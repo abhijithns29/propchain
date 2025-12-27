@@ -20,12 +20,13 @@ import TwoFactorAuth from "./TwoFactorAuth";
 import AuditorDashboard from "./AuditorDashboard";
 import OnboardingChecklist from "./onboarding/OnboardingChecklist";
 import WelcomeBanner from "./onboarding/WelcomeBanner";
+import ChatbotWidget from "./ChatbotWidget";
 
 interface DashboardProps {
   onNavigateToLand?: (landId: string) => void;
   initialTab?: string;
   initialSelectedChatId?: string;
-  chatNavigation?: {landId: string, sellerId: string, isFirstChat?: boolean, activeTab?: string};
+  chatNavigation?: { landId: string, sellerId: string, isFirstChat?: boolean, activeTab?: string };
   onClearChatNavigation?: () => void;
 }
 
@@ -40,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [chatsLoading, setChatsLoading] = useState(false);
   const [autoFillMessage, setAutoFillMessage] = useState<string | null>(null);
-  const [pendingChat, setPendingChat] = useState<{landId: string, recipientId: string, recipientName: string} | null>(null);
+  const [pendingChat, setPendingChat] = useState<{ landId: string, recipientId: string, recipientName: string } | null>(null);
 
   // Update activeTab when initialTab prop changes
   useEffect(() => {
@@ -73,14 +74,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
       if (chatNavigation.activeTab) {
         setActiveTab(chatNavigation.activeTab);
       }
-      
+
       // If we have land and seller info, try to find the specific chat
       if (chatNavigation.landId && chatNavigation.sellerId && chats.length > 0) {
-        const chatToSelect = chats.find(chat => 
-          chat.landId?._id === chatNavigation.landId && 
+        const chatToSelect = chats.find(chat =>
+          chat.landId?._id === chatNavigation.landId &&
           (chat.seller?.id === chatNavigation.sellerId || chat.buyer?.id === chatNavigation.sellerId)
         );
-        
+
         if (chatToSelect) {
           // Found existing chat, select it
           setSelectedChat(chatToSelect);
@@ -89,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
           // No existing chat found, set up pending chat
           setSelectedChat(null);
           setAutoFillMessage("I am interested, can I get more info?");
-          
+
           // We need to get the land details to get the recipient name
           // For now, set a placeholder and let RealtimeChat handle it
           setPendingChat({
@@ -98,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
             recipientName: 'Seller' // Will be updated when land details are loaded
           });
         }
-        
+
         if (onClearChatNavigation) {
           onClearChatNavigation();
         }
@@ -139,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
       console.log("Loading chats for user:", auth.user?.id);
       const response = await apiService.getMyChats();
       console.log("Chat API response:", response);
-      
+
       // Handle different response structures
       let chatsData = [];
       if (response && response.chats) {
@@ -149,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
       } else if (response && Array.isArray(response.data)) {
         chatsData = response.data;
       }
-      
+
       console.log("Processed chats data:", chatsData);
       setChats(chatsData);
     } catch (error: any) {
@@ -207,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                 Communicate with buyers and sellers
               </p>
             </div>
-            
+
             {/* WhatsApp-like Chat Layout */}
             <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm h-[700px] flex">
               {/* Left Sidebar - Chat List */}
@@ -216,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                 <div className="p-4 border-b border-slate-800/50 bg-slate-900/80">
                   <h2 className="text-lg font-semibold text-white">Conversations</h2>
                 </div>
-                
+
                 {/* Chat List */}
                 <div className="flex-1 overflow-y-auto">
                   {chatsLoading ? (
@@ -254,76 +255,74 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                   ) : (
                     <div>
                       {chats
-                        .filter((chat, index, self) => 
+                        .filter((chat, index, self) =>
                           index === self.findIndex((c) => c._id === chat._id)
                         )
                         .map((chat) => {
-                        // Always show the other user (receiver), not the current user
-                        
-                        // Ensure proper string comparison for user IDs
-                        const currentUserId = auth.user?.id;
-                        const buyerId = chat.buyer?.id;
-                        const otherUser = buyerId === currentUserId ? chat.seller : chat.buyer;
-                        const lastMessage = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1] : null;
-                        const isActive = selectedChat?._id === chat._id;
-                        
-                        return (
-                          <div
-                            key={chat._id}
-                            onClick={() => handleChatSelect(chat)}
-                            className={`p-3 hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-800/50 ${
-                              isActive ? 'bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
-                            }`}
-                          >
-                            <div className="flex items-start space-x-3">
-                              {/* Avatar */}
-                              <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-slate-950 font-semibold flex-shrink-0 shadow-md shadow-emerald-500/40">
-                                {otherUser?.fullName?.charAt(0) || 'U'}
-                              </div>
-                              
-                              {/* Chat Info */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start mb-1">
-                                  <h3 className="font-medium text-white truncate">
-                                    {otherUser?.fullName || 'Unknown User'}
-                                  </h3>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    chat.status === 'DEAL_AGREED' ? 'bg-emerald-500/20 text-emerald-300' :
-                                    chat.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                                    'bg-slate-800/50 text-slate-400'
-                                  }`}>
-                                    {chat.status === 'DEAL_AGREED' ? 'Deal' : 'Active'}
-                                  </span>
+                          // Always show the other user (receiver), not the current user
+
+                          // Ensure proper string comparison for user IDs
+                          const currentUserId = auth.user?.id;
+                          const buyerId = chat.buyer?.id;
+                          const otherUser = buyerId === currentUserId ? chat.seller : chat.buyer;
+                          const lastMessage = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1] : null;
+                          const isActive = selectedChat?._id === chat._id;
+
+                          return (
+                            <div
+                              key={chat._id}
+                              onClick={() => handleChatSelect(chat)}
+                              className={`p-3 hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-800/50 ${isActive ? 'bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
+                                }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                {/* Avatar */}
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-slate-950 font-semibold flex-shrink-0 shadow-md shadow-emerald-500/40">
+                                  {otherUser?.fullName?.charAt(0) || 'U'}
                                 </div>
-                                
-                                <p className="text-sm text-slate-300 mb-1 truncate">
-                                  {chat.landId?.village}, {chat.landId?.district}
-                                </p>
-                                
-                                {lastMessage && (
-                                  <p className="text-xs text-slate-400 truncate">
-                                    {lastMessage.messageType === 'OFFER' ? '💰 Offer' :
-                                     lastMessage.messageType === 'ACCEPTANCE' ? '✅ Accepted' :
-                                     lastMessage.messageType === 'REJECTION' ? '❌ Rejected' :
-                                     lastMessage.message}
+
+                                {/* Chat Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-medium text-white truncate">
+                                      {otherUser?.fullName || 'Unknown User'}
+                                    </h3>
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chat.status === 'DEAL_AGREED' ? 'bg-emerald-500/20 text-emerald-300' :
+                                        chat.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' :
+                                          'bg-slate-800/50 text-slate-400'
+                                      }`}>
+                                      {chat.status === 'DEAL_AGREED' ? 'Deal' : 'Active'}
+                                    </span>
+                                  </div>
+
+                                  <p className="text-sm text-slate-300 mb-1 truncate">
+                                    {chat.landId?.village}, {chat.landId?.district}
                                   </p>
-                                )}
-                                
-                                {chat.currentOffer && chat.currentOffer.amount && (
-                                  <p className="text-xs font-medium text-emerald-300 mt-1">
-                                    ₹{(chat.currentOffer.amount / 100000).toFixed(1)}L
-                                  </p>
-                                )}
+
+                                  {lastMessage && (
+                                    <p className="text-xs text-slate-400 truncate">
+                                      {lastMessage.messageType === 'OFFER' ? '💰 Offer' :
+                                        lastMessage.messageType === 'ACCEPTANCE' ? '✅ Accepted' :
+                                          lastMessage.messageType === 'REJECTION' ? '❌ Rejected' :
+                                            lastMessage.message}
+                                    </p>
+                                  )}
+
+                                  {chat.currentOffer && chat.currentOffer.amount && (
+                                    <p className="text-xs font-medium text-emerald-300 mt-1">
+                                      ₹{(chat.currentOffer.amount / 100000).toFixed(1)}L
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {/* Right Side - Chat Area */}
               <div className="flex-1 flex flex-col">
                 {(selectedChat || pendingChat) ? (
@@ -331,7 +330,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                     {/* Chat Header - Same as Marketplace */}
                     <div className="flex justify-between items-center p-4 border-b border-slate-800/50">
                       <h2 className="text-xl font-semibold text-white">
-                        {selectedChat ? 
+                        {selectedChat ?
                           `Chat with ${selectedChat.buyer?.id === auth.user?.id ? selectedChat.seller?.fullName : selectedChat.buyer?.fullName || 'User'}` :
                           `Start Chat with ${pendingChat?.recipientName || 'Seller'}`
                         }
@@ -357,19 +356,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                     </div>
                     <div className="flex-1 overflow-hidden">
                       {selectedChat ? (
-                        <RealtimeChat 
-                          chatId={selectedChat._id} 
-                          onClose={handleBackToChatList} 
+                        <RealtimeChat
+                          chatId={selectedChat._id}
+                          onClose={handleBackToChatList}
                           showHeader={false}
                           autoFillMessage={autoFillMessage}
                           onAutoFillUsed={() => setAutoFillMessage(null)}
                         />
                       ) : pendingChat ? (
-                        <RealtimeChat 
+                        <RealtimeChat
                           landId={pendingChat.landId}
                           recipientId={pendingChat.recipientId}
                           recipientName={pendingChat.recipientName}
-                          onClose={handleBackToChatList} 
+                          onClose={handleBackToChatList}
                           showHeader={false}
                           autoFillMessage={autoFillMessage}
                           onAutoFillUsed={() => setAutoFillMessage(null)}
@@ -431,92 +430,92 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
 
             {/* How It Works Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* How It Works */}
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-                    <QrCode className="h-5 w-5 mr-2 text-emerald-400" />
-                    How It Works
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
-                        1
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-white">Click Scan QR Code</h3>
-                        <p className="text-xs text-slate-400 mt-1">
-                          Open your device camera to scan land certificates
-                        </p>
-                      </div>
+              {/* How It Works */}
+              <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <QrCode className="h-5 w-5 mr-2 text-emerald-400" />
+                  How It Works
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                      1
                     </div>
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
-                        2
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-white">Scan the QR Code</h3>
-                        <p className="text-xs text-slate-400 mt-1">
-                          Point your camera at the QR code on the land document
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-white">Click Scan QR Code</h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Open your device camera to scan land certificates
+                      </p>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
-                        3
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-white">View Results</h3>
-                        <p className="text-xs text-slate-400 mt-1">
-                          Instantly see ownership details and verification status
-                        </p>
-                      </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-white">Scan the QR Code</h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Point your camera at the QR code on the land document
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-white">View Results</h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Instantly see ownership details and verification status
+                      </p>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Benefits */}
-                <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
-                  <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-                    <CheckCircle className="h-5 w-5 mr-2 text-emerald-400" />
-                    Benefits
-                  </h2>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-slate-300">
-                          <span className="font-medium text-white">Instant Verification:</span> Get results in seconds
-                        </p>
-                      </div>
+              {/* Benefits */}
+              <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2 text-emerald-400" />
+                  Benefits
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-300">
+                        <span className="font-medium text-white">Instant Verification:</span> Get results in seconds
+                      </p>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-slate-300">
-                          <span className="font-medium text-white">Fraud Prevention:</span> Verify authenticity on-chain
-                        </p>
-                      </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-300">
+                        <span className="font-medium text-white">Fraud Prevention:</span> Verify authenticity on-chain
+                      </p>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-slate-300">
-                          <span className="font-medium text-white">Complete History:</span> View full ownership trail
-                        </p>
-                      </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-300">
+                        <span className="font-medium text-white">Complete History:</span> View full ownership trail
+                      </p>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm text-slate-300">
-                          <span className="font-medium text-white">Secure & Private:</span> Blockchain-backed verification
-                        </p>
-                      </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-300">
+                        <span className="font-medium text-white">Secure & Private:</span> Blockchain-backed verification
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
         );
       default:
         return null;
@@ -538,6 +537,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
           onClose={() => setShowQRScanner(false)}
         />
       )}
+
+      {/* Chatbot Widget */}
+      <ChatbotWidget onNavigateToLand={onNavigateToLand} />
     </div>
   );
 };

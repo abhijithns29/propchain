@@ -191,6 +191,123 @@ router.post(
       user.verificationDocuments = updatedDocs;
       user.verificationStatus = "PENDING";
 
+      // AI Verification using Gemini
+      const geminiService = require('../utils/geminiService');
+      const autoVerifyEnabled = process.env.AUTO_VERIFY_ENABLED === 'true';
+      
+      if (autoVerifyEnabled && geminiService.initialized) {
+        console.log('🤖 Starting AI verification for user:', user.email);
+        
+        // Prepare documents for AI analysis
+        const documentsToAnalyze = [];
+        const path = require('path');
+        const fs = require('fs');
+        const os = require('os');
+        
+        // Create temp directory for document analysis
+        const tempDir = path.join(os.tmpdir(), 'verification-' + user._id);
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        try {
+          // Download and prepare PAN card
+          if (req.files.panCard && panNumber) {
+            const panPath = path.join(tempDir, 'pan' + path.extname(req.files.panCard[0].originalname));
+            fs.writeFileSync(panPath, req.files.panCard[0].buffer);
+            documentsToAnalyze.push({
+              type: 'PAN',
+              filePath: panPath,
+              userProvided: panNumber.trim().toUpperCase()
+            });
+          }
+
+          // Download and prepare Aadhaar card
+          if (req.files.aadhaarCard && aadhaarNumber) {
+            const aadhaarPath = path.join(tempDir, 'aadhaar' + path.extname(req.files.aadhaarCard[0].originalname));
+            fs.writeFileSync(aadhaarPath, req.files.aadhaarCard[0].buffer);
+            documentsToAnalyze.push({
+              type: 'AADHAAR',
+              filePath: aadhaarPath,
+              userProvided: aadhaarNumber.trim()
+            });
+          }
+
+          // Download and prepare Driving License
+          if (req.files.drivingLicense && dlNumber) {
+            const dlPath = path.join(tempDir, 'dl' + path.extname(req.files.drivingLicense[0].originalname));
+            fs.writeFileSync(dlPath, req.files.drivingLicense[0].buffer);
+            documentsToAnalyze.push({
+              type: 'DL',
+              filePath: dlPath,
+              userProvided: dlNumber.trim().toUpperCase()
+            });
+          }
+
+          // Download and prepare Passport
+          if (req.files.passport && passportNumber) {
+            const passportPath = path.join(tempDir, 'passport' + path.extname(req.files.passport[0].originalname));
+            fs.writeFileSync(passportPath, req.files.passport[0].buffer);
+            documentsToAnalyze.push({
+              type: 'PASSPORT',
+              filePath: passportPath,
+              userProvided: passportNumber.trim().toUpperCase()
+            });
+          }
+
+          // Run AI verification
+          const aiResult = await geminiService.verifyDocuments(documentsToAnalyze);
+          
+          // Store AI verification results
+          user.aiVerification = {
+            analyzed: true,
+            analyzedAt: new Date(),
+            decision: aiResult.decision,
+            confidence: aiResult.confidence,
+            reasoning: aiResult.reasoning,
+            extractedData: aiResult.details?.documents || [],
+            documentAnalysis: aiResult.details?.documents?.map(doc => ({
+              documentType: doc.type,
+              extracted: doc.analysis,
+              matched: doc.analysis.matches,
+              confidence: doc.analysis.confidence,
+              issues: doc.analysis.issues || []
+            })) || []
+          };
+
+          // Auto-approve or auto-reject based on AI decision
+          if (aiResult.decision === 'APPROVED') {
+            user.verificationStatus = 'VERIFIED';
+            user.verificationDate = new Date();
+            console.log('✅ AI auto-approved verification for:', user.email);
+          } else if (aiResult.decision === 'REJECTED') {
+            user.verificationStatus = 'REJECTED';
+            user.rejectionReason = aiResult.reasoning;
+            console.log('❌ AI auto-rejected verification for:', user.email);
+          } else {
+            // MANUAL_REVIEW - keep as PENDING
+            console.log('⚠️  AI recommends manual review for:', user.email);
+          }
+
+          // Cleanup temp files
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        } catch (aiError) {
+          console.error('AI verification error:', aiError);
+          // If AI fails, keep status as PENDING for manual review
+          user.aiVerification = {
+            analyzed: false,
+            analyzedAt: new Date(),
+            decision: 'MANUAL_REVIEW',
+            reasoning: 'AI verification failed: ' + aiError.message,
+            confidence: 0
+          };
+          // Cleanup temp files on error
+          if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+        }
+      }
+
       await user.save();
 
       console.log(
@@ -201,6 +318,11 @@ router.post(
         message: "Verification documents submitted successfully",
         documentsUploaded,
         verificationStatus: user.verificationStatus,
+        aiVerification: user.aiVerification?.analyzed ? {
+          decision: user.aiVerification.decision,
+          confidence: user.aiVerification.confidence,
+          reasoning: user.aiVerification.reasoning
+        } : null
       });
     } catch (error) {
       console.error("Document submission error:", error);
@@ -236,6 +358,11 @@ router.put("/verification/:userId/verify", adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { status, rejectionReason, verifiedDocuments } = req.body;
+
+    // Validate userId
+    if (!userId || userId === 'undefined' || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid or missing user ID" });
+    }
 
     if (!["VERIFIED", "REJECTED"].includes(status)) {
       return res.status(400).json({

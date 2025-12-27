@@ -188,7 +188,7 @@ const UserVerification: React.FC = () => {
 
         // Refresh user data to update verification status
         await refreshUser();
-        
+
         // Optionally reload page after delay
         setTimeout(() => {
           window.location.reload();
@@ -381,7 +381,7 @@ const UserVerification: React.FC = () => {
             </h3>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                PAN Number *
+                PAN Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -451,7 +451,7 @@ const UserVerification: React.FC = () => {
             </h3>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                Aadhaar Number *
+                Aadhaar Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -657,11 +657,10 @@ const UserVerification: React.FC = () => {
           <button
             type="submit"
             disabled={!canSubmit()}
-            className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-200 ${
-              canSubmit()
+            className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-200 ${canSubmit()
                 ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/40"
                 : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700"
-            }`}
+              }`}
           >
             {loading ? (
               <div className="flex items-center">

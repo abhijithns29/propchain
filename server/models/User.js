@@ -123,6 +123,27 @@ const userSchema = new mongoose.Schema(
     verificationDate: Date,
     rejectionReason: String,
 
+    // AI Verification Results
+    aiVerification: {
+      analyzed: { type: Boolean, default: false },
+      analyzedAt: Date,
+      decision: {
+        type: String,
+        enum: ['APPROVED', 'REJECTED', 'MANUAL_REVIEW', null],
+        default: null
+      },
+      confidence: { type: Number, min: 0, max: 100 },
+      reasoning: String,
+      extractedData: mongoose.Schema.Types.Mixed,
+      documentAnalysis: [{
+        documentType: String,
+        extracted: mongoose.Schema.Types.Mixed,
+        matched: Boolean,
+        confidence: Number,
+        issues: [String]
+      }]
+    },
+
     // User profile
     profile: {
       phoneNumber: {

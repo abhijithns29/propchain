@@ -67,6 +67,10 @@ const initializeServices = async () => {
     const { verifyEmailConfig } = require("./utils/emailService");
     await verifyEmailConfig();
 
+    // Initialize Gemini AI service for document verification
+    const geminiService = require("./utils/geminiService");
+    geminiService.initialize();
+
     console.log("✅ All services initialized successfully");
   } catch (error) {
     console.error("❌ Service initialization failed:", error);
