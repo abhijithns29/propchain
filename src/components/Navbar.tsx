@@ -82,7 +82,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
               </div>
               <div className="ml-3">
                 <span className="text-xl font-semibold tracking-tight text-white leading-tight">
-                  LandLedger
+                  PropChain
                 </span>
                 <p className="text-[11px] text-slate-300 leading-tight">
                   Blockchain Land Registry

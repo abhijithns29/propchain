@@ -22,6 +22,8 @@ router.post('/message', auth, async (req, res) => {
     // Process message through chatbot service
     const response = await chatbotService.processMessage(message, userId, context);
 
+    console.log('Sending response to frontend:', JSON.stringify(response).substring(0, 300));
+    
     res.json({
       success: true,
       ...response,

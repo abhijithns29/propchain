@@ -164,14 +164,16 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
             );
 
             if (response.data.success) {
+                console.log('Chatbot response received:', response.data);
                 const botMessage: Message = {
                     id: `bot-${Date.now()}`,
-                    text: response.data.response,
+                    text: response.data.message,
                     sender: 'bot',
                     timestamp: new Date(),
                     type: response.data.type,
                     data: response.data.data
                 };
+                console.log('Bot message created:', botMessage);
                 setMessages(prev => [...prev, botMessage]);
 
                 if (response.data.suggestions) {
@@ -326,17 +328,27 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
                                                                     </span>
                                                                 </div>
 
-                                                                <button
-                                                                    onClick={() => {
-                                                                        // Navigate to land details using callback
-                                                                        if (onNavigateToLand) {
-                                                                            onNavigateToLand(land.id);
-                                                                        }
-                                                                    }}
-                                                                    className="w-full mt-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium rounded-lg hover:shadow-lg transition-all hover:scale-[1.02]"
-                                                                >
-                                                                    📍 View Full Details
-                                                                </button>
+                                                                <div className="flex gap-2 mt-2">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // Navigate to land details using callback
+                                                                            if (onNavigateToLand) {
+                                                                                onNavigateToLand(land.id);
+                                                                            }
+                                                                        }}
+                                                                        className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium rounded-lg hover:shadow-lg transition-all hover:scale-[1.02]"
+                                                                    >
+                                                                        📍 View Details
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            sendMessage(`Predict price for land ${land.id}`);
+                                                                        }}
+                                                                        className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-medium rounded-lg hover:shadow-lg transition-all hover:scale-[1.02]"
+                                                                    >
+                                                                        🤖 AI Price
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                         {message.data.lands.length > 5 && (

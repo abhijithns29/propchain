@@ -2,6 +2,7 @@ const Land = require('../models/Land');
 const User = require('../models/User');
 const LandTransaction = require('../models/LandTransaction');
 const BuyRequest = require('../models/BuyRequest');
+const { predictLandPrice } = require('../services/mlService');
 
 /**
  * Hybrid AI Chatbot Service
@@ -13,6 +14,7 @@ class ChatbotService {
     // Keywords for intent recognition
     this.intents = {
       SEARCH_LANDS: ['show', 'find', 'search', 'list', 'lands', 'properties', 'available'],
+      PRICE_PREDICTION: ['predict', 'prediction', 'estimate', 'value', 'worth', 'valuation', 'ai price', 'ml price'],
       PRICE_INQUIRY: ['price', 'cost', 'expensive', 'cheap', 'average', 'how much'],
       RECOMMENDATION: ['recommend', 'suggest', 'best', 'good', 'investment', 'should i'],
       LOCATION_QUERY: ['near', 'location', 'area', 'district', 'state', 'where'],
@@ -41,14 +43,27 @@ class ChatbotService {
       const quickResponse = this.getQuickResponse(normalizedMessage);
       if (quickResponse) {
         return {
-          response: quickResponse,
-          type: 'quick',
+          message: quickResponse,
+          type: 'text',
           suggestions: this.getContextualSuggestions(context)
         };
       }
 
-      // Recognize intent using rule-based NLP
-      const intent = this.recognizeIntent(normalizedMessage);
+      // Special check: if message contains area units (cent, acre, sqft) + location, treat as price prediction
+      const hasAreaUnit = /\d+\.?\d*\s*(cent|acre|sqft)/i.test(normalizedMessage);
+      const hasLocation = /\b(in|at|near)\s+\w+/i.test(normalizedMessage);
+      const hasPriceKeyword = /\b(price|cost|value|worth|predict|estimate)/i.test(normalizedMessage);
+      
+      console.log('Natural language check:', { hasAreaUnit, hasLocation, hasPriceKeyword, message: normalizedMessage });
+      
+      if (hasAreaUnit && (hasLocation || hasPriceKeyword)) {
+        // This is a natural language price prediction query
+        console.log('Routing to natural language price prediction');
+        return await this.handlePricePrediction(normalizedMessage, userId);
+      }
+
+      // Match intent using keywords
+      const intent = this.matchIntent(normalizedMessage);
       console.log('Recognized intent:', intent);
 
       // Process based on intent
@@ -59,6 +74,9 @@ class ChatbotService {
           break;
         case 'PRICE_INQUIRY':
           response = await this.handlePriceInquiry(normalizedMessage);
+          break;
+        case 'PRICE_PREDICTION':
+          response = await this.handlePricePrediction(normalizedMessage, userId);
           break;
         case 'RECOMMENDATION':
           response = await this.handleRecommendation(normalizedMessage, userId);
@@ -519,11 +537,11 @@ class ChatbotService {
    */
   getContextualSuggestions(context = {}) {
     if (context.page === 'marketplace') {
-      return ['Show cheap lands', 'Recommend properties', 'Price statistics'];
+      return ['Show cheap lands', 'AI Price Prediction', 'Recommend properties'];
     } else if (context.page === 'my-lands') {
-      return ['How to list for sale', 'Market value estimate', 'Transaction status'];
+      return ['Predict my land value', 'How to list for sale', 'Market value estimate'];
     } else {
-      return ['Search lands', 'Price info', 'Help guide'];
+      return ['Search lands', 'AI Price Prediction', 'Price statistics'];
     }
   }
 
@@ -535,6 +553,264 @@ class ChatbotService {
       return `${area.acres || 0} Acres, ${area.guntas || 0} Guntas`;
     }
     return area || 'N/A';
+  }
+
+  /**
+   * Handle AI price prediction queries
+   */
+  async handlePricePrediction(message, userId) {
+    try {
+      // Extract land ID or survey number from message (supports UUID format with hyphens)
+      const landIdMatch = message.match(/land\s+([\w-]+)|survey\s+([\w-]+)|id\s+([\w-]+)/i);
+      
+      if (landIdMatch) {
+        const landId = landIdMatch[1] || landIdMatch[2] || landIdMatch[3];
+        
+        // Try to find land by _id (MongoDB ObjectId), surveyNumber, or assetId
+        let land = null;
+        
+        // First try as MongoDB ObjectId
+        if (landId.match(/^[0-9a-fA-F]{24}$/)) {
+          land = await Land.findById(landId);
+        }
+        
+        // If not found, try surveyNumber
+        if (!land) {
+          land = await Land.findOne({ surveyNumber: landId });
+        }
+        
+        // If still not found, try assetId
+        if (!land) {
+          land = await Land.findOne({ assetId: landId.toUpperCase() });
+        }
+        
+        if (!land) {
+          return {
+            message: "I couldn't find that land. Please provide a valid land ID or ask me to search for lands first.",
+            type: 'error',
+            suggestions: ['Search lands', 'Show available lands']
+          };
+        }
+        
+        // Default coordinates for major districts if not available
+        const districtCoordinates = {
+          'Ernakulam': { lat: 9.9312, lng: 76.2673 },
+          'Thiruvananthapuram': { lat: 8.5241, lng: 76.9366 },
+          'Kozhikode': { lat: 11.2588, lng: 75.7804 },
+          'Thrissur': { lat: 10.5276, lng: 76.2144 },
+          'Bangalore': { lat: 12.9716, lng: 77.5946 },
+          'Chennai': { lat: 13.0827, lng: 80.2707 },
+          'Mumbai': { lat: 19.0760, lng: 72.8777 }
+        };
+        
+        const defaultCoords = districtCoordinates[land.district] || { lat: 10.0, lng: 76.0 };
+        
+        // Prepare data for ML service
+        const landData = {
+          area_sqft: land.area.sqft || (land.area.acres * 43560) || 1000,
+          latitude: land.coordinates?.latitude || defaultCoords.lat,
+          longitude: land.coordinates?.longitude || defaultCoords.lng,
+          district: land.district,
+          state: land.state,
+          land_type: land.landType,
+          pincode: land.pincode || '000000'
+        };
+        
+        // Call ML service
+        const prediction = await predictLandPrice(landData);
+        
+        if (prediction) {
+          const currentPrice = land.marketInfo?.askingPrice || 0;
+          const priceDiff = currentPrice - prediction.predicted_price;
+          const priceDiffPercent = currentPrice > 0 ? ((priceDiff / currentPrice) * 100).toFixed(1) : 0;
+          
+          return {
+            message: `🤖 AI Price Prediction for ${land.surveyNumber}:\n\n` +
+                    `• Predicted Value: ₹${Math.round(prediction.predicted_price).toLocaleString('en-IN')}\n` +
+                    `• Price per Sqft: ₹${Math.round(prediction.price_per_sqft).toLocaleString('en-IN')}\n` +
+                    `• Confidence: ${(prediction.confidence_score * 100).toFixed(0)}%\n` +
+                    `• Price Range: ₹${Math.round(prediction.confidence_interval.min).toLocaleString('en-IN')} - ₹${Math.round(prediction.confidence_interval.max).toLocaleString('en-IN')}\n\n` +
+                    (currentPrice > 0 ? 
+                      `Current Asking Price: ₹${currentPrice.toLocaleString('en-IN')}\n` +
+                      `${priceDiff > 0 ? '📈 Overpriced' : '📉 Underpriced'} by ₹${Math.abs(priceDiff).toLocaleString('en-IN')} (${Math.abs(priceDiffPercent)}%)\n\n` 
+                      : '') +
+                    `💡 Market Insights: ${prediction.market_insights?.market_activity || 'Active'} market with ${prediction.market_insights?.growth_rate || 8}% annual growth`,
+            type: 'price_prediction',
+            data: {
+              prediction,
+              land: {
+                id: land._id,
+                surveyNumber: land.surveyNumber,
+                currentPrice
+              }
+            },
+            suggestions: ['View land details', 'Compare with market', 'Search similar lands']
+          };
+        } else {
+          // Fallback to simple estimation
+          const estimatedPrice = this._estimatePrice(land);
+          return {
+            message: `💡 Estimated Price for ${land.surveyNumber}:\n\n` +
+                    `Based on market averages in ${land.district}, the estimated value is around ₹${estimatedPrice.toLocaleString('en-IN')}.\n\n` +
+                    `Note: This is a basic estimate. For AI-powered prediction, the ML service needs to be running.`,
+            type: 'price_estimation',
+            suggestions: ['View land details', 'Market analysis', 'Search similar lands']
+          };
+        }
+      } else {
+        // No land ID provided - try to extract details from natural language
+        // Examples: "5 cent plot in Thrissur", "2 acre agricultural land in Kerala"
+        
+        // Extract area
+        const areaMatch = message.match(/(\d+\.?\d*)\s*(cent|cents|acre|acres|sqft|sq\.?ft)/i);
+        const area = areaMatch ? parseFloat(areaMatch[1]) : null;
+        const areaUnit = areaMatch ? areaMatch[2].toLowerCase() : null;
+        
+        // Convert to sqft
+        let areaSqft = 1000; // default
+        if (area && areaUnit) {
+          if (areaUnit.includes('cent')) {
+            areaSqft = area * 435.6; // 1 cent = 435.6 sqft
+          } else if (areaUnit.includes('acre')) {
+            areaSqft = area * 43560; // 1 acre = 43560 sqft
+          } else {
+            areaSqft = area;
+          }
+        }
+        
+        // Extract location - search entire message for known districts
+        const locations = ['ernakulam', 'thrissur', 'kozhikode', 'thiruvananthapuram', 'kannur', 
+                          'bangalore', 'chennai', 'mumbai', 'delhi', 'pune', 'hyderabad'];
+        let district = null;
+        let state = 'Kerala'; // default
+        
+        const messageLower = message.toLowerCase();
+        for (const loc of locations) {
+          if (messageLower.includes(loc)) {
+            district = loc.charAt(0).toUpperCase() + loc.slice(1);
+            if (['bangalore', 'mysore'].includes(loc)) state = 'Karnataka';
+            else if (['chennai', 'coimbatore'].includes(loc)) state = 'Tamil Nadu';
+            else if (['mumbai', 'pune'].includes(loc)) state = 'Maharashtra';
+            else if (loc === 'delhi') state = 'Delhi';
+            else if (loc === 'hyderabad') state = 'Telangana';
+            break;
+          }
+        }
+        
+        // Extract land type
+        const landTypes = ['agricultural', 'residential', 'commercial', 'industrial'];
+        let landType = 'RESIDENTIAL'; // default
+        for (const type of landTypes) {
+          if (message.toLowerCase().includes(type)) {
+            landType = type.toUpperCase();
+            break;
+          }
+        }
+        
+        if (!district) {
+          return {
+            message: "🤖 AI Price Prediction Available!\n\n" +
+                    "I can predict land prices using machine learning!\n\n" +
+                    "**Try asking:**\n" +
+                    "• '5 cent plot in Thrissur'\n" +
+                    "• '2 acre agricultural land in Ernakulam'\n" +
+                    "• '1000 sqft residential plot in Bangalore'\n\n" +
+                    "**Or search for a land first:**\n" +
+                    "1. Search: 'Show lands in Kerala'\n" +
+                    "2. Click 🤖 AI Price button on any land",
+            type: 'help',
+            suggestions: ['Search lands', 'Show available lands', 'Price statistics']
+          };
+        }
+        
+        // We have enough info to predict!
+        const districtCoordinates = {
+          'Ernakulam': { lat: 9.9312, lng: 76.2673 },
+          'Thiruvananthapuram': { lat: 8.5241, lng: 76.9366 },
+          'Kozhikode': { lat: 11.2588, lng: 75.7804 },
+          'Thrissur': { lat: 10.5276, lng: 76.2144 },
+          'Kannur': { lat: 11.8745, lng: 75.3704 },
+          'Bangalore': { lat: 12.9716, lng: 77.5946 },
+          'Chennai': { lat: 13.0827, lng: 80.2707 },
+          'Mumbai': { lat: 19.0760, lng: 72.8777 }
+        };
+        
+        const coords = districtCoordinates[district] || { lat: 10.0, lng: 76.0 };
+        
+        const landData = {
+          area_sqft: areaSqft,
+          latitude: coords.lat,
+          longitude: coords.lng,
+          district: district,
+          state: state,
+          land_type: landType,
+          pincode: '000000'
+        };
+        
+        // Call ML service with error handling
+        let prediction = null;
+        try {
+          prediction = await predictLandPrice(landData);
+        } catch (mlError) {
+          console.log('ML service unavailable, using fallback estimation');
+        }
+        
+        if (prediction && prediction.predicted_price) {
+          console.log('Creating AI prediction response for:', area, areaUnit, district);
+          const response = {
+            message: `🤖 AI Price Prediction:
+
+**Property:** ${area} ${areaUnit} ${landType.toLowerCase()} land in ${district}
+
+• Predicted Value: ₹${Math.round(prediction.predicted_price).toLocaleString('en-IN')}
+• Price per Sqft: ₹${Math.round(prediction.price_per_sqft).toLocaleString('en-IN')}
+• Confidence: ${(prediction.confidence_score * 100).toFixed(0)}%
+• Price Range: ₹${Math.round(prediction.confidence_interval.min).toLocaleString('en-IN')} - ₹${Math.round(prediction.confidence_interval.max).toLocaleString('en-IN')}
+
+💡 Market Insights: ${prediction.market_insights?.market_activity || 'Active'} market with ${prediction.market_insights?.growth_rate || 8}% annual growth`,
+            type: 'price_prediction',
+            data: { prediction },
+            suggestions: ['Search similar lands', 'Market analysis', 'Show available lands']
+          };
+          console.log('Response created:', JSON.stringify(response).substring(0, 200));
+          return response;
+        } else {
+          // Fallback estimation
+          const basePrices = { 'RESIDENTIAL': 3000, 'COMMERCIAL': 5000, 'AGRICULTURAL': 1500, 'INDUSTRIAL': 2500 };
+          const basePrice = basePrices[landType] || 2000;
+          const estimatedPrice = basePrice * areaSqft;
+          
+          return {
+            message: `💡 Estimated Price:\n\n` +
+                    `**Property:** ${area || '?'} ${areaUnit || 'units'} ${landType.toLowerCase()} land in ${district}\n\n` +
+                    `Based on market averages, the estimated value is around ₹${estimatedPrice.toLocaleString('en-IN')}.\n\n` +
+                    `Note: This is a basic estimate. For AI-powered prediction, ensure the ML service is running.`,
+            type: 'price_estimation',
+            suggestions: ['Search similar lands', 'Market analysis', 'Show available lands']
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Price prediction error:', error);
+      return {
+        message: "I encountered an error with price prediction. Please try again or use market price analysis instead.",
+        type: 'error',
+        suggestions: ['Price statistics', 'Market analysis', 'Search lands']
+      };
+    }
+  }
+
+  _estimatePrice(land) {
+    // Simple fallback estimation
+    const basePrices = {
+      'RESIDENTIAL': 3000,
+      'COMMERCIAL': 5000,
+      'AGRICULTURAL': 1500,
+      'INDUSTRIAL': 2500
+    };
+    const basePrice = basePrices[land.landType] || 2000;
+    const area = land.area.sqft || (land.area.acres * 43560) || 1000;
+    return basePrice * area;
   }
 }
 
