@@ -22,7 +22,10 @@ class GeminiVerificationService {
       }
 
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      // Use gemini-flash-latest (Gemini 1.5 Flash) which has higher rate limits
+      this.model = this.genAI.getGenerativeModel({ 
+        model: 'gemini-flash-latest'
+      });
       this.initialized = true;
       console.log('✅ Gemini AI service initialized for document verification');
       return true;
@@ -33,8 +36,38 @@ class GeminiVerificationService {
   }
 
   /**
-   * Convert file to base64 for Gemini API
+   * Helper function to retry API calls on 429/503 errors
    */
+  async retryWithBackoff(fn, retries = 3, initialDelay = 60000) {
+    let currentDelay = initialDelay;
+    
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        // Check if error is 429 (Too Many Requests) or 503 (Service Unavailable)
+        const isRateLimit = error.message.includes('429') || 
+                            error.message.includes('Too Many Requests') ||
+                            error.message.includes('503');
+        
+        if (i === retries - 1 || !isRateLimit) {
+          throw error;
+        }
+
+        console.log(`⚠️  Rate limit hit. Retrying in ${currentDelay/1000}s... (Attempt ${i + 1}/${retries})`);
+        
+        // Wait for the delay
+        await new Promise(resolve => setTimeout(resolve, currentDelay));
+        
+        // Exponential backoff
+        currentDelay *= 2;
+      }
+    }
+  }
+
+  /**
+   * Convert file to base64 for Gemini API
+   */  
   fileToGenerativePart(filePath, mimeType) {
     return {
       inlineData: {
@@ -77,7 +110,7 @@ Please respond in JSON format:
 
 Be strict in validation. If the image is unclear, blurry, or the PAN number doesn't match exactly, mark it as invalid.`;
 
-      const result = await this.model.generateContent([prompt, imagePart]);
+      const result = await this.retryWithBackoff(() => this.model.generateContent([prompt, imagePart]));
       const response = await result.response;
       const text = response.text();
       
@@ -136,7 +169,7 @@ Please respond in JSON format:
 
 Be strict in validation. If the image is unclear, blurry, or the visible digits don't match, mark it as invalid.`;
 
-      const result = await this.model.generateContent([prompt, imagePart]);
+      const result = await this.retryWithBackoff(() => this.model.generateContent([prompt, imagePart]));
       const response = await result.response;
       const text = response.text();
       
@@ -285,7 +318,15 @@ Please respond in JSON format:
 
     try {
       // Analyze each document
-      for (const doc of documents) {
+      for (let i = 0; i < documents.length; i++) {
+        const doc = documents[i];
+
+        // Add delay of 12 seconds between requests to avoid rate limits (5 RPM = 1 req/12s)
+        if (i > 0) {
+          console.log('⏳ Waiting 12 seconds before next document analysis to respect rate limits...');
+          await new Promise(resolve => setTimeout(resolve, 12000));
+        }
+
         let analysis = null;
 
         switch (doc.type) {

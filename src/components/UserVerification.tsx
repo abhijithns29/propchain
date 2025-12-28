@@ -166,12 +166,11 @@ const UserVerification: React.FC = () => {
         formDataToSend
       );
 
-      if (response.message === "Verification documents submitted successfully") {
-        setSuccess(
-          "Verification documents submitted successfully! Please wait for admin approval."
-        );
+      if (response.message === "Verification documents submitted successfully. Verification in progress.") {
+        // Refresh user data to update verification status
+        await refreshUser();
 
-        // Reset form fields
+        // Clear form data
         setFormData({
           panNumber: "",
           aadhaarNumber: "",
@@ -185,14 +184,6 @@ const UserVerification: React.FC = () => {
           drivingLicense: null,
           passport: null,
         });
-
-        // Refresh user data to update verification status
-        await refreshUser();
-
-        // Optionally reload page after delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
       } else {
         setError(response.message || "Failed to submit verification documents");
       }
@@ -658,8 +649,8 @@ const UserVerification: React.FC = () => {
             type="submit"
             disabled={!canSubmit()}
             className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-200 ${canSubmit()
-                ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/40"
-                : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700"
+              ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/40"
+              : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700"
               }`}
           >
             {loading ? (
