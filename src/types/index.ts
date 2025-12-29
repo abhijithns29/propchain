@@ -169,6 +169,43 @@ export interface LandTransaction {
   createdAt: string;
 }
 
+export interface BuyRequest {
+  _id: string;
+  chatId: string | Chat;
+  landId: Land;
+  seller: User;
+  buyer: User;
+  agreedPrice: number;
+  status: 'PENDING_SELLER_CONFIRMATION' | 'PENDING_ADMIN_APPROVAL' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+  twoFactorRequired: boolean;
+  twoFactorCode?: string;
+  twoFactorVerified: boolean;
+  twoFactorExpiresAt?: string;
+  adminReview: {
+    reviewedBy?: User;
+    reviewedAt?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    comments?: string;
+    rejectionReason?: string;
+  };
+  landTransactionId?: string | LandTransaction;
+  blockchainTxHash?: string;
+  timeline: Array<{
+    event: string;
+    timestamp: string;
+    performedBy?: User;
+    description: string;
+    metadata?: any;
+  }>;
+  metadata?: {
+    notes?: string;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+    tags?: string[];
+  };
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Chat {
   _id: string;
   id?: string;

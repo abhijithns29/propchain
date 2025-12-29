@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Eye, Users, Database, FileText, ShoppingCart, Sparkles } from 'lucide-react';
-import { User, Land, Transaction } from '../types';
+import { CheckCircle, XCircle, Eye, Users, Database, FileText, ShoppingCart, Sparkles } from 'lucide-react';
+import { User, Land, BuyRequest } from '../types';
 import apiService from '../services/api';
 import OCRVerificationModal from './OCRVerificationModal';
 import Tesseract from 'tesseract.js';
 
 const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'land-transactions'>('users');
-  const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'land-transactions' | 'all-transactions'>('users');
+  const [pendingTransactions, setPendingTransactions] = useState<BuyRequest[]>([]);
+  const [allTransactions, setAllTransactions] = useState<BuyRequest[]>([]);
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [allLands, setAllLands] = useState<Land[]>([]);
   const [landTransactions, setLandTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // OCR Modal state
   const [ocrModal, setOcrModal] = useState<{
@@ -45,6 +48,22 @@ const AdminPanel: React.FC = () => {
           const transResponse = await apiService.getPendingTransactions();
           setPendingTransactions(transResponse.transactions);
           break;
+        case 'all-transactions':
+          try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/admin/transactions', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            const allTransResponse = await response.json();
+            setAllTransactions(allTransResponse.transactions || []);
+          } catch (err) {
+            console.error('Failed to fetch all transactions:', err);
+            setAllTransactions([]);
+          }
+          break;
         case 'users':
           const usersResponse = await apiService.getPendingVerifications();
           setPendingUsers(usersResponse.users);
@@ -70,6 +89,16 @@ const AdminPanel: React.FC = () => {
       setError('');
       setProcessingId(transactionId);
       await apiService.approveTransaction(transactionId);
+
+      // Show success animation
+      setSuccessMessage('Transaction Approved Successfully! 🎉');
+      setShowSuccessAnimation(true);
+
+      // Hide animation after 3 seconds
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+      }, 3000);
+
       await loadData();
     } catch (error: any) {
       setError(error.message || 'Failed to approve transaction');
@@ -465,6 +494,238 @@ const AdminPanel: React.FC = () => {
     </div>
   );
 
+  const renderAllTransactions = () => (
+    <div className="space-y-4">
+      {allTransactions.length === 0 ? (
+        <div className="text-center py-12">
+          <FileText className="mx-auto h-12 w-12 text-slate-500" />
+          <div className="text-slate-300 text-lg mt-4">No transactions found</div>
+          <p className="text-slate-400 mt-2">Transaction history will appear here.</p>
+        </div>
+      ) : (
+        allTransactions.map((transaction) => {
+          const getStatusColor = (status: string) => {
+            switch (status) {
+              case 'APPROVED':
+              case 'COMPLETED':
+                return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+              case 'REJECTED':
+              case 'CANCELLED':
+                return 'bg-red-500/20 text-red-300 border-red-500/30';
+              case 'PENDING_ADMIN_APPROVAL':
+                return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+              default:
+                return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+            }
+          };
+
+          return (
+            <div key={transaction._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <FileText className="h-6 w-6 text-blue-400" />
+                    <h3 className="text-xl font-bold text-white">
+                      Transaction #{transaction._id.slice(-6)}
+                    </h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border uppercase ${getStatusColor(transaction.status)}`}>
+                      {transaction.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs uppercase mb-1">Land Asset ID</div>
+                      <div className="text-white font-semibold">{transaction.landId?.assetId || 'N/A'}</div>
+                    </div>
+                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs uppercase mb-1">Agreed Price</div>
+                      <div className="text-emerald-400 font-bold text-lg">{formatPrice(transaction.agreedPrice)}</div>
+                    </div>
+                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs uppercase mb-1">Seller</div>
+                      <div className="text-white font-semibold">{transaction.seller?.fullName || 'N/A'}</div>
+                    </div>
+                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs uppercase mb-1">Buyer</div>
+                      <div className="text-white font-semibold">{transaction.buyer?.fullName || 'N/A'}</div>
+                    </div>
+                  </div>
+
+                  {transaction.adminReview && transaction.adminReview.reviewedAt && (
+                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs uppercase mb-2">Admin Review</div>
+                      <div className="text-sm text-slate-300">
+                        <div>Reviewed: {new Date(transaction.adminReview.reviewedAt).toLocaleString()}</div>
+                        {transaction.adminReview.comments && (
+                          <div className="mt-1">Comments: {transaction.adminReview.comments}</div>
+                        )}
+                        {transaction.adminReview.rejectionReason && (
+                          <div className="mt-1 text-red-300">Reason: {transaction.adminReview.rejectionReason}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+
+  const renderTransactions = () => (
+    <div className="space-y-4">
+      {pendingTransactions.length === 0 ? (
+        <div className="text-center py-12">
+          <ShoppingCart className="mx-auto h-12 w-12 text-slate-500" />
+          <div className="text-slate-300 text-lg mt-4">No pending buy requests</div>
+          <p className="text-slate-400 mt-2">All buy requests have been processed.</p>
+        </div>
+      ) : (
+        pendingTransactions.map((transaction) => (
+          <div key={transaction._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                {/* Header */}
+                <div className="flex items-center space-x-3 mb-6">
+                  <ShoppingCart className="h-6 w-6 text-emerald-400" />
+                  <h3 className="text-xl font-bold text-white">
+                    Land Transfer Request
+                  </h3>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                    Pending Approval
+                  </span>
+                </div>
+
+                {/* Land Details Card */}
+                <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-lg p-4 border border-slate-700/50 mb-4">
+                  <div className="flex items-center mb-3">
+                    <Database className="h-5 w-5 text-blue-400 mr-2" />
+                    <h4 className="font-bold text-white text-lg">Property Details</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
+                      <span className="text-slate-400 text-xs uppercase">Asset ID</span>
+                      <div className="text-white font-semibold">{transaction.landId?.assetId || 'N/A'}</div>
+                    </div>
+                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
+                      <span className="text-slate-400 text-xs uppercase">Survey Number</span>
+                      <div className="text-white font-semibold">{transaction.landId?.surveyNumber || 'N/A'}</div>
+                    </div>
+                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
+                      <span className="text-slate-400 text-xs uppercase">Location</span>
+                      <div className="text-white font-semibold">{transaction.landId?.village || 'N/A'}, {transaction.landId?.district || 'N/A'}</div>
+                    </div>
+                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
+                      <span className="text-slate-400 text-xs uppercase">Type & Area</span>
+                      <div className="text-white font-semibold">{transaction.landId?.landType || 'N/A'} - {transaction.landId?.area?.acres || 0} Acres</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transfer Details - From and To Boxes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* FROM Box - Seller */}
+                  <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 rounded-lg p-4 border-2 border-red-500/30">
+                    <div className="flex items-center mb-3">
+                      <div className="bg-red-500/20 rounded-full p-2 mr-3">
+                        <Users className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div>
+                        <div className="text-red-300 text-xs font-bold uppercase tracking-wide">From (Seller)</div>
+                        <div className="text-white font-bold text-lg">{transaction.seller?.fullName || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center text-slate-300">
+                        <span className="text-slate-400 mr-2">📧</span>
+                        {transaction.seller?.email || 'N/A'}
+                      </div>
+                      <div className="flex items-center">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
+                          Current Owner
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TO Box - Buyer */}
+                  <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-lg p-4 border-2 border-emerald-500/30">
+                    <div className="flex items-center mb-3">
+                      <div className="bg-emerald-500/20 rounded-full p-2 mr-3">
+                        <Users className="h-5 w-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <div className="text-emerald-300 text-xs font-bold uppercase tracking-wide">To (Buyer)</div>
+                        <div className="text-white font-bold text-lg">{transaction.buyer?.fullName || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center text-slate-300">
+                        <span className="text-slate-400 mr-2">📧</span>
+                        {transaction.buyer?.email || 'N/A'}
+                      </div>
+                      <div className="flex items-center">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          Prospective Owner
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transaction Info */}
+                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-slate-400 text-xs uppercase">Agreed Price</span>
+                      <div className="text-emerald-400 font-bold text-xl">{formatPrice(transaction.agreedPrice)}</div>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-xs uppercase">Request Date</span>
+                      <div className="text-white font-semibold">{new Date(transaction.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col space-y-3 ml-6">
+                <button
+                  onClick={() => handleApproveTransaction(transaction._id)}
+                  disabled={processingId === transaction._id}
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/40 hover:shadow-emerald-500/60"
+                >
+                  {processingId === transaction._id ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-950 mr-2"></div>
+                  ) : (
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                  )}
+                  Approve
+                </button>
+                <button
+                  onClick={() => {
+                    const reason = prompt('Please provide a reason for rejection:');
+                    if (reason) {
+                      handleRejectTransaction(transaction._id, reason);
+                    }
+                  }}
+                  disabled={processingId === transaction._id}
+                  className="inline-flex items-center justify-center px-6 py-3 border-2 border-red-500/50 rounded-lg text-sm font-bold text-red-300 bg-red-900/20 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <XCircle className="h-5 w-5 mr-2" />
+                  Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   const renderLands = () => (
     <div className="space-y-4">
       {allLands.length === 0 ? (
@@ -619,6 +880,26 @@ const AdminPanel: React.FC = () => {
             User Verifications
           </button>
           <button
+            onClick={() => setActiveTab('transactions')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'transactions'
+              ? 'border-emerald-500 text-emerald-400'
+              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+              }`}
+          >
+            <FileText className="inline h-4 w-4 mr-2" />
+            Buy Requests
+          </button>
+          <button
+            onClick={() => setActiveTab('all-transactions')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'all-transactions'
+              ? 'border-emerald-500 text-emerald-400'
+              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+              }`}
+          >
+            <FileText className="inline h-4 w-4 mr-2" />
+            All Transactions
+          </button>
+          <button
             onClick={() => setActiveTab('land-transactions')}
             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'land-transactions'
               ? 'border-emerald-500 text-emerald-400'
@@ -654,9 +935,28 @@ const AdminPanel: React.FC = () => {
       ) : (
         <>
           {activeTab === 'users' && renderUsers()}
+          {activeTab === 'transactions' && renderTransactions()}
+          {activeTab === 'all-transactions' && renderAllTransactions()}
           {activeTab === 'lands' && renderLands()}
           {activeTab === 'land-transactions' && renderLandTransactions()}
         </>
+      )}
+
+      {/* Success Animation Modal */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-emerald-900/90 to-emerald-800/90 rounded-2xl p-8 shadow-2xl border-2 border-emerald-500/50 animate-bounce-in">
+            <div className="text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="bg-emerald-500/20 rounded-full p-4 animate-pulse">
+                  <CheckCircle className="h-16 w-16 text-emerald-400" />
+                </div>
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-2">{successMessage}</h2>
+              <p className="text-emerald-300 text-lg">The ownership has been transferred successfully.</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* OCR Verification Modal */}

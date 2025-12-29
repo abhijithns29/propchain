@@ -63,7 +63,7 @@ class ChatbotService {
       }
 
       // Match intent using keywords
-      const intent = this.matchIntent(normalizedMessage);
+      const intent = this.recognizeIntent(normalizedMessage);
       console.log('Recognized intent:', intent);
 
       // Process based on intent
