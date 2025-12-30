@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   Filter,
@@ -71,6 +72,28 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     } else if (activeTab === "liked") {
       loadLikedLands();
     }
+  }, [activeTab]);
+
+  // Refresh data when window gets focus (handles SPA navigation from details page)
+  useEffect(() => {
+    const handleFocus = () => {
+      // Refresh current tab when window gets focus
+      if (activeTab === "browse") {
+        loadMarketplaceLands();
+      } else if (activeTab === "liked") {
+        loadLikedLands();
+      } else if (activeTab === "my-ads") {
+        loadMyListings();
+      }
+    };
+
+    // Also refresh on mount
+    handleFocus();
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [activeTab]);
 
   useEffect(() => {
@@ -729,35 +752,31 @@ const LandCard: React.FC<LandCardProps> = ({
           </div>
         )}
 
-        {/* Favorite Button - Top Left (only in browse tab) */}
+        {/* Favorite Button - Top Right (only in browse tab) */}
         {activeTab === "browse" && (
-          <button
+          <motion.button
             type="button"
             onClick={handleToggleLike}
             disabled={isProcessingLike}
             aria-pressed={isFavorited}
             aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-            className="absolute top-3 left-3 p-2.5 bg-slate-900/80 backdrop-blur-md rounded-full hover:bg-slate-900 hover:scale-110 transition-all duration-200 border border-slate-700/50"
+            whileTap={{ scale: 0.9 }}
+            animate={isFavorited ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className={`absolute top-3 ${
+              statusBadge ? 'right-3' : 'right-3'
+            } p-2.5 backdrop-blur-md rounded-full hover:scale-110 transition-all duration-200 border z-10 ${
+              isFavorited
+                ? 'bg-red-500/20 border-red-500/50 hover:bg-red-500/30'
+                : 'bg-slate-900/80 border-slate-700/50 hover:bg-slate-900'
+            }`}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              role="img"
-              aria-hidden={false}
-              focusable="false"
-              className={isFavorited ? "heart-icon heart-icon--liked" : "heart-icon"}
-              style={{ display: "block" }}
-            >
-              <path
-                d="M12 21s-7.2-4.73-9.33-7.04C1.73 11.77 3.26 7.5 7.5 6.1 9.4 5.4 11.6 6 12 6s2.6-.6 4.5.1C20.74 7.5 22.27 11.77 21.33 13.96 19.2 16.27 12 21 12 21z"
-                fill={isFavorited ? "#e53e3e" : "none"}
-                stroke={isFavorited ? "#e53e3e" : "currentColor"}
-                strokeWidth="1.5"
-              />
-            </svg>
-          </button>
+            <Heart
+              className={`w-5 h-5 transition-all duration-300 ${
+                isFavorited ? 'fill-red-500 text-red-500' : 'text-white'
+              }`}
+            />
+          </motion.button>
         )}
 
         {/* Price Badge - Bottom Left */}

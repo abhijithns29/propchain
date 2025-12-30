@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
             </div>
             <div className="leading-tight">
               <p className="text-lg font-semibold tracking-tight">
-                LandLedger
+                PropChain
               </p>
               <p className="text-[11px] text-slate-300">
                 Blockchain Land Registry

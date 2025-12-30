@@ -42,7 +42,7 @@ const WelcomeBanner: React.FC = () => {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold text-white mb-1">
-            Welcome to LandLedger, {auth.user?.fullName?.split(' ')[0] || 'there'}! 👋
+            Welcome to PropChain, {auth.user?.fullName?.split(' ')[0] || 'there'}! 👋
           </h3>
           <p className="text-sm text-slate-300 mb-3">
             Here's how to get started with secure land transactions on the blockchain:

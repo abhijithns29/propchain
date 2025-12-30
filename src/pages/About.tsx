@@ -43,13 +43,13 @@ const About: React.FC = () => {
           className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-            About LandLedger
+            About PropChain
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Solving Land Fraud with Verifiable, Shared Truth
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300 sm:text-base">
-            LandLedger exists to bridge the gap between traditional land
+            PropChain exists to bridge the gap between traditional land
             registries and modern digital markets, creating a single,
             trustworthy source of property truth.
           </p>
@@ -67,7 +67,7 @@ const About: React.FC = () => {
             className="max-w-xl space-y-4"
           >
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              The Story Behind LandLedger
+              The Story Behind PropChain
             </h2>
             <p className="text-sm text-slate-300 sm:text-base">
               In many regions, land registries are fragmented across paper
@@ -76,14 +76,14 @@ const About: React.FC = () => {
               door to fraud, disputes, and stalled economic activity.
             </p>
             <p className="text-sm text-slate-300 sm:text-base">
-              LandLedger was born out of collaboration between technologists,
+              PropChain was born out of collaboration between technologists,
               policy experts, and registry officials who wanted a more
               verifiable, resilient way to store and share land ownership
               data.
             </p>
             <p className="text-sm text-slate-300 sm:text-base">
               By anchoring records on blockchain and designing workflows
-              around existing legal frameworks, LandLedger turns land data
+              around existing legal frameworks, PropChain turns land data
               from an opaque liability into a transparent asset.
             </p>
           </motion.div>
@@ -284,7 +284,7 @@ const About: React.FC = () => {
               Powered by Modern Blockchain Technology
             </h2>
             <p className="text-sm text-slate-300 sm:text-base">
-              Under the hood, LandLedger combines best-in-class cryptography,
+              Under the hood, PropChain combines best-in-class cryptography,
               smart contracts, and access controls.
             </p>
           </div>

@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-10 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:py-12 lg:px-8">
         <div className="space-y-3 max-w-sm">
-          <p className="text-lg font-semibold text-white">LandLedger</p>
+          <p className="text-lg font-semibold text-white">PropChain</p>
           <p className="text-sm text-slate-400">
             A blockchain-powered land registry & marketplace for secure,
             transparent property transactions and instant ownership
@@ -104,7 +104,7 @@ const Footer: React.FC = () => {
       </div>
       <div className="border-t border-slate-800/80">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} LandLedger. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} PropChain. All rights reserved.</p>
           <p className="text-[11px]">
             For demonstration purposes only. Not legal land registration
             advice.

@@ -53,6 +53,13 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
     loadLandDetails();
   }, [landId]);
 
+  // Sync like state with land data
+  useEffect(() => {
+    if (land) {
+      setIsLiked(land.isLiked ?? false);
+    }
+  }, [land]);
+
   const loadLandDetails = async () => {
     try {
       setLoading(true);
@@ -68,10 +75,23 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
   const handleLike = async () => {
     if (!land || !land._id) return;
     
+    // Optimistic update
+    const previousState = isLiked;
+    setIsLiked(!previousState);
+    
     try {
-      await apiService.toggleLandLike(land._id);
-      setIsLiked(!isLiked);
+      const res = await apiService.toggleLandLike(land._id);
+      // Use the response from the API to set the final state
+      if (res && typeof res.liked === 'boolean') {
+        setIsLiked(res.liked);
+        // Update the land object so the state persists
+        if (land) {
+          setLand({ ...land, isLiked: res.liked } as Land);
+        }
+      }
     } catch (error: any) {
+      // Revert on error
+      setIsLiked(previousState);
       setError(error.message || 'Failed to update like status');
     }
   };
@@ -308,17 +328,20 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
                   Chat with Seller
                 </button>
 
-                <button
+                <motion.button
                   onClick={handleLike}
+                  whileTap={{ scale: 0.9 }}
+                  animate={isLiked ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.3 }}
                   className={`w-full flex items-center justify-center gap-2 py-3 px-4 border rounded-lg transition-all font-medium ${
                     isLiked
                       ? 'border-red-500/50 text-red-400 bg-red-500/10'
                       : 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-600'
                   }`}
                 >
-                  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                  <Heart className={`w-5 h-5 transition-all duration-300 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
                   {isLiked ? 'Liked' : 'Add to Favorites'}
-                </button>
+                </motion.button>
               </div>
             )}
           </DetailCard>

@@ -23,16 +23,60 @@ import { useAuth } from "../hooks/useAuth";
 import QRCode from "qrcode";
 import apiService from "../services/api";
 import LandListingForm from "./LandListingForm";
+import { z } from "zod";
 
 interface UserProfileProps {
   onNavigateToLand?: (landId: string) => void;
 }
+
+// Validation schema
+const profileSchema = z.object({
+  fullName: z.string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name is too long"),
+  email: z.string()
+    .email("Invalid email format")
+    .min(1, "Email is required"),
+  phoneNumber: z.string()
+    .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
+    .optional()
+    .or(z.literal("")),
+  address: z.object({
+    street: z.string()
+      .min(5, "Street address must be at least 5 characters")
+      .optional()
+      .or(z.literal("")),
+    city: z.string()
+      .regex(/^[a-zA-Z\s]+$/, "City must contain only letters")
+      .min(2, "City must be at least 2 characters")
+      .optional()
+      .or(z.literal("")),
+    state: z.string()
+      .regex(/^[a-zA-Z\s]+$/, "State must contain only letters")
+      .min(2, "State must be at least 2 characters")
+      .optional()
+      .or(z.literal("")),
+    zipCode: z.string()
+      .regex(/^[0-9]{6}$/, "ZIP code must be exactly 6 digits")
+      .optional()
+      .or(z.literal("")),
+  }),
+});
+
+type FormErrors = {
+  [K in keyof z.infer<typeof profileSchema>]?: string;
+} & {
+  address?: {
+    [K in keyof z.infer<typeof profileSchema>["address"]]?: string;
+  };
+};
 
 const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
   const { auth, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [ownedLands, setOwnedLands] = useState<any[]>([]);
@@ -279,10 +323,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
           [child]: value,
         },
       }));
+      
+      // Clear field error when user types
+      setFieldErrors((prev) => ({
+        ...prev,
+        [parent]: {
+          ...(prev[parent as keyof FormErrors] as any),
+          [child]: undefined,
+        },
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
+      }));
+      
+      // Clear field error when user types
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
       }));
     }
   };
@@ -291,6 +350,29 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
     try {
       setLoading(true);
       setError("");
+      setFieldErrors({});
+      
+      // Validate form data
+      const validationResult = profileSchema.safeParse(formData);
+      
+      if (!validationResult.success) {
+        // Convert Zod errors to field errors
+        const errors: any = {};
+        validationResult.error.issues.forEach((err: z.ZodIssue) => {
+          const path = err.path;
+          if (path.length === 1) {
+            errors[path[0]] = err.message;
+          } else if (path.length === 2 && path[0] === 'address') {
+            if (!errors.address) errors.address = {};
+            errors.address[path[1]] = err.message;
+          }
+        });
+        
+        setFieldErrors(errors);
+        setError("Please fix the validation errors below");
+        setLoading(false);
+        return;
+      }
       
       // Call the API to update the profile
       const response = await apiService.updateProfile({
@@ -527,13 +609,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                 Full Name
               </label>
               {isEditing ? (
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                />
+                <>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${fieldErrors.fullName ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                  />
+                  {fieldErrors.fullName && (
+                    <p className="text-red-400 text-xs mt-1">{fieldErrors.fullName}</p>
+                  )}
+                </>
               ) : (
                 <p className="text-white">{auth.user.fullName}</p>
               )}
@@ -545,13 +632,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                 Email Address
               </label>
               {isEditing ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                />
+                <>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${fieldErrors.email ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                  />
+                  {fieldErrors.email && (
+                    <p className="text-red-400 text-xs mt-1">{fieldErrors.email}</p>
+                  )}
+                </>
               ) : (
                 <p className="text-white">{auth.user.email}</p>
               )}
@@ -563,14 +655,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                 Phone Number
               </label>
               {isEditing ? (
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                  placeholder="Enter phone number"
-                />
+                <>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${fieldErrors.phoneNumber ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                    placeholder="Enter phone number"
+                  />
+                  {fieldErrors.phoneNumber && (
+                    <p className="text-red-400 text-xs mt-1">{fieldErrors.phoneNumber}</p>
+                  )}
+                </>
               ) : (
                 <p className={auth.user.profile?.phoneNumber ? "text-white" : "text-slate-500 italic"}>
                   {auth.user.profile?.phoneNumber || "Click 'Edit Profile' to add"}
@@ -601,14 +698,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                   Street Address
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="address.street"
-                    value={formData.address.street}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                    placeholder="Enter street address"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="address.street"
+                      value={formData.address.street}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.street ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      placeholder="Enter street address"
+                    />
+                    {fieldErrors.address?.street && (
+                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.street}</p>
+                    )}
+                  </>
                 ) : (
                   <p className={auth.user.profile?.address?.street ? "text-white" : "text-slate-500 italic"}>
                     {auth.user.profile?.address?.street || "Click 'Edit Profile' to add"}
@@ -621,14 +723,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                   City
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="address.city"
-                    value={formData.address.city}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                    placeholder="Enter city"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="address.city"
+                      value={formData.address.city}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.city ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      placeholder="Enter city"
+                    />
+                    {fieldErrors.address?.city && (
+                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.city}</p>
+                    )}
+                  </>
                 ) : (
                   <p className={auth.user.profile?.address?.city ? "text-white" : "text-slate-500 italic"}>
                     {auth.user.profile?.address?.city || "Click 'Edit Profile' to add"}
@@ -641,14 +748,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                   State
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="address.state"
-                    value={formData.address.state}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                    placeholder="Enter state"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="address.state"
+                      value={formData.address.state}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.state ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      placeholder="Enter state"
+                    />
+                    {fieldErrors.address?.state && (
+                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.state}</p>
+                    )}
+                  </>
                 ) : (
                   <p className={auth.user.profile?.address?.state ? "text-white" : "text-slate-500 italic"}>
                     {auth.user.profile?.address?.state || "Click 'Edit Profile' to add"}
@@ -661,14 +773,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                   ZIP Code
                 </label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="address.zipCode"
-                    value={formData.address.zipCode}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                    placeholder="Enter ZIP code"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="address.zipCode"
+                      value={formData.address.zipCode}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.zipCode ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      placeholder="Enter ZIP code"
+                    />
+                    {fieldErrors.address?.zipCode && (
+                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.zipCode}</p>
+                    )}
+                  </>
                 ) : (
                   <p className={auth.user.profile?.address?.zipCode ? "text-white" : "text-slate-500 italic"}>
                     {auth.user.profile?.address?.zipCode || "Click 'Edit Profile' to add"}

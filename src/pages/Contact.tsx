@@ -107,7 +107,7 @@ const Contact: React.FC = () => {
                     <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                       Support Email
                     </dt>
-                    <dd className="mt-1">support@landledger.app</dd>
+                    <dd className="mt-1">support@propchain.app</dd>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -147,7 +147,7 @@ const Contact: React.FC = () => {
                 Registry & Marketplace Deployments
               </h3>
               <p className="mt-2 text-xs text-slate-300">
-                Explore how LandLedger can be adapted to your local legal
+                Explore how PropChain can be adapted to your local legal
                 framework, registry workflows, and infrastructure
                 requirements.
               </p>

@@ -18,7 +18,7 @@ const MinimalHeader: React.FC = () => {
               <Home className="h-4 w-4 text-slate-950" />
             </div>
             <span className="text-lg font-semibold text-white group-hover:text-emerald-300 transition-colors">
-              LandLedger
+              PropChain
             </span>
           </button>
 

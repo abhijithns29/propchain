@@ -74,7 +74,7 @@ const lands = [
 const testimonials = [
   {
     quote:
-      'We reduced title verification times from weeks to minutes. Our team now relies on LandLedger for every transaction.',
+      'We reduced title verification times from weeks to minutes. Our team now relies on PropChain for every transaction.',
     name: 'Anita Rao',
     role: 'Chief Registrar, Urban Land Authority',
   },
@@ -94,9 +94,9 @@ const testimonials = [
 
 const faqs = [
   {
-    question: 'Is LandLedger a legal land registry?',
+    question: 'Is PropChain a legal land registry?',
     answer:
-      'LandLedger integrates with existing legal registries where applicable. It is designed to augment, not replace, your jurisdiction’s legal framework.',
+      'PropChain integrates with existing legal registries where applicable. It is designed to augment, not replace, your jurisdiction’s legal framework.',
   },
   {
     question: 'How are land records verified before going on-chain?',
@@ -104,12 +104,12 @@ const faqs = [
       'Each record goes through a verification workflow with authorities and trusted partners before it is anchored to the blockchain.',
   },
   {
-    question: 'Do I need a crypto wallet to use LandLedger?',
+    question: 'Do I need a crypto wallet to use PropChain?',
     answer:
       'Buyers and sellers can connect a compatible wallet for smart-contract settlements, but authorities can operate with standard accounts.',
   },
   {
-    question: 'Which blockchains does LandLedger support?',
+    question: 'Which blockchains does PropChain support?',
     answer:
       'The platform is built to be chain-agnostic and can be deployed on EVM-compatible networks based on regulatory and infrastructure needs.',
   },
@@ -276,7 +276,7 @@ const Home: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl space-y-3">
             <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Why LandLedger?
+              Why PropChain?
             </h2>
             <p className="text-sm text-slate-400 sm:text-base">
               A unified platform to secure land titles, orchestrate deals, and

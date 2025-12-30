@@ -263,7 +263,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
 
                           // Ensure proper string comparison for user IDs
                           const currentUserId = auth.user?.id;
-                          const buyerId = chat.buyer?.id;
+                          // Handle both id and _id fields for buyer
+                          const buyerId = chat.buyer?.id || chat.buyer?._id;
                           const otherUser = buyerId === currentUserId ? chat.seller : chat.buyer;
                           const lastMessage = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1] : null;
                           const isActive = selectedChat?._id === chat._id;
@@ -330,8 +331,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                     {/* Chat Header - Same as Marketplace */}
                     <div className="flex justify-between items-center p-4 border-b border-slate-800/50">
                       <h2 className="text-xl font-semibold text-white">
-                        {selectedChat ?
-                          `Chat with ${selectedChat.buyer?.id === auth.user?.id ? selectedChat.seller?.fullName : selectedChat.buyer?.fullName || 'User'}` :
+                        {selectedChat ? (() => {
+                          // Get current user ID
+                          const currentUserId = auth.user?.id;
+                          // Get buyer ID (handle both id and _id)
+                          const buyerId = selectedChat.buyer?.id || selectedChat.buyer?._id;
+                          // Determine other user
+                          const otherUser = buyerId === currentUserId ? selectedChat.seller : selectedChat.buyer;
+                          return `Chat with ${otherUser?.fullName || 'User'}`;
+                        })() :
                           `Start Chat with ${pendingChat?.recipientName || 'Seller'}`
                         }
                       </h2>

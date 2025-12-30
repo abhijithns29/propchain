@@ -2,6 +2,7 @@ const express = require("express");
 const QRCode = require("qrcode");
 const fs = require("fs");
 const path = require("path");
+const jwt = require("jsonwebtoken");
 const Land = require("../models/Land");
 const User = require("../models/User");
 const AuditLog = require("../models/AuditLog");
@@ -1877,15 +1878,34 @@ router.get("/:landId/details", async (req, res) => {
     const land = await Land.findById(landId)
       .populate("currentOwner", "fullName email verificationStatus")
       .populate("addedBy", "fullName")
-      .populate("verifiedBy", "fullName");
+      .populate("verifiedBy", "fullName")
+      .lean();
 
     if (!land) {
       return res.status(404).json({ error: "Land not found" });
     }
 
+    // Check if current user has liked this land (if authenticated)
+    let isLiked = false;
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (user && user.likedLands) {
+          isLiked = user.likedLands.some(likedId => likedId.toString() === landId);
+        }
+      } catch (err) {
+        // Token invalid or expired, continue without auth
+      }
+    }
+
     res.json({
       success: true,
-      land,
+      land: {
+        ...land,
+        isLiked
+      },
     });
   } catch (error) {
     console.error("Get land details error:", error);

@@ -26,7 +26,10 @@ router.post('/message', auth, async (req, res) => {
     
     res.json({
       success: true,
-      ...response,
+      message: response.response,  // Map response.response to message
+      type: response.type || 'text',
+      data: response.data || null,
+      suggestions: response.suggestions || [],
       timestamp: new Date()
     });
 
