@@ -217,6 +217,7 @@ export interface Chat {
   buyer: User;
   seller: User;
   messages: Array<{
+    _id: string;
     sender: User;
     message: string;
     messageType: 'TEXT' | 'OFFER' | 'COUNTER_OFFER' | 'ACCEPTANCE' | 'REJECTION';

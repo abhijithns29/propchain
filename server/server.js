@@ -87,6 +87,9 @@ const io = socketIo(server, {
   }
 });
 
+// Make io available to routes
+app.set("io", io);
+
 // Middleware
 app.use(
   cors({
@@ -362,12 +365,12 @@ io.on('connection', (socket) => {
   // Handle typing indicators
   socket.on('typing-start', (data) => {
     const { chatId, userId } = data;
-    socket.to(`chat-${chatId}`).emit('user-typing', { userId, isTyping: true });
+    socket.to(`chat-${chatId}`).emit('user-typing', { chatId, userId, isTyping: true });
   });
 
   socket.on('typing-stop', (data) => {
     const { chatId, userId } = data;
-    socket.to(`chat-${chatId}`).emit('user-typing', { userId, isTyping: false });
+    socket.to(`chat-${chatId}`).emit('user-typing', { chatId, userId, isTyping: false });
   });
 
   // Handle disconnect

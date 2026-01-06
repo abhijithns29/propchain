@@ -107,8 +107,11 @@ router.get('/:chatId', auth, async (req, res) => {
     }
 
     // Check if user is part of this chat
-    if (chat.buyer._id.toString() !== req.user._id.toString() && 
-        chat.seller._id.toString() !== req.user._id.toString()) {
+    const buyerId = chat.buyer?._id || chat.buyer;
+    const sellerId = chat.seller?._id || chat.seller;
+
+    if ((!buyerId || buyerId.toString() !== req.user._id.toString()) && 
+        (!sellerId || sellerId.toString() !== req.user._id.toString())) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -146,8 +149,11 @@ router.post('/:chatId/message', auth, async (req, res) => {
     }
 
     // Check if user is part of this chat
-    if (chat.buyer.toString() !== req.user._id.toString() && 
-        chat.seller.toString() !== req.user._id.toString()) {
+    const buyerId = chat.buyer?.toString() || '';
+    const sellerId = chat.seller?.toString() || '';
+
+    if (buyerId !== req.user._id.toString() && 
+        sellerId !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -179,9 +185,19 @@ router.post('/:chatId/message', auth, async (req, res) => {
     await chat.save();
     await chat.populate('messages.sender', 'fullName');
 
+    const lastMessage = chat.messages[chat.messages.length - 1];
+    
+    // Emit new message event via socket
+    const io = req.app.get('io');
+    io.to(`chat-${req.params.chatId}`).emit('new-message', {
+      chatId: req.params.chatId,
+      message: lastMessage,
+      timestamp: new Date()
+    });
+
     res.json({
       message: 'Message sent successfully',
-      newMessage: chat.messages[chat.messages.length - 1]
+      newMessage: lastMessage
     });
   } catch (error) {
     console.error('Send message error:', error);
@@ -314,6 +330,85 @@ router.post('/:chatId/accept', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Accept offer error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete chat
+router.delete('/:chatId', auth, async (req, res) => {
+  try {
+    const chat = await Chat.findById(req.params.chatId);
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    // Check if user is part of this chat
+    const buyerId = chat.buyer?.toString() || '';
+    const sellerId = chat.seller?.toString() || '';
+
+    if (buyerId !== req.user._id.toString() && 
+        sellerId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await Chat.findByIdAndDelete(req.params.chatId);
+
+    // Notify participants via socket
+    const io = req.app.get('io');
+    io.to(`chat-${req.params.chatId}`).emit('chat-deleted', { chatId: req.params.chatId });
+
+    res.json({ message: 'Chat deleted successfully' });
+  } catch (error) {
+    console.error('Delete chat error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete specific message
+router.delete('/:chatId/messages/:messageId', auth, async (req, res) => {
+  try {
+    const chat = await Chat.findById(req.params.chatId);
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    // Check if user is part of this chat
+    const buyerId = chat.buyer?._id || chat.buyer;
+    const sellerId = chat.seller?._id || chat.seller;
+
+    if ((!buyerId || buyerId.toString() !== req.user._id.toString()) && 
+        (!sellerId || sellerId.toString() !== req.user._id.toString())) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Find message index
+    const messageIndex = chat.messages.findIndex(
+      m => m._id.toString() === req.params.messageId
+    );
+
+    if (messageIndex === -1) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // Check if user is the sender of the message
+    if (chat.messages[messageIndex].sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only delete your own messages' });
+    }
+
+    // Remove message
+    chat.messages.splice(messageIndex, 1);
+    await chat.save();
+
+    // Notify participants via socket
+    const io = req.app.get('io');
+    io.to(`chat-${req.params.chatId}`).emit('message-deleted', { 
+      chatId: req.params.chatId, 
+      messageId: req.params.messageId 
+    });
+
+    res.json({ message: 'Message deleted successfully' });
+  } catch (error) {
+    console.error('Delete message error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

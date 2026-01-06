@@ -191,41 +191,41 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
   const handleDownloadDocument = async (landId: string) => {
     try {
       setLoading(true);
-      
+
       // Create a temporary link to download the PDF
       const token = localStorage.getItem('token');
       const downloadUrl = `http://localhost:5000/api/lands/${landId}/download-document`;
-      
+
       // Create a temporary anchor element to trigger download
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `land_document_${landId}.pdf`;
-      
+
       // Add authorization header by creating a fetch request first
       const response = await fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to download document');
       }
-      
+
       // Get the blob and create a download URL
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // Trigger download
       link.href = blobUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the blob URL
       window.URL.revokeObjectURL(blobUrl);
-      
+
     } catch (error: any) {
       setError(error.message || 'Failed to download document');
     } finally {
@@ -236,35 +236,35 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
   const handleDownloadOriginalDocument = async (landId: string) => {
     try {
       setLoading(true);
-      
+
       const token = localStorage.getItem('token');
       const downloadUrl = `http://localhost:5000/api/lands/${landId}/download-original-document`;
-      
+
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `original_document_${landId}.pdf`;
-      
+
       const response = await fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to download original document');
       }
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       link.href = blobUrl;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       window.URL.revokeObjectURL(blobUrl);
-      
+
     } catch (error: any) {
       setError(error.message || 'Failed to download original document');
     } finally {
@@ -323,7 +323,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
           [child]: value,
         },
       }));
-      
+
       // Clear field error when user types
       setFieldErrors((prev) => ({
         ...prev,
@@ -337,7 +337,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
         ...prev,
         [name]: value,
       }));
-      
+
       // Clear field error when user types
       setFieldErrors((prev) => ({
         ...prev,
@@ -351,10 +351,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       setLoading(true);
       setError("");
       setFieldErrors({});
-      
+
       // Validate form data
       const validationResult = profileSchema.safeParse(formData);
-      
+
       if (!validationResult.success) {
         // Convert Zod errors to field errors
         const errors: any = {};
@@ -367,25 +367,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             errors.address[path[1]] = err.message;
           }
         });
-        
+
         setFieldErrors(errors);
         setError("Please fix the validation errors below");
         setLoading(false);
         return;
       }
-      
+
       // Call the API to update the profile
       const response = await apiService.updateProfile({
         fullName: formData.fullName,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
       });
-      
+
       console.log("Profile updated successfully:", response);
-      
+
       // Refresh the user data in the auth context
       await refreshUser();
-      
+
       // Exit edit mode
       setIsEditing(false);
     } catch (error: any) {
@@ -415,7 +415,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
   if (!auth.user) {
     return (
       <div className="flex justify-center py-12">
-        <div className="text-slate-400">Loading profile...</div>
+        <div className="text-gray-600">Loading profile...</div>
       </div>
     );
   }
@@ -432,7 +432,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       auth.user?.profile?.address?.zipCode,
       auth.user?.walletAddress,
     ];
-    
+
     const filledFields = fields.filter(field => field && field.trim() !== '').length;
     return Math.round((filledFields / fields.length) * 100);
   };
@@ -443,15 +443,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">User Profile</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#012970]">User Profile</h1>
+          <p className="mt-1 text-sm text-gray-600">
             Manage your account information and preferences
           </p>
         </div>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="inline-flex items-center px-4 py-2 border border-slate-700 rounded-lg text-sm font-medium text-white bg-slate-800/50 hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-[#012970] bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             <Edit2 className="h-4 w-4 mr-2" />
             Edit Profile
@@ -461,10 +461,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             <button
               onClick={handleSave}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-2xl text-sm font-semibold text-slate-950 bg-emerald-500 hover:bg-emerald-400 shadow-md shadow-emerald-500/40 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-2xl text-sm font-semibold text-white bg-[#4154f1] hover:bg-[#3346d8] shadow-md shadow-blue-500/30 transition-colors"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950 mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
@@ -473,7 +473,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             <button
               onClick={handleCancel}
               disabled={loading}
-              className="inline-flex items-center px-4 py-2 border border-slate-700 rounded-lg text-sm font-medium text-white bg-slate-800/50 hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-[#012970] bg-gray-50 hover:bg-gray-100 transition-colors"
             >
               <X className="h-4 w-4 mr-2" />
               Cancel
@@ -484,17 +484,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
       {/* Profile Completion Indicator */}
       {completionPercentage < 100 && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl p-4">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h3 className="text-sm font-semibold text-emerald-300">Complete Your Profile</h3>
-              <p className="text-xs text-emerald-200/70">Add missing information to unlock all features</p>
+              <h3 className="text-sm font-semibold text-[#4154f1]">Complete Your Profile</h3>
+              <p className="text-xs text-gray-500/70">Add missing information to unlock all features</p>
             </div>
-            <span className="text-lg font-bold text-emerald-300">{completionPercentage}%</span>
+            <span className="text-lg font-bold text-[#4154f1]">{completionPercentage}%</span>
           </div>
-          <div className="w-full bg-slate-900/50 rounded-full h-2 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 rounded-full"
+          <div className="w-full bg-white rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#4154f1] to-[#3346d8] transition-all duration-500 rounded-full"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
@@ -502,100 +502,91 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       )}
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-800/50">
-          <div className="flex items-center">
-            <div className="h-16 w-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center shadow-md shadow-emerald-500/40">
-              <User className="h-8 w-8 text-slate-950" />
-            </div>
-            <div className="ml-4">
-              <h2 className="text-xl font-semibold text-white">
-                {auth.user.fullName}
-              </h2>
-              <p className="text-sm text-slate-400">
-                {auth.user.role === "ADMIN"
-                  ? "Administrator"
-                  : "Property Owner"}
-              </p>
-              <div className="flex items-center mt-1">
-                {auth.user.verificationStatus === "VERIFIED" ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    Verified Account
-                  </span>
-                ) : auth.user.verificationStatus === "PENDING" ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                    Pending Verification
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-                    Verification Required
-                  </span>
-                )}
+      <div className="rounded-lg border border-gray-200 bg-white backdrop-blur-xl shadow-sm">
+        <div className="p-6 border-b border-gray-100">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Left Column: Avatar & Info */}
+            <div className="lg:col-span-3 flex flex-col md:flex-row items-center md:items-start gap-6">
+              <div className="h-24 w-24 bg-gradient-to-br from-[#4154f1] to-[#3346d8] rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
+                <User className="h-10 w-10 text-white" />
+              </div>
+
+              <div className="flex-1 space-y-4 w-full text-center md:text-left">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#012970]">
+                    {auth.user.fullName}
+                  </h2>
+                  <p className="text-gray-600 font-medium">
+                    {auth.user.role === "ADMIN" ? "Administrator" : "Property Owner"}
+                  </p>
+                  <div className="mt-2 flex justify-center md:justify-start">
+                    {auth.user.verificationStatus === "VERIFIED" ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-[#4154f1] border border-emerald-200">
+                        Verified Account
+                      </span>
+                    ) : auth.user.verificationStatus === "PENDING" ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                        Pending Verification
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-200">
+                        Verification Required
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="max-w-md mx-auto md:mx-0">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    User ID
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <code className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono text-[#012970] break-all">
+                      {auth.user?.id || "Not available"}
+                    </code>
+                    <button
+                      onClick={() => copyToClipboard(auth.user?.id || "")}
+                      className="p-2 text-gray-600 hover:text-[#012970] hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Copy User ID"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {copySuccess && (
+                    <p className="text-xs text-[#4154f1] mt-1 animated animate-pulse">
+                      Copied to clipboard!
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* User ID and QR Code Section */}
-        <div className="px-6 py-4 bg-slate-800/30 border-b border-slate-800/50">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User ID */}
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                <User className="inline h-4 w-4 mr-1" />
-                User ID (MongoDB ObjectId)
-              </label>
-              <div className="flex items-center space-x-2">
-                <code className="flex-1 px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm font-mono text-white break-all">
-                  {auth.user?.id || "Not available"}
-                </code>
-                <button
-                  onClick={() => copyToClipboard(auth.user?.id || "")}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-                  title="Copy User ID"
-                >
-                  <Copy className="h-4 w-4" />
-                </button>
-              </div>
-              {copySuccess && (
-                <p className="text-xs text-emerald-300 mt-1">
-                  Copied to clipboard!
-                </p>
-              )}
-            </div>
-
-            {/* QR Code */}
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                <QrCode className="inline h-4 w-4 mr-1" />
-                User ID QR Code
-              </label>
-              <div className="flex justify-center">
-                {qrCodeUrl ? (
-                  <div className="bg-white p-4 rounded-lg border border-slate-700 shadow-sm">
+            {/* Right Column: QR Code */}
+            <div className="lg:col-span-1 flex flex-col items-center justify-center border-t lg:border-t-0 lg:border-l border-gray-100 pt-6 lg:pt-0 lg:pl-8">
+              {qrCodeUrl ? (
+                <div className="relative group text-center">
+                  <div className="bg-white p-2 rounded-xl border border-gray-200 shadow-sm transition-transform duration-300 group-hover:scale-105 inline-block">
                     <img
                       src={qrCodeUrl}
                       alt="User ID QR Code"
-                      className="w-32 h-32"
+                      className="w-28 h-28"
                     />
-                    <p className="text-xs text-slate-600 text-center mt-2 font-medium">
-                      Scan to get User ID
-                    </p>
                   </div>
-                ) : (
-                  <div className="w-32 h-32 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-center">
-                    <QrCode className="h-8 w-8 text-slate-600" />
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-gray-700">QR Identity</p>
+                    <p className="text-[10px] text-gray-500 mt-1">Scan to verify identity</p>
                   </div>
-                )}
-              </div>
-              <p className="text-xs text-slate-400 text-center mt-2">
-                Share this QR code for quick identity verification
-              </p>
+                </div>
+              ) : (
+                <div className="w-28 h-28 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center">
+                  <QrCode className="h-8 w-8 text-gray-400" />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -604,7 +595,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
                 Full Name
               </label>
@@ -615,19 +606,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${fieldErrors.fullName ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                    className={`w-full px-3 py-2 border ${fieldErrors.fullName ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                   />
                   {fieldErrors.fullName && (
-                    <p className="text-red-400 text-xs mt-1">{fieldErrors.fullName}</p>
+                    <p className="text-red-600 text-xs mt-1">{fieldErrors.fullName}</p>
                   )}
                 </>
               ) : (
-                <p className="text-white">{auth.user.fullName}</p>
+                <p className="text-[#012970]">{auth.user.fullName}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Mail className="inline h-4 w-4 mr-1" />
                 Email Address
               </label>
@@ -638,19 +629,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${fieldErrors.email ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                    className={`w-full px-3 py-2 border ${fieldErrors.email ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                   />
                   {fieldErrors.email && (
-                    <p className="text-red-400 text-xs mt-1">{fieldErrors.email}</p>
+                    <p className="text-red-600 text-xs mt-1">{fieldErrors.email}</p>
                   )}
                 </>
               ) : (
-                <p className="text-white">{auth.user.email}</p>
+                <p className="text-[#012970]">{auth.user.email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Phone className="inline h-4 w-4 mr-1" />
                 Phone Number
               </label>
@@ -661,26 +652,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${fieldErrors.phoneNumber ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                    className={`w-full px-3 py-2 border ${fieldErrors.phoneNumber ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                     placeholder="Enter phone number"
                   />
                   {fieldErrors.phoneNumber && (
-                    <p className="text-red-400 text-xs mt-1">{fieldErrors.phoneNumber}</p>
+                    <p className="text-red-600 text-xs mt-1">{fieldErrors.phoneNumber}</p>
                   )}
                 </>
               ) : (
-                <p className={auth.user.profile?.phoneNumber ? "text-white" : "text-slate-500 italic"}>
+                <p className={auth.user.profile?.phoneNumber ? "text-[#012970]" : "text-gray-400 italic"}>
                   {auth.user.profile?.phoneNumber || "Click 'Edit Profile' to add"}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Wallet className="inline h-4 w-4 mr-1" />
                 Wallet Address
               </label>
-              <p className="text-white font-mono text-sm break-all">
+              <p className="text-[#012970] font-mono text-sm break-all">
                 {auth.user.walletAddress}
               </p>
             </div>
@@ -688,13 +679,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
           {/* Address Information */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4 flex items-center">
+            <h3 className="text-lg font-medium text-[#012970] mb-4 flex items-center">
               <MapPin className="h-5 w-5 mr-2" />
               Address
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Street Address
                 </label>
                 {isEditing ? (
@@ -704,22 +695,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       name="address.street"
                       value={formData.address.street}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border ${fieldErrors.address?.street ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.street ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                       placeholder="Enter street address"
                     />
                     {fieldErrors.address?.street && (
-                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.street}</p>
+                      <p className="text-red-600 text-xs mt-1">{fieldErrors.address.street}</p>
                     )}
                   </>
                 ) : (
-                  <p className={auth.user.profile?.address?.street ? "text-white" : "text-slate-500 italic"}>
+                  <p className={auth.user.profile?.address?.street ? "text-[#012970]" : "text-gray-400 italic"}>
                     {auth.user.profile?.address?.street || "Click 'Edit Profile' to add"}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   City
                 </label>
                 {isEditing ? (
@@ -729,22 +720,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       name="address.city"
                       value={formData.address.city}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border ${fieldErrors.address?.city ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.city ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                       placeholder="Enter city"
                     />
                     {fieldErrors.address?.city && (
-                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.city}</p>
+                      <p className="text-red-600 text-xs mt-1">{fieldErrors.address.city}</p>
                     )}
                   </>
                 ) : (
-                  <p className={auth.user.profile?.address?.city ? "text-white" : "text-slate-500 italic"}>
+                  <p className={auth.user.profile?.address?.city ? "text-[#012970]" : "text-gray-400 italic"}>
                     {auth.user.profile?.address?.city || "Click 'Edit Profile' to add"}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   State
                 </label>
                 {isEditing ? (
@@ -754,22 +745,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       name="address.state"
                       value={formData.address.state}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border ${fieldErrors.address?.state ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.state ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                       placeholder="Enter state"
                     />
                     {fieldErrors.address?.state && (
-                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.state}</p>
+                      <p className="text-red-600 text-xs mt-1">{fieldErrors.address.state}</p>
                     )}
                   </>
                 ) : (
-                  <p className={auth.user.profile?.address?.state ? "text-white" : "text-slate-500 italic"}>
+                  <p className={auth.user.profile?.address?.state ? "text-[#012970]" : "text-gray-400 italic"}>
                     {auth.user.profile?.address?.state || "Click 'Edit Profile' to add"}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   ZIP Code
                 </label>
                 {isEditing ? (
@@ -779,15 +770,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       name="address.zipCode"
                       value={formData.address.zipCode}
                       onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border ${fieldErrors.address?.zipCode ? 'border-red-500' : 'border-slate-700'} bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500`}
+                      className={`w-full px-3 py-2 border ${fieldErrors.address?.zipCode ? 'border-red-500' : 'border-gray-200'} bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400`}
                       placeholder="Enter ZIP code"
                     />
                     {fieldErrors.address?.zipCode && (
-                      <p className="text-red-400 text-xs mt-1">{fieldErrors.address.zipCode}</p>
+                      <p className="text-red-600 text-xs mt-1">{fieldErrors.address.zipCode}</p>
                     )}
                   </>
                 ) : (
-                  <p className={auth.user.profile?.address?.zipCode ? "text-white" : "text-slate-500 italic"}>
+                  <p className={auth.user.profile?.address?.zipCode ? "text-[#012970]" : "text-gray-400 italic"}>
                     {auth.user.profile?.address?.zipCode || "Click 'Edit Profile' to add"}
                   </p>
                 )}
@@ -797,31 +788,31 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
           {/* Account Statistics */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">
+            <h3 className="text-lg font-medium text-[#012970] mb-4">
               Account Statistics
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-4">
-                <div className="text-2xl font-bold text-emerald-300">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-[#4154f1]">
                   {auth.user.ownedProperties?.length ?? 0}
                 </div>
-                <div className="text-sm text-emerald-200">Properties Owned</div>
+                <div className="text-sm text-emerald-600">Properties Owned</div>
               </div>
 
-              <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-4">
-                <div className="text-2xl font-bold text-emerald-300">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-[#4154f1]">
                   {/* This would be calculated from transactions */}0
                 </div>
-                <div className="text-sm text-emerald-200">
+                <div className="text-sm text-emerald-600">
                   Completed Transactions
                 </div>
               </div>
 
-              <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-4">
-                <div className="text-2xl font-bold text-yellow-400">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-yellow-700">
                   {/* This would be calculated from pending transactions */}0
                 </div>
-                <div className="text-sm text-yellow-300">
+                <div className="text-sm text-yellow-600">
                   Pending Transactions
                 </div>
               </div>
@@ -832,13 +823,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
         {/* Owned Lands Section */}
         <div className="px-6 py-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-white flex items-center">
+            <h3 className="text-lg font-medium text-[#012970] flex items-center">
               <Map className="h-5 w-5 mr-2" />
               Owned Lands
             </h3>
             <button
               onClick={toggleOwnedLands}
-              className="inline-flex items-center px-3 py-2 border border-slate-700 shadow-sm text-sm leading-4 font-medium rounded-lg text-white bg-slate-800/50 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-gray-200 shadow-sm text-sm leading-4 font-medium rounded-lg text-[#012970] bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4154f1] transition-colors"
             >
               {showOwnedLands ? "Hide" : "Show"} Lands
             </button>
@@ -849,38 +840,37 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
               {landsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                  <span className="ml-2 text-slate-400">Loading lands...</span>
+                  <span className="ml-2 text-gray-600">Loading lands...</span>
                 </div>
               ) : ownedLands.length === 0 ? (
                 <div className="text-center py-8">
-                  <Map className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-                  <p className="text-slate-400">No lands owned yet</p>
+                  <Map className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No lands owned yet</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {ownedLands.map((land) => (
                     <div
                       key={land._id}
-                      className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-4 hover:shadow-lg hover:shadow-emerald-500/10 transition-all"
+                      className="rounded-lg border border-gray-200 bg-white backdrop-blur-xl p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all"
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-white truncate">
+                        <h4 className="font-medium text-[#012970] truncate">
                           {land.surveyNumber} - {land.subDivision}
                         </h4>
                         <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            land.status === "FOR_SALE"
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                              : land.status === "DIGITIZED"
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                              : "bg-slate-800/50 text-slate-400 border border-slate-700"
-                          }`}
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${land.status === "FOR_SALE"
+                            ? "bg-emerald-50 text-[#4154f1] border border-emerald-200"
+                            : land.status === "DIGITIZED"
+                              ? "bg-emerald-50 text-[#4154f1] border border-emerald-200"
+                              : "bg-gray-50 text-gray-600 border border-gray-200"
+                            }`}
                         >
                           {land.status}
                         </span>
                       </div>
 
-                      <div className="space-y-2 text-sm text-slate-400">
+                      <div className="space-y-2 text-sm text-gray-600">
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1" />
                           <span>
@@ -898,7 +888,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
                         {land.area && (
                           <div className="flex items-center">
-                            <span className="font-medium text-white">Area: </span>
+                            <span className="font-medium text-[#012970]">Area: </span>
                             <span className="ml-1">
                               {typeof land.area === "string"
                                 ? JSON.parse(land.area).acres + " acres"
@@ -910,13 +900,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                         {/* Document Information */}
                         <div className="space-y-1">
                           {land.originalDocument && (
-                            <div className="flex items-center text-sm text-slate-400">
+                            <div className="flex items-center text-sm text-gray-600">
                               <Download className="h-3 w-3 mr-1" />
                               <span>Original Doc: {land.originalDocument.filename || 'Available'}</span>
                             </div>
                           )}
                           {land.digitalDocument && (
-                            <div className="flex items-center text-sm text-emerald-300">
+                            <div className="flex items-center text-sm text-[#4154f1]">
                               <Download className="h-3 w-3 mr-1" />
                               <span>Digitized Doc: Available</span>
                             </div>
@@ -925,26 +915,26 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
                         <div className="pt-2 space-y-2">
                           <div className="flex flex-wrap gap-2">
-                            <button 
+                            <button
                               onClick={() => handleViewDetails(land._id)}
-                              className="inline-flex items-center text-emerald-300 hover:text-emerald-200 text-sm transition-colors"
+                              className="inline-flex items-center text-[#4154f1] hover:text-emerald-600 text-sm transition-colors"
                             >
                               <Eye className="h-4 w-4 mr-1" />
                               View Details
                             </button>
                             {land.digitalDocument && (
-                              <button 
+                              <button
                                 onClick={() => handleDownloadDocument(land._id)}
-                                className="inline-flex items-center text-emerald-300 hover:text-emerald-200 text-sm transition-colors"
+                                className="inline-flex items-center text-[#4154f1] hover:text-emerald-600 text-sm transition-colors"
                               >
                                 <Download className="h-4 w-4 mr-1" />
                                 Download Digitized Doc
                               </button>
                             )}
                             {land.originalDocument && (
-                              <button 
+                              <button
                                 onClick={() => handleDownloadOriginalDocument(land._id)}
-                                className="inline-flex items-center text-slate-400 hover:text-slate-300 text-sm transition-colors"
+                                className="inline-flex items-center text-gray-600 hover:text-gray-700 text-sm transition-colors"
                               >
                                 <Download className="h-4 w-4 mr-1" />
                                 Download Original Doc
@@ -956,14 +946,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleListForSale(land)}
-                                className="inline-flex items-center px-3 py-1 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg text-sm transition-colors"
+                                className="inline-flex items-center px-3 py-1 bg-emerald-50 text-[#4154f1] hover:bg-[#4154f1]/30 border border-emerald-200 rounded-lg text-sm transition-colors"
                               >
                                 <ShoppingCart className="h-4 w-4 mr-1" />
                                 List for Sale
                               </button>
                               <button
                                 onClick={() => handlePartitionLand(land)}
-                                className="inline-flex items-center px-3 py-1 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30 rounded-lg text-sm transition-colors"
+                                className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-sm transition-colors"
                               >
                                 <Scissors className="h-4 w-4 mr-1" />
                                 Partition
@@ -973,13 +963,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
                           {land.status === "FOR_SALE" && (
                             <div className="flex space-x-2">
-                              <span className="inline-flex items-center px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg text-sm">
+                              <span className="inline-flex items-center px-2 py-1 bg-emerald-50 text-[#4154f1] border border-emerald-200 rounded-lg text-sm">
                                 <ShoppingCart className="h-4 w-4 mr-1" />
                                 Listed for Sale
                               </span>
                               <button
                                 onClick={() => handlePartitionLand(land)}
-                                className="inline-flex items-center px-3 py-1 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30 rounded-lg text-sm transition-colors"
+                                className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-sm transition-colors"
                               >
                                 <Scissors className="h-4 w-4 mr-1" />
                                 Partition
@@ -1009,12 +999,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       {/* Partition Modal */}
       {showPartitionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/90 backdrop-blur-xl p-6 w-full max-w-md shadow-xl">
+          <div className="rounded-lg border border-gray-200 bg-white/90 backdrop-blur-xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Partition Land</h3>
+              <h3 className="text-lg font-semibold text-[#012970]">Partition Land</h3>
               <button
                 onClick={() => setShowPartitionModal(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-gray-600 hover:text-[#012970] transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -1022,7 +1012,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Partition Type
                 </label>
                 <select
@@ -1033,7 +1023,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       partitionType: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-3 py-2 border border-gray-200 bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1]"
                 >
                   <option value="partial">Partial Sale</option>
                   <option value="whole">Sale as Whole</option>
@@ -1042,7 +1032,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
 
               {partitionData.partitionType === "partial" && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Partition Area (acres)
                   </label>
                   <input
@@ -1055,14 +1045,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                         partitionArea: e.target.value,
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                    className="w-full px-3 py-2 border border-gray-200 bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
                     placeholder="Enter area to partition"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Asking Price (₹)
                 </label>
                 <input
@@ -1074,13 +1064,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       askingPrice: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                  className="w-full px-3 py-2 border border-gray-200 bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
                   placeholder="Enter asking price"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
@@ -1091,7 +1081,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                       description: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                  className="w-full px-3 py-2 border border-gray-200 bg-white text-[#012970] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
                   rows={3}
                   placeholder="Describe the partitioned land..."
                 />
@@ -1101,14 +1091,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setShowPartitionModal(false)}
-                className="flex-1 px-4 py-2 border border-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-200 text-[#012970] rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePartitionSubmit}
                 disabled={loading || !partitionData.askingPrice}
-                className="flex-1 px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 disabled:opacity-50 font-semibold shadow-md shadow-emerald-500/40 transition-colors"
+                className="flex-1 px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] disabled:opacity-50 font-semibold shadow-md shadow-blue-500/30 transition-colors"
               >
                 {loading ? "Processing..." : "Partition & List"}
               </button>

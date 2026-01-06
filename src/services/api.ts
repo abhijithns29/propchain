@@ -392,6 +392,18 @@ class ApiService {
     });
   }
 
+  async deleteChat(chatId: string) {
+    return this.request(`/chats/${chatId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteMessage(chatId: string, messageId: string) {
+    return this.request(`/chats/${chatId}/messages/${messageId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getNearbyLands(latitude: number, longitude: number, maxDistance?: number) {
     const params = new URLSearchParams({
       latitude: latitude.toString(),

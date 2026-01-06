@@ -3,6 +3,7 @@ import {
   Shield,
   QrCode,
   CheckCircle,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import apiService from "../services/api";
@@ -21,6 +22,8 @@ import AuditorDashboard from "./AuditorDashboard";
 import OnboardingChecklist from "./onboarding/OnboardingChecklist";
 import WelcomeBanner from "./onboarding/WelcomeBanner";
 import ChatbotWidget from "./ChatbotWidget";
+import io, { Socket } from 'socket.io-client';
+import { useRef } from 'react';
 
 interface DashboardProps {
   onNavigateToLand?: (landId: string) => void;
@@ -42,6 +45,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
   const [chatsLoading, setChatsLoading] = useState(false);
   const [autoFillMessage, setAutoFillMessage] = useState<string | null>(null);
   const [pendingChat, setPendingChat] = useState<{ landId: string, recipientId: string, recipientName: string } | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   // Update activeTab when initialTab prop changes
   useEffect(() => {
@@ -66,6 +71,97 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
       setSelectedChat(null);
     }
   }, [activeTab]);
+
+  // Socket initialization for Dashboard
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000', {
+      auth: { token: localStorage.getItem('token') }
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Dashboard: Connected to socket');
+      if (auth.user?.id) {
+        // We might want a personal room for the user to receive multi-chat updates
+        // For now, new-message events are broadcasted to the chat room
+      }
+    });
+
+    newSocket.on('new-message', (data) => {
+      console.log('Dashboard: New message received:', data);
+
+      // 1. Update the chat list (sidebar)
+      setChats(prev => {
+        return prev.map(chat => {
+          if (chat._id === data.chatId) {
+            return {
+              ...chat,
+              messages: [...(chat.messages || []), data.message],
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return chat;
+        });
+      });
+
+      // 2. Update selectedChat if it's the current one
+      setSelectedChat(prev => {
+        if (prev && prev._id === data.chatId) {
+          // Check for duplicates to prevent race conditions
+          const messageExists = (prev.messages || []).some(m => m._id === data.message._id);
+          if (messageExists) return prev;
+
+          return {
+            ...prev,
+            messages: [...(prev.messages || []), data.message],
+            updatedAt: new Date().toISOString()
+          };
+        }
+        return prev;
+      });
+    });
+
+    newSocket.on('message-deleted', (data) => {
+      console.log('Dashboard: Message deleted received:', data);
+      setChats(prev => {
+        return prev.map(chat => {
+          if (chat._id === data.chatId) {
+            return {
+              ...chat,
+              messages: (chat.messages || []).filter(msg => msg._id !== data.messageId)
+            };
+          }
+          return chat;
+        });
+      });
+    });
+
+    newSocket.on('chat-deleted', (data) => {
+      console.log('Dashboard: Chat deleted received:', data);
+      setChats(prev => prev.filter(c => c._id !== data.chatId));
+      if (selectedChat?._id === data.chatId) {
+        setSelectedChat(null);
+      }
+    });
+
+    setSocket(newSocket);
+    socketRef.current = newSocket;
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [selectedChat?._id, auth.user?.id]);
+
+  // Join rooms for all user's chats to receive updates
+  useEffect(() => {
+    if (socket && chats.length > 0) {
+      chats.forEach(chat => {
+        socket.emit('join-chat', {
+          chatId: chat._id,
+          userId: auth.user?.id
+        });
+      });
+    }
+  }, [socket, chats.length]);
 
   // Handle chat navigation and active tab changes
   useEffect(() => {
@@ -168,6 +264,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
   const handleBackToChatList = () => {
     setSelectedChat(null);
     setPendingChat(null);
+  };
+
+  const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation(); // Prevent selecting the chat when clicking delete
+
+    if (!window.confirm('Are you sure you want to delete this conversation? This will delete the entire chat history for you.')) {
+      return;
+    }
+
+    try {
+      await apiService.deleteChat(chatId);
+      if (selectedChat?._id === chatId) {
+        setSelectedChat(null);
+      }
+      // Update local state immediately
+      setChats(prev => prev.filter(c => c._id !== chatId));
+    } catch (error: any) {
+      console.error('Error deleting chat:', error);
+      setError(error.message || 'Failed to delete chat');
+    }
   };
 
 
@@ -283,17 +399,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                                 </div>
 
                                 {/* Chat Info */}
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 group relative pr-8">
                                   <div className="flex justify-between items-start mb-1">
                                     <h3 className="font-medium text-gray-900 truncate">
                                       {otherUser?.fullName || 'Unknown User'}
                                     </h3>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chat.status === 'DEAL_AGREED' ? 'bg-blue-100 text-[#4154f1]' :
-                                      chat.status === 'ACTIVE' ? 'bg-blue-100 text-[#4154f1]' :
-                                        'bg-gray-100 text-gray-600'
-                                      }`}>
-                                      {chat.status === 'DEAL_AGREED' ? 'Deal' : 'Active'}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={(e) => handleDeleteChat(e, chat._id)}
+                                        className="p-1 text-gray-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                        title="Delete Conversation"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chat.status === 'DEAL_AGREED' ? 'bg-blue-100 text-[#4154f1]' :
+                                        chat.status === 'ACTIVE' ? 'bg-blue-100 text-[#4154f1]' :
+                                          'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {chat.status === 'DEAL_AGREED' ? 'Deal' : 'Active'}
+                                      </span>
+                                    </div>
                                   </div>
 
                                   <p className="text-sm text-gray-600 mb-1 truncate">

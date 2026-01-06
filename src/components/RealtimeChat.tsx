@@ -86,23 +86,21 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   useEffect(() => {
     initializeSocket();
     return () => {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
       }
     };
-  }, []);
+  }, [auth.user?.id]); // Only re-login if user changes
 
-  useEffect(() => {
-    if (socket && chat) {
-      joinChatRoom();
-    }
-  }, [socket, chat]);
+  // Use a Ref to keep track of the socket to avoid stale closures in listeners
+  const socketRef = useRef<Socket | null>(null);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
+  // Initialize socket connection
   const initializeSocket = () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+
     const newSocket = io('http://localhost:5000', {
       auth: {
         token: localStorage.getItem('token')
@@ -110,34 +108,52 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to chat server');
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from chat server');
+      console.log('RealtimeChat: Connected to chat server');
     });
 
     newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
+      console.error('RealtimeChat: Socket error:', error);
       setError(error.message);
     });
 
-    newSocket.on('new-message', (data) => {
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+  };
+
+  // Socket event listeners
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !chatId) return;
+
+    // Remove existing listeners to avoid duplicates when chatId changes
+    socket.off('new-message');
+    socket.off('user-typing');
+    socket.off('message-deleted');
+    socket.off('chat-deleted');
+
+    socket.on('new-message', (data) => {
+      console.log('RealtimeChat: New message via socket:', data);
+
+      // ONLY process messages for THIS chat
+      if (data.chatId !== chatId) {
+        console.log('RealtimeChat: Message for different chat, ignoring');
+        return;
+      }
+
       try {
-        const currentUserId = auth.user?.id;
-        const messageSenderId = typeof data.message.sender === 'string'
-          ? data.message.sender
-          : (data.message.sender as any)?.id;
+        const currentUserId = auth.user?._id || auth.user?.id;
+        const sender = data.message.sender;
+        const messageSenderId = typeof sender === 'string' ? sender : (sender?._id || sender?.id);
+
+        console.log('RealtimeChat: Comparing IDs:', { messageSenderId, currentUserId });
 
         // If message is from current user, replace the temporary message
         if (String(messageSenderId) === String(currentUserId)) {
           setMessages(prev => {
-            // Remove any temporary messages from this user and add the real message
             const filteredMessages = prev.filter(msg =>
-              msg && msg._id && !(msg._id.startsWith('temp-') && msg.sender === currentUserId)
+              msg && msg._id && !(msg._id.startsWith('temp-') && String(msg.sender) === String(currentUserId))
             );
 
-            // Check if this message already exists to prevent duplicates
             const messageExists = filteredMessages.some(msg => msg._id === data.message._id);
             if (!messageExists) {
               return [...filteredMessages, data.message];
@@ -145,7 +161,6 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             return filteredMessages;
           });
         } else {
-          // Add message from other users - check for duplicates first
           setMessages(prev => {
             const messageExists = prev.some(msg => msg._id === data.message._id);
             if (!messageExists) {
@@ -155,7 +170,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
           });
         }
 
-        // Update current offer if this is an offer-related message
+        // Update current offer if applicable
         if (data.message.messageType === 'OFFER' && data.message.offerAmount) {
           setCurrentOffer({
             amount: data.message.offerAmount,
@@ -167,38 +182,56 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         } else if (data.message.messageType === 'REJECTION') {
           setCurrentOffer((prev: any) => prev ? { ...prev, status: 'REJECTED' } : null);
         }
-      } catch (error) {
-        console.error('Error handling new message:', error);
-        // Fallback: just add the message normally
-        setMessages(prev => {
-          const messageExists = prev.some(msg => msg._id === data.message._id);
-          if (!messageExists) {
-            return [...prev, data.message];
-          }
-          return prev;
-        });
+      } catch (err) {
+        console.error('RealtimeChat: Error handling new-message:', err);
       }
     });
 
-    newSocket.on('user-typing', (data) => {
-      const currentUserId = auth.user?.id;
-      if (data.userId !== currentUserId) {
-        setOtherUserTyping(data.isTyping);
+    socket.on('user-typing', (data) => {
+      if (data.chatId === chatId) {
+        const currentUserId = auth.user?._id || auth.user?.id;
+        if (String(data.userId) !== String(currentUserId)) {
+          setOtherUserTyping(data.isTyping);
+        }
       }
     });
 
-    setSocket(newSocket);
-  };
+    socket.on('message-deleted', (data) => {
+      if (data.chatId === chatId) {
+        console.log('RealtimeChat: Message deleted via socket:', data);
+        setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+      }
+    });
+
+    socket.on('chat-deleted', (data) => {
+      if (data.chatId === chatId) {
+        console.log('RealtimeChat: Chat deleted via socket:', data);
+        if (onClose) onClose();
+      }
+    });
+
+    return () => {
+      socket.off('new-message');
+      socket.off('user-typing');
+      socket.off('message-deleted');
+      socket.off('chat-deleted');
+    };
+  }, [socket, chatId, auth.user?._id, auth.user?.id]);
+
+  useEffect(() => {
+    if (socket && chatId) {
+      joinChatRoom();
+    }
+  }, [socket, chatId]);
 
   const joinChatRoom = () => {
-    if (socket && chat) {
-      const chatId = chat._id;
-      if (chatId) {
-        socket.emit('join-chat', {
-          chatId: chatId,
-          userId: auth.user?.id
-        });
-      }
+    const socket = socketRef.current;
+    if (socket && chatId) {
+      console.log('RealtimeChat: Joining room:', chatId);
+      socket.emit('join-chat', {
+        chatId: chatId,
+        userId: auth.user?._id || auth.user?.id
+      });
     }
   };
 
@@ -584,16 +617,14 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   };
 
   const handleTyping = () => {
-    if (!socket || !chat) return;
-
-    const chatId = chat._id;
-    if (!chatId) return;
+    const socket = socketRef.current;
+    if (!socket || !chatId) return;
 
     if (!isTyping) {
       setIsTyping(true);
       socket.emit('typing-start', {
         chatId: chatId,
-        userId: auth.user?.id
+        userId: auth.user?._id || auth.user?.id
       });
     }
 
@@ -611,20 +642,31 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   };
 
   const stopTyping = () => {
-    if (!socket || !chat) return;
-
-    const chatId = chat._id;
-    if (!chatId) return;
+    const socket = socketRef.current;
+    if (!socket || !chatId) return;
 
     setIsTyping(false);
     socket.emit('typing-stop', {
       chatId: chatId,
-      userId: auth.user?.id
+      userId: auth.user?._id || auth.user?.id
     });
 
     if (typingTimeout) {
       clearTimeout(typingTimeout);
       setTypingTimeout(null);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!chat || !window.confirm('Are you sure you want to delete this message?')) return;
+
+    try {
+      await apiService.deleteMessage(chat._id, messageId);
+      // Update local state to remove the message
+      setMessages(prev => prev.filter(msg => msg._id !== messageId));
+    } catch (error: any) {
+      console.error('Error deleting message:', error);
+      setError(error.message || 'Failed to delete message');
     }
   };
 
@@ -771,7 +813,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
               >
                 {/* Message bubble */}
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl shadow-lg transition-all ${message.messageType === 'OFFER'
+                  className={`relative group max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl shadow-lg transition-all ${message.messageType === 'OFFER'
                     ? isOwnMessage
                       ? 'bg-gradient-to-br from-[#4154f1] to-[#3346d8] text-white rounded-br-md shadow-blue-500/30'
                       : 'bg-white text-[#4154f1] rounded-bl-md border border-blue-100 shadow-sm'
@@ -789,6 +831,19 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                     }`}
                   title={`Message from: ${isOwnMessage ? 'YOU (Right Side)' : 'OTHER (Left Side)'}`}
                 >
+                  {/* Delete menu for own messages */}
+                  {isOwnMessage && (
+                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleDeleteMessage(message._id)}
+                        className="p-1 hover:bg-black/10 rounded-full text-white/70 hover:text-white"
+                        title="Delete message"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Offer message with special styling */}
                   {message.messageType === 'OFFER' && (
                     <div className="flex items-center gap-2 mb-1">
