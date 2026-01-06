@@ -11,16 +11,16 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
   const { scrollYProgress } = useScroll();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
+    <div className="min-h-screen bg-white text-gray-900">
       {/* Scroll progress bar */}
       <motion.div
-        className="fixed top-0 left-0 z-50 h-1 bg-emerald-500 origin-left"
+        className="fixed top-0 left-0 z-50 h-1 bg-[#4154f1] origin-left"
         style={{ scaleX: scrollYProgress }}
       />
 
       <Navbar />
 
-      <main className="pt-24 pb-16">
+      <main className="pt-20">
         {children}
       </main>
 

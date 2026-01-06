@@ -31,28 +31,26 @@ const Navbar: React.FC = () => {
       className="fixed top-0 inset-x-0 z-40"
     >
       <div
-        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
-          isScrolled ? 'py-2' : 'py-3'
-        }`}
+        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-3'
+          }`}
       >
         <nav
-          className={`flex items-center justify-between rounded-2xl border backdrop-blur-xl bg-slate-900/70 border-white/10 shadow-lg transition-all duration-300 ${
-            isScrolled ? 'shadow-emerald-500/10' : 'shadow-slate-900/30'
-          }`}
+          className={`flex items-center justify-between rounded-2xl border backdrop-blur-xl bg-white/90 border-gray-200 shadow-lg transition-all duration-300 ${isScrolled ? 'shadow-blue-500/10' : 'shadow-gray-200'
+            }`}
         >
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-3 px-4 py-2 text-slate-50"
+            className="flex items-center gap-3 px-4 py-2 text-[#012970]"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md shadow-emerald-500/40">
-              <span className="text-lg font-black tracking-tight">L</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#4154f1] to-[#3346d8] shadow-md shadow-blue-500/40">
+              <span className="text-lg font-black tracking-tight text-white">P</span>
             </div>
             <div className="leading-tight">
               <p className="text-lg font-semibold tracking-tight">
                 PropChain
               </p>
-              <p className="text-[11px] text-slate-300">
+              <p className="text-[11px] text-gray-600">
                 Blockchain Land Registry
               </p>
             </div>
@@ -70,16 +68,15 @@ const Navbar: React.FC = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-emerald-300'
-                      : 'text-slate-200 hover:text-white'
-                  }`}
+                  className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-colors ${isActive
+                      ? 'text-[#4154f1]'
+                      : 'text-[#012970] hover:text-[#4154f1]'
+                    }`}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="nav-active-pill"
-                      className="absolute inset-0 -z-10 rounded-xl bg-emerald-500/10"
+                      className="absolute inset-0 -z-10 rounded-xl bg-[#4154f1]/10"
                     />
                   )}
                   {link.label}
@@ -92,9 +89,9 @@ const Navbar: React.FC = () => {
           <div className="flex items-center gap-2 pr-3">
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm shadow-emerald-500/40 transition hover:bg-emerald-400"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#4154f1] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-500/40 transition hover:bg-[#3346d8]"
             >
-              <span>Get Started</span>
+              <span>Login</span>
             </button>
           </div>
         </nav>

@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Zap, MapPinned, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap, MapPinned, TrendingUp, CheckCircle2, Award, ClipboardCheck, Dribbble, Filter, BadgeCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MarketingLayout from '../components/layout/MarketingLayout';
 
@@ -34,6 +33,57 @@ const features = [
   },
 ];
 
+const values = [
+  {
+    title: 'Next-Gen Blockchain',
+    description: 'We value the power of blockchain technology in ensuring transparency, security, and decentralization, allowing every property transaction to be tamper-proof, verifiable, and free from unnecessary intermediaries.',
+    image: '/assets/img/values-1.png',
+  },
+  {
+    title: 'Smart Innovation',
+    description: 'We are committed to continuously pushing the boundaries of real estate technology, integrating cutting-edge solutions like smart contracts and AI-driven analytics to enhance user experience and streamline the buying and selling process.',
+    image: '/assets/img/values-2.png',
+  },
+  {
+    title: 'Efficiency and Time Management',
+    description: 'We prioritize making property transactions faster and more seamless by automating processes, reducing paperwork, and eliminating delays, ensuring that our users save valuable time while achieving their real estate goals effortlessly.',
+    image: '/assets/img/values-3.png',
+  },
+];
+
+const altFeatures = [
+  {
+    title: 'Trust and Transparency',
+    description: 'We are committed to maintaining the highest standards of trust by ensuring transparency in all our operations and transactions.',
+    icon: Award,
+  },
+  {
+    title: 'Minimal Errors',
+    description: 'We rigorously test and optimize our platform to minimize errors, providing users with a smooth and hassle-free experience.',
+    icon: ClipboardCheck,
+  },
+  {
+    title: 'Expert Team',
+    description: 'Our skilled professionals bring extensive experience in blockchain, real estate, and technology, ensuring top-notch service and innovative solutions.',
+    icon: Dribbble,
+  },
+  {
+    title: 'Customer First',
+    description: 'We take a professional and customer-centric approach, ensuring that every interaction is handled with care, respect, and efficiency.',
+    icon: Filter,
+  },
+  {
+    title: 'Fast Response',
+    description: 'We prioritize quick and efficient communication, ensuring that all queries and concerns are addressed promptly to provide a seamless user experience.',
+    icon: Zap,
+  },
+  {
+    title: 'Verified and Secure',
+    description: 'Our company is fully verified and follows strict security protocols, guaranteeing authenticity and reliability in every transaction.',
+    icon: BadgeCheck,
+  },
+];
+
 const howItWorks = [
   {
     title: 'Create Account / Login',
@@ -50,24 +100,6 @@ const howItWorks = [
   {
     title: 'Complete Smart-Contract Transaction',
     description: 'Settle payments, transfer titles, and generate immutable receipts.',
-  },
-];
-
-const lands = [
-  {
-    title: 'Seaside Residency Plot #42',
-    location: 'Coastal Region, Zone A',
-    description: 'Prime coastal parcel with direct access to planned smart city amenities.',
-  },
-  {
-    title: 'Greenfield Agro Estate',
-    location: 'Agro Belt, Sector 7',
-    description: 'Verified agricultural land with long-term lease potential and water access.',
-  },
-  {
-    title: 'Metro Skyline Apartments Block',
-    location: 'Central Business District',
-    description: 'High-rise residential block with fractional ownership options.',
   },
 ];
 
@@ -96,7 +128,7 @@ const faqs = [
   {
     question: 'Is PropChain a legal land registry?',
     answer:
-      'PropChain integrates with existing legal registries where applicable. It is designed to augment, not replace, your jurisdiction’s legal framework.',
+      'PropChain integrates with existing legal registries where applicable. It is designed to augment, not replace, your jurisdiction legal framework.',
   },
   {
     question: 'How are land records verified before going on-chain?',
@@ -117,311 +149,211 @@ const faqs = [
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
-  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 80]);
 
   return (
     <MarketingLayout>
-      {/* Hero */}
-      <motion.section
-        initial={{ opacity: 0, x: -40 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.7, ease: 'easeOut' }}
-        className="relative overflow-hidden"
-      >
-        <motion.div
-          style={{ y: parallaxY }}
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950"
-        />
-        <div className="pointer-events-none absolute -right-32 -top-40 -z-10 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-32 top-40 -z-10 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+      {/* Hero Section */}
+      <section className="bg-white py-12 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+            <div className="space-y-6">
+              <h1 className="text-4xl font-bold tracking-tight text-[#012970] md:text-5xl lg:text-6xl">
+                Unlocking growth with PropChain smart solutions
+              </h1>
+              <p className="text-lg text-gray-600">
+                Transforming your business growth with cutting-edge, tailored property solutions.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="inline-flex items-center justify-center gap-2 rounded bg-[#4154f1] px-8 py-3 text-base font-medium text-white transition hover:bg-[#3346d8]"
+                >
+                  Get Started
+                  <ArrowRight className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => navigate('/marketplace-preview')}
+                  className="inline-flex items-center justify-center gap-2 rounded border-2 border-[#4154f1] bg-transparent px-8 py-3 text-base font-medium text-[#4154f1] transition hover:bg-[#4154f1] hover:text-white"
+                >
+                  Explore Marketplace
+                </button>
+              </div>
+            </div>
+            <div className="order-first lg:order-last">
+              <img
+                src="/assets/img/hero-img.png"
+                alt="PropChain Hero"
+                className="w-full h-auto animate-[float_4s_ease-in-out_infinite]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-12 px-4 pb-16 pt-4 sm:px-6 lg:flex-row lg:gap-20 lg:px-8 xl:pb-24 xl:pt-6">
-          {/* Left content */}
-          <div className="max-w-xl space-y-6 lg:basis-1/2">
-            <p className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-300">
-              Land Registry • Marketplace • Compliance
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Secure, Transparent Land Registry on{' '}
-              <span className="bg-gradient-to-r from-emerald-300 to-teal-400 bg-clip-text text-transparent">
-                Blockchain
-              </span>
-            </h1>
-            <p className="text-sm leading-relaxed text-slate-300 sm:text-base">
-              Prevent land fraud, verify ownership instantly, and run
-              compliant property transactions through a blockchain-powered
-              registry and marketplace — all in one place.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                onClick={() => navigate('/login')}
-                className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 transition hover:bg-emerald-400"
-              >
-                Get Started
+      {/* About Section */}
+      <section className="bg-gray-50 py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-[#4154f1]">Who We Are</h3>
+              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
+                At PropChain, we are revolutionizing the real estate industry by integrating blockchain technology to create a transparent, secure, and decentralized property marketplace.
+              </h2>
+              <p className="text-gray-600">
+                We are committed to making property transactions more efficient, cost-effective, and accessible to everyone. Join us in redefining how properties are bought and sold in the digital era.
+              </p>
+              <button className="inline-flex items-center gap-2 text-[#4154f1] font-medium hover:gap-3 transition-all">
+                Read More
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button
-                onClick={() => navigate('/marketplace-preview')}
-                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-500/40 bg-transparent px-5 py-3 text-sm font-medium text-emerald-200 hover:bg-emerald-500/10"
-              >
-                Explore Marketplace
-              </button>
             </div>
-            <p className="text-xs text-slate-400">
-              Trusted by buyers, sellers, and public authorities for
-              high-stakes land transfers.
-            </p>
+            <div>
+              <img
+                src="/assets/img/about.jpg"
+                alt="About PropChain"
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
           </div>
-
-          {/* Right hero visual */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.15 }}
-            className="lg:basis-1/2"
-          >
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative mx-auto max-w-md rounded-3xl border border-emerald-500/20 bg-slate-900/70 p-5 shadow-2xl shadow-emerald-500/25 backdrop-blur-xl"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                    Live Registry
-                  </p>
-                  <p className="text-sm text-slate-300">
-                    Immutable land ownership graph
-                  </p>
-                </div>
-                <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-medium text-emerald-200">
-                  <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Synced on-chain
-                </span>
-              </div>
-              <div className="space-y-3 rounded-2xl bg-slate-950/60 p-4 ring-1 ring-white/5">
-                {lands.map((land, index) => (
-                  <div
-                    key={land.title}
-                    className="flex items-start justify-between rounded-2xl bg-slate-900/80 p-3 text-xs text-slate-200"
-                  >
-                    <div>
-                      <p className="font-semibold text-emerald-100">
-                        {land.title}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {land.location}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-300 line-clamp-2">
-                        {land.description}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 pl-3">
-                      <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-medium text-emerald-200">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Verified
-                      </span>
-                      <span className="rounded-full bg-slate-900/80 px-2 py-1 text-[10px] text-slate-400">
-                        Parcel #{index + 1}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
         </div>
-      </motion.section>
-
-      {/* Stats strip */}
-      <section className="border-y border-slate-800/80 bg-slate-950/90">
-        <motion.div
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.15 },
-            },
-          }}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-4 py-8 sm:px-6 lg:px-8"
-        >
-          {stats.map((item) => (
-            <motion.div
-              key={item.label}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  transition: { duration: 0.4 },
-                },
-              }}
-              className="min-w-[140px] flex-1 space-y-1"
-            >
-              <p className="text-lg font-semibold text-emerald-300">
-                {item.value}
-              </p>
-              <p className="text-xs text-slate-400">{item.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
       </section>
 
-      {/* Features */}
-      <section className="bg-slate-950 py-16 sm:py-20">
+      {/* Values Section */}
+      <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl space-y-3">
-            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Why PropChain?
-            </h2>
-            <p className="text-sm text-slate-400 sm:text-base">
-              A unified platform to secure land titles, orchestrate deals, and
-              keep regulators, banks, and buyers aligned.
-            </p>
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Our Values</h2>
+            <p className="mt-2 text-gray-600">What we value most</p>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => (
-              <motion.article
-                key={feature.title}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.6 }}
-                whileHover={{ y: -6, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-sm shadow-slate-900/40 backdrop-blur-xl"
+          <div className="grid gap-8 md:grid-cols-3">
+            {values.map((value) => (
+              <div
+                key={value.title}
+                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
               >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-300">
-                  <feature.icon className="h-5 w-5" />
-                </div>
-                <h3 className="text-sm font-semibold text-white">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-xs text-slate-400 sm:text-sm">
-                  {feature.description}
-                </p>
-              </motion.article>
+                <img
+                  src={value.image}
+                  alt={value.title}
+                  className="mb-4 w-full h-auto"
+                />
+                <h3 className="mb-3 text-xl font-semibold text-[#012970]">{value.title}</h3>
+                <p className="text-sm text-gray-600">{value.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-gradient-to-b from-slate-950 to-slate-900 py-16 sm:py-20">
+      {/* Features Section */}
+      <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl space-y-3">
-            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              How It Works
-            </h2>
-            <p className="text-sm text-slate-400 sm:text-base">
-              From onboarding to smart-contract settlement, every step is
-              orchestrated with trust and transparency.
-            </p>
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Features</h2>
+            <p className="mt-2 text-gray-600">Our Advanced Features</p>
           </div>
-
-          <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_auto]">
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-emerald-500 via-emerald-500/30 to-transparent" />
-              <div className="space-y-8">
-                {howItWorks.map((step, index) => {
-                  const isEven = index % 2 === 1;
-                  return (
-                    <motion.div
-                      key={step.title}
-                      initial={
-                        isEven
-                          ? { opacity: 0, x: 40 }
-                          : { opacity: 0, x: -40 }
-                      }
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true, amount: 0.3 }}
-                      transition={{ duration: 0.5 }}
-                      className="relative flex gap-4 pl-10"
-                    >
-                      <div className="absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-emerald-400 bg-slate-950 text-[11px] font-semibold text-emerald-300">
-                        {index + 1}
-                      </div>
-                      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm">
-                        <h3 className="text-sm font-semibold text-white">
-                          {step.title}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-                          {step.description}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div>
+              <img
+                src="/assets/img/features.png"
+                alt="Features"
+                className="w-full h-auto"
+              />
             </div>
-
-            <div className="hidden h-full w-px bg-slate-800/80 md:block" aria-hidden />
+            <div className="grid gap-6 md:grid-cols-2">
+              {features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:shadow-md"
+                >
+                  <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-[#4154f1]" />
+                  <h3 className="font-semibold text-[#012970]">{feature.title}</h3>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Carousel */}
-      <LandsCarousel onGetStarted={() => navigate('/login')} />
+      {/* Alt Features Section */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div className="grid gap-6 md:grid-cols-2">
+              {altFeatures.map((feature) => (
+                <div key={feature.title} className="space-y-2">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#4154f1]/10 text-[#4154f1]">
+                    <feature.icon className="h-6 w-6" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-[#012970]">{feature.title}</h4>
+                  <p className="text-sm text-gray-600">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+            <div className="order-first lg:order-last">
+              <img
+                src="/assets/img/alt-features.png"
+                alt="Additional Features"
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-gray-50 py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 max-w-2xl">
+            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">How It Works</h2>
+            <p className="mt-3 text-gray-600">
+              From onboarding to smart-contract settlement, every step is orchestrated with trust and transparency.
+            </p>
+          </div>
+          <div className="space-y-8">
+            {howItWorks.map((step, index) => (
+              <div
+                key={step.title}
+                className="flex gap-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+              >
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#4154f1] bg-white text-lg font-bold text-[#4154f1]">
+                  {index + 1}
+                </div>
+                <div>
+                  <h3 className="mb-2 text-xl font-semibold text-[#012970]">{step.title}</h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Testimonials */}
-      <section className="bg-slate-950 py-16 sm:py-20">
+      <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl space-y-3">
-            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <div className="mb-12 max-w-2xl">
+            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
               Trusted by Buyers and Authorities
             </h2>
-            <p className="text-sm text-slate-400 sm:text-base">
-              Built for regulators, institutions, and property participants
-              who cannot compromise on security or transparency.
+            <p className="mt-3 text-gray-600">
+              Built for regulators, institutions, and property participants who cannot compromise on security or transparency.
             </p>
           </div>
-
-          <motion.div
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: { staggerChildren: 0.15 },
-              },
-            }}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            className="mt-10 grid gap-6 md:grid-cols-3"
-          >
+          <div className="grid gap-8 md:grid-cols-3">
             {testimonials.map((t) => (
-              <motion.article
+              <div
                 key={t.name}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.4 },
-                  },
-                }}
-                whileHover={{ y: -6 }}
-                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-sm shadow-slate-900/40"
+                className="rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-sm transition hover:shadow-md"
               >
-                <p className="text-xs text-slate-300 sm:text-sm">
-                  “{t.quote}”
-                </p>
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-white">
-                    {t.name}
-                  </p>
-                  <p className="text-xs text-emerald-300">{t.role}</p>
+                <p className="mb-4 text-gray-700 italic">&quot;{t.quote}&quot;</p>
+                <div>
+                  <p className="font-semibold text-[#012970]">{t.name}</p>
+                  <p className="text-sm text-[#4154f1]">{t.role}</p>
                 </div>
-              </motion.article>
+              </div>
             ))}
-          </motion.div>
-
-          {/* Partner logos strip */}
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800/80 bg-slate-900/60 px-4 py-4 text-[10px] uppercase tracking-[0.22em] text-slate-500 sm:px-6 sm:text-xs">
+          </div>
+          <div className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 text-xs uppercase tracking-wider text-gray-500">
             <span>Municipal Land Offices</span>
             <span>Registry Authorities</span>
             <span>Compliance Teams</span>
@@ -431,67 +363,50 @@ const Home: React.FC = () => {
       </section>
 
       {/* FAQ + CTA */}
-      <section className="bg-gradient-to-b from-slate-950 to-slate-950 py-16 sm:py-20">
+      <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+          <div className="grid gap-12 lg:grid-cols-[2fr_1.4fr]">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              <h2 className="mb-6 text-3xl font-bold text-[#012970] md:text-4xl">
                 Frequently Asked Questions
               </h2>
-              <div className="mt-6 space-y-3">
+              <div className="space-y-4">
                 {faqs.map((item) => (
                   <details
                     key={item.question}
-                    className="group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm"
+                    className="group rounded-lg border border-gray-200 bg-white p-5"
                   >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium text-white">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-[#012970]">
                       <span>{item.question}</span>
-                      <span className="text-xs text-slate-400 group-open:hidden">
-                        +
-                      </span>
-                      <span className="hidden text-xs text-slate-400 group-open:inline">
-                        −
-                      </span>
+                      <span className="text-gray-400 group-open:hidden">+</span>
+                      <span className="hidden text-gray-400 group-open:inline">−</span>
                     </summary>
-                    <p className="mt-3 text-xs text-slate-300 sm:text-sm">
-                      {item.answer}
-                    </p>
+                    <p className="mt-3 text-gray-600">{item.answer}</p>
                   </details>
                 ))}
               </div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6 }}
-              className="rounded-3xl bg-gradient-to-br from-emerald-500/20 via-emerald-500/5 to-slate-900 p-[1px]"
-            >
-              <div className="h-full rounded-[1.45rem] bg-slate-950/90 p-6 shadow-xl shadow-emerald-500/20">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                  Final Step
-                </p>
-                <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">
-                  Ready to Secure Your Land Transactions?
-                </h3>
-                <p className="mt-3 text-sm text-slate-300">
-                  Bring your registry, marketplace, or portfolio into a
-                  single source of truth — anchored by blockchain.
-                </p>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 transition hover:bg-emerald-400"
-                >
-                  Get Started
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <p className="mt-3 text-[11px] text-slate-400">
-                  No blockchain expertise required. Your teams keep using
-                  workflows they know — with stronger guarantees underneath.
-                </p>
-              </div>
-            </motion.div>
+            <div className="rounded-2xl bg-gradient-to-br from-[#4154f1]/10 to-white p-8 shadow-lg">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#4154f1]">
+                Final Step
+              </p>
+              <h3 className="mt-3 text-2xl font-bold text-[#012970] md:text-3xl">
+                Ready to Secure Your Land Transactions?
+              </h3>
+              <p className="mt-3 text-gray-600">
+                Bring your registry, marketplace, or portfolio into a single source of truth — anchored by blockchain.
+              </p>
+              <button
+                onClick={() => navigate('/login')}
+                className="mt-6 inline-flex items-center gap-2 rounded bg-[#4154f1] px-8 py-3 text-base font-medium text-white transition hover:bg-[#3346d8]"
+              >
+                Get Started
+                <ArrowRight className="h-5 w-5" />
+              </button>
+              <p className="mt-3 text-xs text-gray-500">
+                No blockchain expertise required. Your teams keep using workflows they know — with stronger guarantees underneath.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -499,153 +414,4 @@ const Home: React.FC = () => {
   );
 };
 
-interface LandsCarouselProps {
-  onGetStarted: () => void;
-}
-
-const LandsCarousel: React.FC<LandsCarouselProps> = ({ onGetStarted }) => {
-  const [activeIndex, setActiveIndex] = React.useState(0);
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isHovered) return;
-    const id = window.setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % lands.length);
-    }, 5000);
-    return () => window.clearInterval(id);
-  }, [isHovered]);
-
-  return (
-    <motion.section
-      initial={{ opacity: 0, scale: 0.98 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6 }}
-      className="bg-slate-900 py-16 sm:py-20"
-    >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
-          <div className="max-w-md space-y-3">
-            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Explore Verified Lands
-            </h2>
-            <p className="text-sm text-slate-300 sm:text-base">
-              Browse a catalog of vetted parcels with on-chain verification
-              and transparent history — ready for compliant transactions.
-            </p>
-            <button
-              onClick={onGetStarted}
-              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/40 transition hover:bg-emerald-400"
-            >
-              Get Started
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div
-            className="relative flex-1"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <div className="relative overflow-hidden rounded-3xl border border-emerald-500/25 bg-slate-950/80 p-4 shadow-xl shadow-emerald-500/20 backdrop-blur-xl">
-              <motion.div
-                key={activeIndex}
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.4 }}
-                className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]"
-              >
-                <div className="relative h-56 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 md:h-64">
-                  <img
-                    src="/placeholder-land.svg"
-                    alt={lands[activeIndex].title}
-                    className="h-full w-full object-cover opacity-90"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
-                  <div className="absolute left-4 top-4 rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-medium text-emerald-200">
-                    Verified on Blockchain
-                  </div>
-                  <div className="absolute bottom-4 left-4 rounded-xl bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200">
-                    On-chain proof of ownership • Immutable history
-                  </div>
-                </div>
-
-                <div className="flex flex-col justify-between rounded-2xl bg-slate-950/80 p-4 text-sm">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">
-                      Featured Parcel
-                    </p>
-                    <h3 className="mt-2 text-base font-semibold text-white">
-                      {lands[activeIndex].title}
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      {lands[activeIndex].location}
-                    </p>
-                    <p className="mt-3 text-xs text-slate-300 sm:text-sm">
-                      {lands[activeIndex].description}
-                    </p>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>Land Token ID: #{activeIndex + 1843}</span>
-                    <span>Last verified: &lt; 5 mins ago</span>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Arrows */}
-              <div className="pointer-events-none absolute inset-y-0 flex items-center justify-between px-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveIndex(
-                      (prev) => (prev - 1 + lands.length) % lands.length,
-                    )
-                  }
-                  className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/70 text-slate-200 ring-1 ring-slate-700 hover:text-white"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveIndex((prev) => (prev + 1) % lands.length)
-                  }
-                  className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/70 text-slate-200 ring-1 ring-slate-700 hover:text-white"
-                >
-                  ›
-                </button>
-              </div>
-
-              {/* Dots */}
-              <div className="mt-4 flex justify-center gap-2 text-[8px] text-slate-500">
-                {lands.map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      index === activeIndex
-                        ? 'w-6 bg-emerald-400'
-                        : 'w-2 bg-slate-600'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.section>
-  );
-};
-
 export default Home;
-
-
-
-
-
-
-
-
