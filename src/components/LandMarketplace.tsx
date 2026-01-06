@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   Search,
   Filter,
@@ -7,7 +6,6 @@ import {
   MessageCircle,
   Eye,
   Heart,
-  ShoppingCart,
   Camera,
   Star,
   X,
@@ -77,6 +75,13 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
   // Refresh data when window gets focus (handles SPA navigation from details page)
   useEffect(() => {
     const handleFocus = () => {
+      // Check if we're returning from details page
+      const returnedFromDetails = sessionStorage.getItem('navigatedToDetails');
+      if (returnedFromDetails) {
+        sessionStorage.removeItem('navigatedToDetails');
+        console.log('Returned from details page, refreshing data...');
+      }
+
       // Refresh current tab when window gets focus
       if (activeTab === "browse") {
         loadMarketplaceLands();
@@ -87,12 +92,28 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        handleFocus();
+      }
+    };
+
+    // Check if returning from details page on mount
+    const returnedFromDetails = sessionStorage.getItem('navigatedToDetails');
+    if (returnedFromDetails) {
+      sessionStorage.removeItem('navigatedToDetails');
+      console.log('Component mounted after details page, refreshing...');
+    }
+
     // Also refresh on mount
     handleFocus();
 
     window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [activeTab]);
 
@@ -136,24 +157,79 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     }
   };
 
+  // Fuzzy matching function - calculates similarity between two strings
+  const fuzzyMatch = (str1: string, str2: string): boolean => {
+    if (!str1 || !str2) return false;
+
+    const s1 = str1.toLowerCase();
+    const s2 = str2.toLowerCase();
+
+    // Exact match or substring match
+    if (s1.includes(s2) || s2.includes(s1)) return true;
+
+    // Check if one string starts with the other (for partial matches)
+    if (s1.startsWith(s2.substring(0, 3)) || s2.startsWith(s1.substring(0, 3))) {
+      if (Math.abs(s1.length - s2.length) <= 3) return true;
+    }
+
+    // Calculate Levenshtein distance for fuzzy matching
+    const getLevenshteinDistance = (a: string, b: string): number => {
+      const matrix: number[][] = [];
+
+      for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+      }
+
+      for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+      }
+
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+
+      return matrix[b.length][a.length];
+    };
+
+    const distance = getLevenshteinDistance(s1, s2);
+    const maxLength = Math.max(s1.length, s2.length);
+    const similarity = 1 - distance / maxLength;
+
+    // Return true if similarity is above 60% (more lenient for typos)
+    // This allows for bigger differences like "thamil" -> "tamil"
+    return similarity >= 0.6;
+  };
+
   const filterLands = () => {
     const sourceLands =
       activeTab === "browse"
         ? lands
         : activeTab === "my-ads"
-        ? myListings
-        : likedLands;
+          ? myListings
+          : likedLands;
 
     let filtered = sourceLands.filter((land) => {
-      // Search term filter
+      // Search term filter with fuzzy matching on ALL text fields
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch =
-          land.village?.toLowerCase().includes(searchLower) ||
-          land.district?.toLowerCase().includes(searchLower) ||
-          land.state?.toLowerCase().includes(searchLower) ||
-          land.surveyNumber?.toLowerCase().includes(searchLower) ||
-          land.marketInfo?.description?.toLowerCase().includes(searchLower);
+          fuzzyMatch(land.village || "", searchLower) ||
+          fuzzyMatch(land.district || "", searchLower) ||
+          fuzzyMatch(land.state || "", searchLower) ||
+          fuzzyMatch(land.surveyNumber || "", searchLower) ||
+          fuzzyMatch(land.subDivision || "", searchLower) ||
+          fuzzyMatch(land.marketInfo?.description || "", searchLower) ||
+          fuzzyMatch(land.landType || "", searchLower);
         if (!matchesSearch) return false;
       }
 
@@ -167,15 +243,13 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
           return false;
       }
 
-      // Location filters
+      // Location filters with fuzzy matching
       if (filters.district && land.district) {
-        if (
-          !land.district.toLowerCase().includes(filters.district.toLowerCase())
-        )
+        if (!fuzzyMatch(land.district, filters.district))
           return false;
       }
       if (filters.state && land.state) {
-        if (!land.state.toLowerCase().includes(filters.state.toLowerCase()))
+        if (!fuzzyMatch(land.state, filters.state))
           return false;
       }
 
@@ -240,27 +314,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     setShowChat(true);
   };
 
-  const handleBuyNow = (land: Land) => {
-    // Implement buy now functionality
-    console.log("Buy now clicked for land:", land.assetId);
-    // You can redirect to a purchase flow or show a modal
-  };
 
-  const handleLikeLand = async (land: Land) => {
-    try {
-      if (land._id) {
-        await apiService.toggleLandLike(land._id as string);
-        // Refresh the current tab data
-        if (activeTab === "browse") {
-          loadMarketplaceLands();
-        } else if (activeTab === "liked") {
-          loadLikedLands();
-        }
-      }
-    } catch (error: any) {
-      setError(error.message || "Failed to update like status");
-    }
-  };
 
   const handleEditListing = (land: Land) => {
     setSelectedLandForEdit(land);
@@ -281,6 +335,9 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
   };
 
   const handleViewDetails = (land: Land) => {
+    // Set a flag to indicate we're navigating to details
+    sessionStorage.setItem('navigatedToDetails', 'true');
+
     // Navigate to detailed view page
     if (land._id && onNavigateToLand) {
       onNavigateToLand(land._id);
@@ -290,7 +347,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4154f1]"></div>
       </div>
     );
   }
@@ -301,7 +358,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
         <p className="text-red-400 mb-4">{error}</p>
         <button
           onClick={loadMarketplaceLands}
-          className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-2xl hover:bg-emerald-400 font-semibold shadow-md shadow-emerald-500/40 transition"
+          className="bg-[#4154f1] text-white px-4 py-2 rounded-2xl hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/40 transition"
         >
           Try Again
         </button>
@@ -313,10 +370,10 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-[#012970] mb-2">
           Land Marketplace
         </h1>
-        <p className="text-slate-400">
+        <p className="text-gray-600">
           Discover verified lands for sale across India
         </p>
 
@@ -325,31 +382,28 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
           <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab("browse")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "browse"
-                  ? "border-emerald-500 text-emerald-300"
-                  : "border-transparent text-slate-400 hover:text-white hover:border-slate-700"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "browse"
+                ? "border-[#4154f1] text-[#4154f1]"
+                : "border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300"
+                }`}
             >
               Browse All
             </button>
             <button
               onClick={() => setActiveTab("my-ads")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "my-ads"
-                  ? "border-emerald-500 text-emerald-300"
-                  : "border-transparent text-slate-400 hover:text-white hover:border-slate-700"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "my-ads"
+                ? "border-[#4154f1] text-[#4154f1]"
+                : "border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300"
+                }`}
             >
               My Ads
             </button>
             <button
               onClick={() => setActiveTab("liked")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "liked"
-                  ? "border-emerald-500 text-emerald-300"
-                  : "border-transparent text-slate-400 hover:text-white hover:border-slate-700"
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "liked"
+                ? "border-[#4154f1] text-[#4154f1]"
+                : "border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300"
+                }`}
             >
               Liked Ads
             </button>
@@ -358,18 +412,18 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6 mb-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search by location, survey number, or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400 transition-all"
               />
             </div>
           </div>
@@ -377,81 +431,75 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-3 border border-slate-700 bg-slate-900/50 text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className={`flex items-center gap-2 px-6 py-2.5 border rounded-lg font-medium transition-all ${showFilters
+              ? 'bg-[#4154f1] text-white border-[#4154f1]'
+              : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+              }`}
           >
             <Filter className="w-5 h-5" />
-            Filters
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
           </button>
         </div>
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 pt-6 border-t border-slate-800/50">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Min Price (₹)
-                </label>
-                <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) =>
-                    handleFilterChange("minPrice", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                  placeholder="0"
-                />
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Filter Results</h3>
+
+            {/* Price Range */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Price Range (₹)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <input
+                    type="number"
+                    value={filters.minPrice}
+                    onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
+                    placeholder="Min"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={filters.maxPrice}
+                    onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
+                    placeholder="Max"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Max Price (₹)
-                </label>
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) =>
-                    handleFilterChange("maxPrice", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                  placeholder="No limit"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  District
-                </label>
+            </div>
+
+            {/* Location */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Location</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
                   type="text"
                   value={filters.district}
-                  onChange={(e) =>
-                    handleFilterChange("district", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                  placeholder="Any district"
+                  onChange={(e) => handleFilterChange("district", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
+                  placeholder="District"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  State
-                </label>
                 <input
                   type="text"
                   value={filters.state}
                   onChange={(e) => handleFilterChange("state", e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
-                  placeholder="Any state"
+                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
+                  placeholder="State"
                 />
               </div>
+            </div>
+
+            {/* Land Type & Area */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Land Type
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Land Type</label>
                 <select
                   value={filters.landType}
-                  onChange={(e) =>
-                    handleFilterChange("landType", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(e) => handleFilterChange("landType", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1]"
                 >
                   <option value="">All Types</option>
                   <option value="AGRICULTURAL">Agricultural</option>
@@ -461,43 +509,37 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Min Area (acres)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Min Area (acres)</label>
                 <input
                   type="number"
                   value={filters.minArea}
-                  onChange={(e) =>
-                    handleFilterChange("minArea", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                  onChange={(e) => handleFilterChange("minArea", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
                   placeholder="0"
                   step="0.1"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Max Area (acres)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Max Area (acres)</label>
                 <input
                   type="number"
                   value={filters.maxArea}
-                  onChange={(e) =>
-                    handleFilterChange("maxArea", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-500"
+                  onChange={(e) => handleFilterChange("maxArea", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-[#4154f1] placeholder-gray-400"
                   placeholder="No limit"
                   step="0.1"
                 />
               </div>
-              <div className="flex items-end">
-                <button
-                  onClick={clearFilters}
-                  className="w-full px-4 py-2 text-slate-300 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
-                >
-                  Clear All
-                </button>
-              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Clear All Filters
+              </button>
             </div>
           </div>
         )}
@@ -505,31 +547,31 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
 
       {/* Results Count */}
       <div className="mb-4">
-        <p className="text-slate-400">
+        <p className="text-gray-600">
           Showing {filteredLands.length} of{" "}
           {activeTab === "browse"
             ? lands.length
             : activeTab === "my-ads"
-            ? myListings.length
-            : likedLands.length}{" "}
+              ? myListings.length
+              : likedLands.length}{" "}
           {activeTab === "browse"
             ? "lands for sale"
             : activeTab === "my-ads"
-            ? "your listings"
-            : "liked lands"}
+              ? "your listings"
+              : "liked lands"}
         </p>
       </div>
 
       {/* Land Cards Grid */}
       {filteredLands.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-slate-500 mb-4">
+          <div className="text-slate-300 mb-4">
             <MapPin className="w-16 h-16 mx-auto" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-2">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
             No lands found
           </h3>
-          <p className="text-slate-400">
+          <p className="text-gray-500">
             Try adjusting your search criteria or filters
           </p>
         </div>
@@ -541,8 +583,6 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
               land={land}
               activeTab={activeTab}
               onChat={() => handleChatWithSeller(land)}
-              onBuy={() => handleBuyNow(land)}
-              onLike={handleLikeLand}
               onEdit={() => handleEditListing(land)}
               onRemove={() => handleRemoveListing(land)}
               onViewDetails={() => handleViewDetails(land)}
@@ -557,14 +597,14 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
       {/* Chat Modal */}
       {showChat && selectedLand && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-lg border border-slate-800 bg-slate-900/90 backdrop-blur-xl w-full max-w-4xl h-[80vh] flex flex-col shadow-xl">
-            <div className="flex items-center justify-between p-4 border-b border-slate-800/50">
-              <h3 className="text-lg font-semibold text-white">
+          <div className="rounded-lg border border-gray-200 bg-white w-full max-w-4xl h-[80vh] flex flex-col shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-[#012970]">
                 Chat with {selectedLand.currentOwner?.fullName || "Seller"}
               </h3>
               <button
                 onClick={() => setShowChat(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -610,8 +650,6 @@ interface LandCardProps {
   land: Land;
   activeTab: "browse" | "my-ads" | "liked";
   onChat: () => void;
-  onBuy: () => void;
-  onLike: (land: Land) => void;
   onEdit: (land: Land) => void;
   onRemove: (land: Land) => void;
   onViewDetails: (land: Land) => void;
@@ -624,8 +662,6 @@ const LandCard: React.FC<LandCardProps> = ({
   land,
   activeTab,
   onChat,
-  onBuy,
-  onLike,
   onEdit,
   onRemove,
   onViewDetails,
@@ -647,7 +683,7 @@ const LandCard: React.FC<LandCardProps> = ({
     } else if (auth.user && Array.isArray((auth.user as any).likedLands)) {
       initial = (auth.user as any).likedLands.some((id: any) => {
         try {
-          return id.toString() === land._id.toString();
+          return id.toString() === land._id?.toString();
         } catch (e) {
           return id === land._id;
         }
@@ -659,6 +695,8 @@ const LandCard: React.FC<LandCardProps> = ({
   const handleToggleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!land._id) return;
 
     const previous = isFavorited;
     setIsFavorited(!previous);
@@ -689,7 +727,7 @@ const LandCard: React.FC<LandCardProps> = ({
 
     if (onViewDetails) {
       try {
-        onViewDetails();
+        onViewDetails(land);
       } catch (err) {
         // ignore
       }
@@ -702,7 +740,6 @@ const LandCard: React.FC<LandCardProps> = ({
     : "/placeholder-land.svg";
 
   const features = land.marketInfo?.features || [];
-  const amenities = land.marketInfo?.nearbyAmenities || [];
 
   const isOwner =
     auth.user?.id === land?.currentOwner?.id ||
@@ -710,11 +747,11 @@ const LandCard: React.FC<LandCardProps> = ({
 
   // Get status badge info
   const getStatusBadge = () => {
-    if (land.status === "PENDING") {
-      return { text: "Pending", color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30" };
+    if (land.verificationStatus === "PENDING") {
+      return { text: "Pending", color: "bg-yellow-100 text-yellow-700 border-yellow-200" };
     }
-    if (land.status === "DRAFT") {
-      return { text: "Draft", color: "bg-blue-500/20 text-blue-300 border-blue-500/30" };
+    if (land.verificationStatus === "NOT_SUBMITTED") {
+      return { text: "Draft", color: "bg-blue-100 text-[#4154f1] border-blue-200" };
     }
     return null;
   };
@@ -723,66 +760,69 @@ const LandCard: React.FC<LandCardProps> = ({
 
   return (
     <div
-      className="group rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-lg hover:shadow-xl hover:shadow-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 overflow-hidden cursor-pointer hover:-translate-y-1 flex flex-col h-full"
+      className="group rounded-lg border border-gray-200 bg-white hover:border-gray-300 transition-all duration-200 overflow-hidden cursor-pointer flex flex-col h-full"
       onClick={handleCardClick}
     >
-      {/* Image Section with Gradient Overlay */}
-      <div className="relative h-56 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
+      {/* Image Section - Clean and simple */}
+      <div className="relative h-56 bg-gray-100 overflow-hidden">
         {!imageError && primaryImage ? (
           <img
             src={imageUrl}
             alt={`${land.village}, ${land.district}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-200"
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900/20 via-slate-900 to-teal-900/20">
-            <Camera className="w-16 h-16 text-slate-700 mb-2" />
-            <span className="text-xs text-slate-600 font-medium">No Image Available</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
+            <Camera className="w-12 h-12 text-gray-300 mb-2" />
+            <span className="text-xs text-gray-400">No Image Available</span>
           </div>
         )}
 
-        {/* Dark gradient overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
+        {/* Sold Overlay */}
+        {land.status === "SOLD" && (
+          <div className="absolute inset-0 bg-white/95 flex items-center justify-center z-20">
+            <div className="border-2 border-red-600 px-6 py-2 rounded">
+              <span className="text-2xl font-bold text-red-600 uppercase">
+                SOLD
+              </span>
+            </div>
+          </div>
+        )}
 
-        {/* Status Badge - Top Right */}
+        {/* Status Badge - Top Left */}
         {statusBadge && (
-          <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border ${statusBadge.color}`}>
+          <div className={`absolute top-3 left-3 px-3 py-1 rounded text-xs font-medium border ${statusBadge.color}`}>
             {statusBadge.text}
           </div>
         )}
 
-        {/* Favorite Button - Top Right (only in browse tab) */}
-        {activeTab === "browse" && (
-          <motion.button
+        {/* Favorite Button - Top Right (browse and liked tabs) */}
+        {(activeTab === "browse" || activeTab === "liked") && (
+          <button
             type="button"
             onClick={handleToggleLike}
             disabled={isProcessingLike}
             aria-pressed={isFavorited}
             aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-            whileTap={{ scale: 0.9 }}
-            animate={isFavorited ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className={`absolute top-3 ${
-              statusBadge ? 'right-3' : 'right-3'
-            } p-2.5 backdrop-blur-md rounded-full hover:scale-110 transition-all duration-200 border z-10 ${
-              isFavorited
-                ? 'bg-red-500/20 border-red-500/50 hover:bg-red-500/30'
-                : 'bg-slate-900/80 border-slate-700/50 hover:bg-slate-900'
-            }`}
+            className={`absolute top-3 right-3 p-2 bg-white rounded-full hover:scale-105 transition-transform duration-200 border z-10 ${isFavorited
+              ? 'border-red-500'
+              : 'border-gray-200'
+              }`}
           >
             <Heart
-              className={`w-5 h-5 transition-all duration-300 ${
-                isFavorited ? 'fill-red-500 text-red-500' : 'text-white'
-              }`}
+              className={`w-4 h-4 transition-colors duration-200 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400'
+                }`}
             />
-          </motion.button>
+          </button>
         )}
 
-        {/* Price Badge - Bottom Left */}
+        {/* Price Badge - Bottom */}
         {land.marketInfo?.askingPrice && (
-          <div className="absolute bottom-3 left-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 px-4 py-2 rounded-full text-base font-bold shadow-lg shadow-emerald-500/50">
-            {formatPrice(land.marketInfo.askingPrice)}
+          <div className="absolute bottom-0 left-0 right-0 bg-white/95 px-4 py-2 border-t border-gray-200">
+            <span className="text-lg font-bold text-[#4154f1]">
+              {formatPrice(land.marketInfo.askingPrice)}
+            </span>
           </div>
         )}
       </div>
@@ -790,7 +830,7 @@ const LandCard: React.FC<LandCardProps> = ({
       {/* Content Section - Fixed height with flex-grow */}
       <div className="p-5 flex flex-col flex-grow">
         {/* Location */}
-        <div className="flex items-center gap-1.5 text-slate-400 mb-3">
+        <div className="flex items-center gap-1.5 text-gray-500 mb-3">
           <MapPin className="w-4 h-4 flex-shrink-0" />
           <span className="text-sm truncate">
             {land.village}, {land.district}, {land.state}
@@ -798,16 +838,16 @@ const LandCard: React.FC<LandCardProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-lg text-white mb-2 line-clamp-1">
+        <h3 className="text-lg font-bold text-[#012970] mb-2 truncate group-hover:text-[#4154f1] transition-colors">
           {land.landType} Land - Survey No. {land.surveyNumber}
         </h3>
 
         {/* Area */}
-        <p className="text-slate-300 text-sm font-medium mb-3">{formatArea(land)}</p>
+        <p className="text-gray-600 text-sm font-medium mb-3">{formatArea(land)}</p>
 
         {/* Description - Truncated to 2 lines */}
         {land.marketInfo?.description && (
-          <p className="text-slate-400 text-xs mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
             {land.marketInfo.description}
           </p>
         )}
@@ -819,14 +859,14 @@ const LandCard: React.FC<LandCardProps> = ({
               {features.slice(0, 2).map((feature, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-300 text-xs rounded-md border border-emerald-500/20"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-[#4154f1] text-xs rounded-md border border-[#4154f1]/20"
                 >
-                  <Star className="w-3 h-3 fill-emerald-400 text-emerald-400" />
+                  <Star className="w-3 h-3 fill-[#4154f1] text-[#4154f1]" />
                   {feature}
                 </span>
               ))}
               {features.length > 2 && (
-                <span className="inline-flex items-center px-2.5 py-1 bg-slate-800/50 text-slate-400 text-xs rounded-md">
+                <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
                   +{features.length - 2} more
                 </span>
               )}
@@ -838,76 +878,78 @@ const LandCard: React.FC<LandCardProps> = ({
         <div className="flex-grow" />
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-auto pt-4 border-t border-slate-800/50">
+        <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
           {activeTab === "my-ads" || isOwner ? (
             // Owner actions
-            <>
-              {land.status === "FOR_SALE" && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(land);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-emerald-500/50 text-emerald-300 rounded-lg hover:bg-emerald-500/10 hover:border-emerald-500 transition-all duration-200 font-medium text-sm"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-              )}
-              {land.status === "FOR_SALE" && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(land);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 hover:border-red-500 transition-all duration-200 font-medium text-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Remove
-                </button>
-              )}
-            </>
+            <div className="flex items-center gap-2 w-full">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(land);
+                }}
+                className="p-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                title="Edit Listing"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(land);
+                }}
+                className="p-2 rounded border border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
+                title="Remove Listing"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(land);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 border border-[#4154f1] text-[#4154f1] rounded hover:bg-[#4154f1] hover:text-white transition-colors font-medium text-sm"
+              >
+                View Details
+              </button>
+            </div>
           ) : (
             // Buyer actions
-            <>
+            <div className="flex gap-2 w-full">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onChat();
                 }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 rounded-lg hover:from-emerald-400 hover:to-teal-400 transition-all duration-200 font-semibold text-sm shadow-lg shadow-emerald-500/30"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-[#4154f1] text-white rounded hover:bg-[#3346d8] transition-colors font-medium text-sm"
               >
                 <MessageCircle className="w-4 h-4" />
-                Chat with Seller
+                Chat
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onViewDetails();
+                  onViewDetails(land);
                 }}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 hover:border-slate-600 transition-all duration-200 font-medium text-sm"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 border border-[#4154f1] text-[#4154f1] rounded hover:bg-[#4154f1] hover:text-white transition-colors font-medium text-sm"
               >
                 <Eye className="w-4 h-4" />
+                Details
               </button>
-            </>
+            </div>
           )}
         </div>
 
         {/* Additional Info */}
-        <div className="mt-3 pt-3 border-t border-slate-800/30 flex items-center justify-between text-xs text-slate-500">
+        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
           <span>
             Listed{" "}
             {new Date(
               land.marketInfo?.listedDate || land.createdAt
-            ).toLocaleDateString("en-IN", { 
-              day: "numeric", 
-              month: "short", 
-              year: "numeric" 
+            ).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric"
             })}
-          </span>
-          <span className="flex items-center gap-1 text-emerald-400">
-            <Eye className="w-3 h-3" />
-            Verified
           </span>
         </div>
       </div>

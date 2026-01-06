@@ -31,11 +31,13 @@ const Navbar: React.FC = () => {
       className="fixed top-0 inset-x-0 z-40"
     >
       <div
-        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-3'
+        className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'
           }`}
       >
         <nav
-          className={`flex items-center justify-between rounded-2xl border backdrop-blur-xl bg-white/90 border-gray-200 shadow-lg transition-all duration-300 ${isScrolled ? 'shadow-blue-500/10' : 'shadow-gray-200'
+          className={`flex items-center justify-between px-2 py-1 transition-all duration-300 ${isScrolled
+            ? 'bg-white/95 backdrop-blur-md border-b border-gray-200 rounded-2xl shadow-sm'
+            : 'bg-gradient-to-r from-blue-50/80 via-white/80 to-blue-50/80 backdrop-blur-sm rounded-2xl border border-blue-100/50'
             }`}
         >
           {/* Logo */}
@@ -69,8 +71,8 @@ const Navbar: React.FC = () => {
                   key={link.to}
                   to={link.to}
                   className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-colors ${isActive
-                      ? 'text-[#4154f1]'
-                      : 'text-[#012970] hover:text-[#4154f1]'
+                    ? 'text-[#4154f1]'
+                    : 'text-[#012970] hover:text-[#4154f1]'
                     }`}
                 >
                   {isActive && (

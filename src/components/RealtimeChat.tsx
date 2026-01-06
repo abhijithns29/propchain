@@ -125,18 +125,18 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     newSocket.on('new-message', (data) => {
       try {
         const currentUserId = auth.user?.id;
-        const messageSenderId = typeof data.message.sender === 'string' 
-          ? data.message.sender 
+        const messageSenderId = typeof data.message.sender === 'string'
+          ? data.message.sender
           : (data.message.sender as any)?.id;
-        
+
         // If message is from current user, replace the temporary message
         if (String(messageSenderId) === String(currentUserId)) {
           setMessages(prev => {
             // Remove any temporary messages from this user and add the real message
-            const filteredMessages = prev.filter(msg => 
+            const filteredMessages = prev.filter(msg =>
               msg && msg._id && !(msg._id.startsWith('temp-') && msg.sender === currentUserId)
             );
-            
+
             // Check if this message already exists to prevent duplicates
             const messageExists = filteredMessages.some(msg => msg._id === data.message._id);
             if (!messageExists) {
@@ -208,7 +208,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       console.log('loadChat already in progress, skipping...');
       return;
     }
-    
+
     try {
       loadingChatRef.current = true;
       setLoading(true);
@@ -232,7 +232,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         console.log('Current offer from chat:', chatData.chat.currentOffer);
         setChat(chatData.chat);
         setMessages(chatData.chat.messages || []);
-        
+
         // Set current offer if it exists
         if (chatData.chat.currentOffer) {
           setCurrentOffer(chatData.chat.currentOffer);
@@ -241,14 +241,14 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
           const recentOfferMessage = chatData.chat.messages
             ?.filter((msg: any) => msg.messageType === 'OFFER')
             ?.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-          
+
           if (recentOfferMessage && recentOfferMessage.offerAmount) {
             // Check if this offer hasn't been accepted or rejected yet
-            const hasResponse = chatData.chat.messages?.some((msg: any) => 
+            const hasResponse = chatData.chat.messages?.some((msg: any) =>
               (msg.messageType === 'ACCEPTANCE' || msg.messageType === 'REJECTION') &&
               new Date(msg.timestamp).getTime() > new Date(recentOfferMessage.timestamp).getTime()
             );
-            
+
             if (!hasResponse) {
               setCurrentOffer({
                 amount: recentOfferMessage.offerAmount,
@@ -288,7 +288,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       }
 
       const messageText = newMessage.trim();
-      
+
       // Add message optimistically to UI immediately
       const optimisticMessage = {
         _id: `temp-${Date.now()}`,
@@ -298,14 +298,14 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         timestamp: new Date(),
         isRead: false
       };
-      
+
       setMessages(prev => {
         if (!Array.isArray(prev)) return [optimisticMessage];
         return [...prev, optimisticMessage];
       });
       setNewMessage('');
       stopTyping();
-      
+
       console.log('Sending message to chat:', chatId);
       const messageData = {
         message: messageText,
@@ -324,7 +324,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     try {
       // Clear any previous errors
       setError('');
-      
+
       if (!offerAmount.trim() || !chat) {
         setError('Please enter a valid amount and ensure chat is loaded');
         return;
@@ -383,7 +383,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   const respondToOffer = async (action: 'ACCEPT' | 'REJECT') => {
     try {
       console.log('respondToOffer called:', { action, socket: !!socket, chat: !!chat, currentOffer: !!currentOffer });
-      
+
       if (!chat || !currentOffer) {
         console.log('Missing chat or currentOffer');
         return;
@@ -395,7 +395,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         return;
       }
 
-      const responseMessage = action === 'ACCEPT' 
+      const responseMessage = action === 'ACCEPT'
         ? `Accepted offer of ₹${currentOffer.amount?.toLocaleString() || '0'}`
         : `Rejected offer of ₹${currentOffer.amount?.toLocaleString() || '0'}`;
 
@@ -457,8 +457,8 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       if (!chat || !currentOffer) return;
 
       const chatId = chat._id;
-      console.log('Initiating buy request:', { 
-        chatId, 
+      console.log('Initiating buy request:', {
+        chatId,
         offerAmount: currentOffer.amount,
         landId: chat.landId,
         sellerId: chat.seller?._id,
@@ -473,12 +473,12 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         buyerId: chat.buyer._id,
         agreedPrice: currentOffer.amount
       };
-      
+
       console.log('Sending buy request with data:', requestData);
       const response = await apiService.createBuyRequest(requestData);
       console.log('Buy request created:', response);
-      
-        setBuyRequestStatus('PENDING');
+
+      setBuyRequestStatus('PENDING');
 
       // Add message to chat
       const messageData = {
@@ -490,7 +490,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
     } catch (error: any) {
       console.error('Error creating buy request:', error);
-      
+
       // Handle specific error cases
       if (error.message && error.message.includes('already exists')) {
         // Buy request already exists, load it instead
@@ -535,7 +535,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       // Call API to confirm buy request with 2FA code
       const response = await apiService.confirmBuyRequest(chatId, twoFactorCode);
       console.log('Buy request confirmed:', response);
-      
+
       setBuyRequestStatus('CONFIRMED');
       setShowTwoFactorModal(false);
       setTwoFactorCode('');
@@ -543,7 +543,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
     } catch (error: any) {
       console.error('Error confirming buy request:', error);
-      
+
       // Handle specific 2FA errors
       if (error.message && error.message.includes('Invalid or expired')) {
         setError('Invalid or expired 2FA code. Please try again.');
@@ -566,9 +566,9 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       const response = await apiService.getBuyRequest(chatId);
       if (response.buyRequest) {
         console.log('Existing buy request found:', response.buyRequest);
-        setBuyRequestStatus(response.buyRequest.status === 'PENDING_SELLER_CONFIRMATION' ? 'PENDING' : 
-                           response.buyRequest.status === 'PENDING_ADMIN_APPROVAL' ? 'CONFIRMED' : 
-                           response.buyRequest.status === 'APPROVED' ? 'COMPLETED' : 'NONE');
+        setBuyRequestStatus(response.buyRequest.status === 'PENDING_SELLER_CONFIRMATION' ? 'PENDING' :
+          response.buyRequest.status === 'PENDING_ADMIN_APPROVAL' ? 'CONFIRMED' :
+            response.buyRequest.status === 'APPROVED' ? 'COMPLETED' : 'NONE');
       }
     } catch (error: any) {
       // It's okay if no buy request exists yet
@@ -672,10 +672,10 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={loadChat}
-            className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 font-semibold shadow-md shadow-emerald-500/40 transition"
+            className="px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/40 transition"
           >
             Try Again
           </button>
@@ -687,7 +687,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   if (!chat) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-slate-400">No chat found</p>
+        <p className="text-gray-500">No chat found</p>
       </div>
     );
   }
@@ -695,37 +695,37 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   const otherUser = getOtherUser();
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/40">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Chat Header - Only show if showHeader is true */}
       {showHeader && (
-        <div className="flex items-center justify-between p-4 border-b border-slate-800/50 bg-slate-900/80">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-slate-950 font-semibold shadow-md shadow-emerald-500/40">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#4154f1] to-[#3346d8] rounded-full flex items-center justify-center text-white font-semibold shadow-md shadow-blue-500/40">
               {otherUser?.fullName?.charAt(0) || 'U'}
             </div>
             <div>
-              <h3 className="font-semibold text-white">{otherUser?.fullName || recipientName}</h3>
-              <p className="text-sm text-slate-400">
+              <h3 className="font-semibold text-[#012970]">{otherUser?.fullName || recipientName}</h3>
+              <p className="text-sm text-gray-500">
                 {otherUser?.verificationStatus === 'VERIFIED' ? '✓ Verified' : 'Unverified'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
-              <Phone className="w-5 h-5 text-slate-400 hover:text-emerald-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Phone className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
             </button>
-            <button className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
-              <Video className="w-5 h-5 text-slate-400 hover:text-emerald-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Video className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
             </button>
-            <button className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
-              <MoreVertical className="w-5 h-5 text-slate-400 hover:text-emerald-400" />
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <MoreVertical className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
             </button>
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-slate-400 hover:text-emerald-400" />
+                <X className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
               </button>
             )}
           </div>
@@ -733,16 +733,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       )}
 
       {/* Messages */}
-      <div 
-        className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" 
-        style={{ 
-          maxHeight: 'calc(100vh - 250px)', 
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        style={{
+          maxHeight: 'calc(100vh - 250px)',
           minHeight: '300px',
           scrollbarWidth: 'thin'
         }}
       >
         {messages.length === 0 ? (
-          <div className="text-center text-slate-400 mt-8">
+          <div className="text-center text-gray-500 mt-8">
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
@@ -758,12 +758,12 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             } else {
               senderId = message.sender;
             }
-            
+
             // Convert both to strings for comparison
             const currentUserIdStr = String(currentUserId);
             const senderIdStr = String(senderId);
             const isOwnMessage = currentUserIdStr === senderIdStr;
-            
+
             return (
               <div
                 key={message._id}
@@ -771,23 +771,22 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
               >
                 {/* Message bubble */}
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl shadow-lg transition-all ${
-                    message.messageType === 'OFFER'
+                  className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl shadow-lg transition-all ${message.messageType === 'OFFER'
+                    ? isOwnMessage
+                      ? 'bg-gradient-to-br from-[#4154f1] to-[#3346d8] text-white rounded-br-md shadow-blue-500/30'
+                      : 'bg-white text-[#4154f1] rounded-bl-md border border-blue-100 shadow-sm'
+                    : message.messageType === 'ACCEPTANCE'
                       ? isOwnMessage
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-br-md shadow-emerald-500/30'
-                        : 'bg-slate-800/80 text-emerald-300 rounded-bl-md border border-emerald-500/30 shadow-slate-900/50'
-                      : message.messageType === 'ACCEPTANCE'
-                      ? isOwnMessage
-                        ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-br-md shadow-teal-500/30'
-                        : 'bg-slate-800/80 text-teal-300 rounded-bl-md border border-teal-500/30 shadow-slate-900/50'
+                        ? 'bg-gradient-to-br from-green-500 to-green-600 text-white rounded-br-md shadow-green-500/30'
+                        : 'bg-white text-green-600 rounded-bl-md border border-green-200 shadow-sm'
                       : message.messageType === 'REJECTION'
-                      ? isOwnMessage
-                        ? 'bg-gradient-to-br from-red-500 to-red-600 text-white rounded-br-md shadow-red-500/30'
-                        : 'bg-slate-800/80 text-red-300 rounded-bl-md border border-red-500/30 shadow-slate-900/50'
-                      : isOwnMessage
-                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-br-md shadow-emerald-500/30'
-                      : 'bg-slate-800/60 text-slate-200 rounded-bl-md border border-slate-700/50 shadow-slate-900/50'
-                  }`}
+                        ? isOwnMessage
+                          ? 'bg-gradient-to-br from-red-500 to-red-600 text-white rounded-br-md shadow-red-500/30'
+                          : 'bg-white text-red-600 rounded-bl-md border border-red-200 shadow-sm'
+                        : isOwnMessage
+                          ? 'bg-gradient-to-br from-[#4154f1] to-[#3346d8] text-white rounded-br-md shadow-blue-500/30'
+                          : 'bg-white text-gray-800 rounded-bl-md border border-gray-100 shadow-sm'
+                    }`}
                   title={`Message from: ${isOwnMessage ? 'YOU (Right Side)' : 'OTHER (Left Side)'}`}
                 >
                   {/* Offer message with special styling */}
@@ -797,7 +796,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                       <span className="text-xs font-semibold">OFFER</span>
                     </div>
                   )}
-                  
+
                   {/* Acceptance message with special styling */}
                   {message.messageType === 'ACCEPTANCE' && (
                     <div className="flex items-center gap-2 mb-1">
@@ -805,7 +804,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                       <span className="text-xs font-semibold">ACCEPTED</span>
                     </div>
                   )}
-                  
+
                   {/* Rejection message with special styling */}
                   {message.messageType === 'REJECTION' && (
                     <div className="flex items-center gap-2 mb-1">
@@ -813,14 +812,13 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                       <span className="text-xs font-semibold">REJECTED</span>
                     </div>
                   )}
-                  
+
                   <p className="text-sm leading-relaxed">{message.message}</p>
                   <p
-                    className={`text-xs mt-1 text-right opacity-75 ${
-                      isOwnMessage 
-                        ? 'text-white'
-                        : 'text-slate-400'
-                    }`}
+                    className={`text-xs mt-1 text-right opacity-75 ${isOwnMessage
+                      ? 'text-white'
+                      : 'text-gray-500'
+                      }`}
                   >
                     {formatTime(message.timestamp)}
                   </p>
@@ -829,31 +827,31 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             );
           })
         )}
-        
+
         {/* Typing Indicator */}
         {otherUserTyping && (
           <div className="flex mb-2 justify-start">
-            <div className="bg-slate-800/60 text-slate-300 px-4 py-2 rounded-2xl rounded-bl-md shadow-lg border border-slate-700/50">
+            <div className="bg-white text-gray-600 px-4 py-2 rounded-2xl rounded-bl-md shadow-sm border border-gray-200">
               <div className="flex items-center gap-1">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-[#4154f1] rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-[#4154f1] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-[#4154f1] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
-                <span className="text-xs text-slate-400 ml-2">typing...</span>
+                <span className="text-xs text-gray-500 ml-2">typing...</span>
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Offer Input Section */}
       {showOfferInput && isBuyer() && (
-        <div className="p-4 border-t border-slate-800/50 bg-slate-900/60">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           {error && (
-            <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-red-300 text-sm">
+            <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
               {error}
             </div>
           )}
@@ -866,14 +864,14 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                 setError(''); // Clear error when user types
               }}
               placeholder="Enter offer amount (₹)"
-              className="flex-1 px-4 py-2 border border-slate-700 bg-slate-800/60 text-white rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+              className="flex-1 px-4 py-2 border border-gray-300 bg-white text-gray-900 rounded-full focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
               min="1000"
               step="0.01"
             />
             <button
               onClick={sendOffer}
               disabled={!offerAmount.trim() || isNaN(parseFloat(offerAmount)) || parseFloat(offerAmount) < 1000}
-              className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-full hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold shadow-md shadow-emerald-500/40"
+              className="px-4 py-2 bg-[#4154f1] text-white rounded-full hover:bg-[#3346d8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold shadow-md shadow-blue-500/40"
             >
               <DollarSign className="w-5 h-5" />
             </button>
@@ -883,12 +881,12 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                 setOfferAmount('');
                 setError('');
               }}
-              className="px-4 py-2 bg-slate-700 text-white rounded-full hover:bg-slate-600 transition-colors flex items-center justify-center"
+              className="px-4 py-2 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Minimum offer: ₹1,000</p>
+          <p className="text-xs text-gray-500 mt-2">Minimum offer: ₹1,000</p>
         </div>
       )}
 
@@ -900,23 +898,23 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         shouldShowActions: currentOffer && currentOffer.status === 'PENDING' && isSeller()
       })}
       {currentOffer && currentOffer.status === 'PENDING' && isSeller() && (
-        <div className="p-4 border-t border-slate-800/50 bg-amber-500/10">
+        <div className="p-4 border-t border-amber-200 bg-amber-50">
           <div className="text-center mb-3">
-            <p className="text-sm text-slate-200">
-              <strong className="text-amber-400">₹{currentOffer.amount?.toLocaleString() || '0'}</strong> offer received
+            <p className="text-sm text-gray-700">
+              <strong className="text-amber-700">₹{currentOffer.amount?.toLocaleString() || '0'}</strong> offer received
             </p>
           </div>
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => respondToOffer('ACCEPT')}
-              className="px-6 py-2 bg-emerald-500 text-slate-950 rounded-full hover:bg-emerald-400 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-emerald-500/40"
+              className="px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-500 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-green-500/40"
             >
               <Check className="w-4 h-4" />
               Accept
             </button>
             <button
               onClick={() => respondToOffer('REJECT')}
-              className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-400 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-red-500/40"
+              className="px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-red-500/40"
             >
               <XIcon className="w-4 h-4" />
               Reject
@@ -927,23 +925,23 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
       {/* Buy Request Actions (for buyer after offer accepted) */}
       {currentOffer && currentOffer.status === 'ACCEPTED' && isBuyer() && buyRequestStatus === 'NONE' && (
-        <div className="p-4 border-t border-slate-800/50 bg-teal-500/10">
+        <div className="p-4 border-t border-teal-200 bg-teal-50">
           <div className="text-center mb-3">
-            <p className="text-sm text-slate-200">
+            <p className="text-sm text-gray-700">
               Offer accepted! Ready to proceed with purchase?
             </p>
           </div>
           <div className="flex gap-2 justify-center">
             <button
               onClick={initiateBuyRequest}
-              className="px-6 py-2 bg-teal-500 text-slate-950 rounded-full hover:bg-teal-400 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-teal-500/40"
+              className="px-6 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-500 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-teal-500/40"
             >
               <DollarSign className="w-4 h-4" />
               Initiate Buy Request
             </button>
             <button
               onClick={() => loadExistingBuyRequest(chat?._id || '')}
-              className="px-4 py-2 bg-slate-700 text-white rounded-full hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors flex items-center justify-center gap-2 shadow-sm"
               title="Check for existing buy request"
             >
               <Eye className="w-4 h-4" />
@@ -951,7 +949,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             </button>
             <button
               onClick={() => setBuyRequestStatus('NONE')}
-              className="px-3 py-2 bg-red-500 text-white rounded-full hover:bg-red-400 transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-500/40"
+              className="px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-500/40"
               title="Reset buy request status (for testing)"
             >
               <X className="w-4 h-4" />
@@ -963,16 +961,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
       {/* Buy Request Status (for seller) */}
       {buyRequestStatus === 'PENDING' && isSeller() && (
-        <div className="p-4 border-t border-slate-800/50 bg-orange-500/10">
+        <div className="p-4 border-t border-orange-200 bg-orange-50">
           <div className="text-center mb-3">
-            <p className="text-sm text-slate-200">
-              <strong className="text-orange-400">Buy request pending</strong> your confirmation
+            <p className="text-sm text-gray-700">
+              <strong className="text-orange-600">Buy request pending</strong> your confirmation
             </p>
           </div>
           <div className="flex gap-2 justify-center">
             <button
               onClick={confirmBuyRequest}
-              className="px-6 py-2 bg-orange-500 text-slate-950 rounded-full hover:bg-orange-400 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-orange-500/40"
+              className="px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-400 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md shadow-orange-500/40"
             >
               <Check className="w-4 h-4" />
               Confirm Buy Request
@@ -983,10 +981,10 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
       {/* Transaction Status */}
       {buyRequestStatus === 'CONFIRMED' && (
-        <div className="p-4 border-t border-slate-800/50 bg-purple-500/10">
+        <div className="p-4 border-t border-purple-200 bg-purple-50">
           <div className="text-center">
-            <p className="text-sm text-slate-200">
-              <strong className="text-purple-400">Transaction submitted</strong> to admin for approval
+            <p className="text-sm text-gray-700">
+              <strong className="text-purple-600">Transaction submitted</strong> to admin for approval
             </p>
           </div>
         </div>
@@ -994,29 +992,29 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
 
       {/* Buy Request Already Exists */}
       {buyRequestStatus === 'PENDING' && isBuyer() && (
-        <div className="p-4 border-t border-slate-800/50 bg-teal-500/10">
+        <div className="p-4 border-t border-teal-200 bg-teal-50">
           <div className="text-center">
-            <p className="text-sm text-slate-200">
-              <strong className="text-teal-400">Buy request already exists</strong> and is pending seller confirmation
+            <p className="text-sm text-gray-700">
+              <strong className="text-teal-600">Buy request already exists</strong> and is pending seller confirmation
             </p>
           </div>
         </div>
       )}
 
       {/* Message Input */}
-      <div className="p-4 border-t border-slate-800/50 bg-slate-900/80">
+      <div className="p-4 border-t border-gray-200 bg-white">
         <div className="flex gap-2">
           {/* Offer button for buyers - only show if no accepted offer */}
           {isBuyer() && !showOfferInput && (!currentOffer || currentOffer.status !== 'ACCEPTED') && (
             <button
               onClick={() => setShowOfferInput(true)}
-              className="px-3 py-2 bg-emerald-500 text-slate-950 rounded-full hover:bg-emerald-400 transition-colors flex items-center justify-center font-semibold shadow-md shadow-emerald-500/40"
+              className="px-3 py-2 bg-[#4154f1] text-white rounded-full hover:bg-[#3346d8] transition-colors flex items-center justify-center font-semibold shadow-md shadow-blue-500/40"
               title="Make an offer"
             >
               <DollarSign className="w-4 h-4" />
             </button>
           )}
-          
+
           <input
             ref={inputRef}
             type="text"
@@ -1027,12 +1025,12 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-slate-700 bg-slate-800/60 text-white rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+            className="flex-1 px-4 py-2 border border-gray-300 bg-white text-gray-900 rounded-full focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
           />
           <button
             onClick={sendMessage}
             disabled={!newMessage.trim()}
-            className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-full hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold shadow-md shadow-emerald-500/40"
+            className="px-4 py-2 bg-[#4154f1] text-white rounded-full hover:bg-[#3346d8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center font-semibold shadow-md shadow-blue-500/40"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -1042,15 +1040,15 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       {/* 2FA Modal */}
       {showTwoFactorModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-2xl w-full max-w-md p-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-2xl w-full max-w-md p-6">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-4">
+              <h2 className="text-xl font-bold text-[#012970] mb-4">
                 Two-Factor Authentication
               </h2>
-              <p className="text-sm text-slate-400 mb-6">
+              <p className="text-sm text-gray-500 mb-6">
                 Please enter the 6-digit code from your authenticator app (Google Authenticator, Authy, etc.) to confirm the buy request.
               </p>
-              
+
               <div className="mb-6">
                 <input
                   type="text"
@@ -1063,13 +1061,13 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
                   }}
                   placeholder="Enter 6-digit code"
                   maxLength={6}
-                  className="w-full px-4 py-3 border border-slate-700 bg-slate-800/60 text-white rounded-lg text-center text-xl font-mono focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-slate-500"
+                  className="w-full px-4 py-3 border border-gray-300 bg-gray-50 text-gray-900 rounded-lg text-center text-xl font-mono focus:ring-2 focus:ring-orange-500 focus:border-transparent placeholder-gray-400"
                   autoFocus
                 />
               </div>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-md text-red-300 text-sm">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
                   {error}
                 </div>
               )}
@@ -1077,13 +1075,13 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={closeTwoFactorModal}
-                  className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors font-semibold"
+                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleTwoFactorSubmit}
-                  className="px-6 py-2 bg-orange-500 text-slate-950 rounded-lg hover:bg-orange-400 transition-colors flex items-center gap-2 font-semibold shadow-md shadow-orange-500/40"
+                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-400 transition-colors flex items-center gap-2 font-semibold shadow-md shadow-orange-500/40"
                 >
                   <Check className="w-4 h-4" />
                   Confirm

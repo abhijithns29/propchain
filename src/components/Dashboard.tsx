@@ -181,11 +181,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
         ) : (
           <div className="flex items-center justify-center min-h-96">
             <div className="text-center">
-              <Shield className="h-16 w-16 text-slate-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-white mb-2">
+              <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-[#012970] mb-2">
                 Access Restricted
               </h2>
-              <p className="text-slate-400">
+              <p className="text-gray-600">
                 The Land Database is only accessible to administrators.
               </p>
             </div>
@@ -203,51 +203,51 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
         return (
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-white">Chat System</h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <h1 className="text-2xl font-semibold tracking-tight text-[#012970]">Chat System</h1>
+              <p className="mt-1 text-sm text-gray-600">
                 Communicate with buyers and sellers
               </p>
             </div>
 
             {/* WhatsApp-like Chat Layout */}
-            <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm h-[700px] flex">
+            <div className="rounded-lg border border-gray-200 bg-white shadow-sm h-[700px] flex">
               {/* Left Sidebar - Chat List */}
-              <div className="w-1/3 border-r border-slate-800/50 flex flex-col">
+              <div className="w-1/3 border-r border-gray-200 flex flex-col">
                 {/* Header */}
-                <div className="p-4 border-b border-slate-800/50 bg-slate-900/80">
-                  <h2 className="text-lg font-semibold text-white">Conversations</h2>
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <h2 className="text-lg font-semibold text-[#012970]">Conversations</h2>
                 </div>
 
                 {/* Chat List */}
                 <div className="flex-1 overflow-y-auto">
                   {chatsLoading ? (
                     <div className="flex justify-center items-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4154f1]"></div>
                     </div>
                   ) : error ? (
                     <div className="p-4 text-center">
                       <p className="text-red-400 mb-4 text-sm">{error}</p>
                       <button
                         onClick={loadChats}
-                        className="px-3 py-1 bg-emerald-500 text-slate-950 rounded-md hover:bg-emerald-400 text-sm font-semibold shadow-md shadow-emerald-500/40 transition"
+                        className="px-3 py-1 bg-[#4154f1] text-white rounded-md hover:bg-[#3346d8] text-sm font-semibold shadow-md shadow-blue-500/40 transition"
                       >
                         Try Again
                       </button>
                     </div>
                   ) : chats.length === 0 ? (
-                    <div className="p-4 text-center text-slate-400">
+                    <div className="p-4 text-center text-gray-500">
                       <div className="mb-3">
-                        <svg className="w-12 h-12 mx-auto text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
-                      <h3 className="text-sm font-medium text-white mb-2">No conversations yet</h3>
-                      <p className="text-xs text-slate-400 mb-3">
+                      <h3 className="text-sm font-medium text-gray-900 mb-2">No conversations yet</h3>
+                      <p className="text-xs text-gray-500 mb-3">
                         Start a conversation from the marketplace.
                       </p>
                       <button
                         onClick={() => setActiveTab("marketplace")}
-                        className="text-xs px-3 py-1 bg-emerald-500 text-slate-950 rounded-md hover:bg-emerald-400 font-semibold shadow-md shadow-emerald-500/40 transition"
+                        className="text-xs px-3 py-1 bg-[#4154f1] text-white rounded-md hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/40 transition"
                       >
                         Go to Marketplace
                       </button>
@@ -273,35 +273,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                             <div
                               key={chat._id}
                               onClick={() => handleChatSelect(chat)}
-                              className={`p-3 hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-800/50 ${isActive ? 'bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
+                              className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 ${isActive ? 'bg-blue-50 border-l-4 border-l-[#4154f1]' : ''
                                 }`}
                             >
                               <div className="flex items-start space-x-3">
                                 {/* Avatar */}
-                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-slate-950 font-semibold flex-shrink-0 shadow-md shadow-emerald-500/40">
+                                <div className="w-12 h-12 bg-gradient-to-br from-[#4154f1] to-[#3346d8] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 shadow-md shadow-blue-500/30">
                                   {otherUser?.fullName?.charAt(0) || 'U'}
                                 </div>
 
                                 {/* Chat Info */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start mb-1">
-                                    <h3 className="font-medium text-white truncate">
+                                    <h3 className="font-medium text-gray-900 truncate">
                                       {otherUser?.fullName || 'Unknown User'}
                                     </h3>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chat.status === 'DEAL_AGREED' ? 'bg-emerald-500/20 text-emerald-300' :
-                                        chat.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                                          'bg-slate-800/50 text-slate-400'
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${chat.status === 'DEAL_AGREED' ? 'bg-blue-100 text-[#4154f1]' :
+                                      chat.status === 'ACTIVE' ? 'bg-blue-100 text-[#4154f1]' :
+                                        'bg-gray-100 text-gray-600'
                                       }`}>
                                       {chat.status === 'DEAL_AGREED' ? 'Deal' : 'Active'}
                                     </span>
                                   </div>
 
-                                  <p className="text-sm text-slate-300 mb-1 truncate">
+                                  <p className="text-sm text-gray-600 mb-1 truncate">
                                     {chat.landId?.village}, {chat.landId?.district}
                                   </p>
 
                                   {lastMessage && (
-                                    <p className="text-xs text-slate-400 truncate">
+                                    <p className="text-xs text-gray-500 truncate">
                                       {lastMessage.messageType === 'OFFER' ? '💰 Offer' :
                                         lastMessage.messageType === 'ACCEPTANCE' ? '✅ Accepted' :
                                           lastMessage.messageType === 'REJECTION' ? '❌ Rejected' :
@@ -310,7 +310,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                                   )}
 
                                   {chat.currentOffer && chat.currentOffer.amount && (
-                                    <p className="text-xs font-medium text-emerald-300 mt-1">
+                                    <p className="text-xs font-medium text-[#4154f1] mt-1">
                                       ₹{(chat.currentOffer.amount / 100000).toFixed(1)}L
                                     </p>
                                   )}
@@ -327,10 +327,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
               {/* Right Side - Chat Area */}
               <div className="flex-1 flex flex-col">
                 {(selectedChat || pendingChat) ? (
-                  <div className="flex-1 flex flex-col bg-slate-900/40">
+                  <div className="flex-1 flex flex-col bg-gray-50/50">
                     {/* Chat Header - Same as Marketplace */}
-                    <div className="flex justify-between items-center p-4 border-b border-slate-800/50">
-                      <h2 className="text-xl font-semibold text-white">
+                    <div className="flex justify-between items-center p-4 border-b border-gray-200">
+                      <h2 className="text-xl font-semibold text-[#012970]">
                         {selectedChat ? (() => {
                           // Get current user ID
                           const currentUserId = auth.user?.id;
@@ -345,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                       </h2>
                       <button
                         onClick={handleBackToChatList}
-                        className="text-slate-400 hover:text-white transition-colors"
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
                       >
                         <svg
                           className="w-6 h-6"
@@ -385,13 +385,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center bg-slate-900/40">
-                    <div className="text-center text-slate-400">
-                      <svg className="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex-1 flex items-center justify-center bg-gray-50">
+                    <div className="text-center text-gray-500">
+                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
-                      <h3 className="text-lg font-medium text-white mb-2">Select a conversation</h3>
-                      <p className="text-slate-400">
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+                      <p className="text-gray-500">
                         Choose a conversation from the list to start chatting
                       </p>
                     </div>
@@ -420,16 +420,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white">
+                <h1 className="text-2xl font-semibold tracking-tight text-[#012970]">
                   QR Code Verification
                 </h1>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-gray-600">
                   Scan QR codes to verify land ownership and authenticity
                 </p>
               </div>
               <button
                 onClick={() => setShowQRScanner(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-2xl shadow-lg shadow-emerald-500/40 text-sm font-semibold text-slate-950 bg-emerald-500 hover:bg-emerald-400 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-2xl shadow-lg shadow-blue-500/40 text-sm font-semibold text-white bg-[#4154f1] hover:bg-[#3346d8] transition-colors"
               >
                 <QrCode className="h-4 w-4 mr-2" />
                 Scan QR Code
@@ -439,41 +439,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
             {/* How It Works Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* How It Works */}
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <QrCode className="h-5 w-5 mr-2 text-emerald-400" />
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-[#012970] mb-4 flex items-center">
+                  <QrCode className="h-5 w-5 mr-2 text-[#4154f1]" />
                   How It Works
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-[#4154f1] font-semibold text-sm">
                       1
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-white">Click Scan QR Code</h3>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <h3 className="text-sm font-medium text-gray-900">Click Scan QR Code</h3>
+                      <p className="text-xs text-gray-500 mt-1">
                         Open your device camera to scan land certificates
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-[#4154f1] font-semibold text-sm">
                       2
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-white">Scan the QR Code</h3>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <h3 className="text-sm font-medium text-gray-900">Scan the QR Code</h3>
+                      <p className="text-xs text-gray-500 mt-1">
                         Point your camera at the QR code on the land document
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-300 font-semibold text-sm">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-[#4154f1] font-semibold text-sm">
                       3
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-white">View Results</h3>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <h3 className="text-sm font-medium text-gray-900">View Results</h3>
+                      <p className="text-xs text-gray-500 mt-1">
                         Instantly see ownership details and verification status
                       </p>
                     </div>
@@ -482,41 +482,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
               </div>
 
               {/* Benefits */}
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <CheckCircle className="h-5 w-5 mr-2 text-emerald-400" />
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-[#012970] mb-4 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2 text-[#4154f1]" />
                   Benefits
                 </h2>
                 <div className="space-y-3">
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-[#4154f1] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-300">
-                        <span className="font-medium text-white">Instant Verification:</span> Get results in seconds
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium text-gray-900">Instant Verification:</span> Get results in seconds
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-[#4154f1] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-300">
-                        <span className="font-medium text-white">Fraud Prevention:</span> Verify authenticity on-chain
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium text-gray-900">Fraud Prevention:</span> Verify authenticity on-chain
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-[#4154f1] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-300">
-                        <span className="font-medium text-white">Complete History:</span> View full ownership trail
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium text-gray-900">Complete History:</span> View full ownership trail
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-[#4154f1] mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-slate-300">
-                        <span className="font-medium text-white">Secure & Private:</span> Blockchain-backed verification
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium text-gray-900">Secure & Private:</span> Blockchain-backed verification
                       </p>
                     </div>
                   </div>
@@ -531,11 +531,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-[#f6f9ff]">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-slate-900/40 animate-fadeIn">
+        <div className="rounded-2xl bg-transparent p-0 shadow-none border-0 animate-fadeIn">
           {renderContent()}
         </div>
       </main>

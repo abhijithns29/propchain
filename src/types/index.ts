@@ -63,6 +63,7 @@ export interface Land {
     acres?: number;
     guntas?: number;
     sqft?: number;
+    squareFeet?: number;
   };
   boundaries: {
     north: string;
@@ -111,6 +112,9 @@ export interface Land {
     nearbyAmenities?: string[];
     virtualTourUrl?: string;
   };
+  images?: string[];
+  price?: number;
+  isLiked?: boolean;
   status: 'AVAILABLE' | 'FOR_SALE' | 'UNDER_TRANSACTION' | 'SOLD' | 'DISPUTED';
   verificationStatus: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
   verifiedBy?: User;
@@ -263,4 +267,20 @@ export interface AuditLog {
   details: any;
   timestamp: string;
   ipAddress: string;
+}
+
+export interface Transaction {
+  id: string;
+  transactionType: 'REGISTRATION' | 'SALE' | 'RENT' | 'TRANSFER';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  amount: number;
+  createdAt: string;
+  from?: User;
+  to: User;
+  metadata: {
+    description?: string;
+    rejectionReason?: string;
+  };
+  certificateUrl?: string;
+  blockchainTxHash?: string;
 }

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowRight, ShieldCheck, Zap, MapPinned, TrendingUp, CheckCircle2, Award, ClipboardCheck, Dribbble, Filter, BadgeCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useInView } from 'framer-motion';
 import MarketingLayout from '../components/layout/MarketingLayout';
 
 const stats = [
@@ -147,6 +148,40 @@ const faqs = [
   },
 ];
 
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1 }
+};
+
+// Reusable animated section component
+const AnimatedSection: React.FC<{ children: React.ReactNode; delay?: number }> = ({ children, delay = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={fadeInUp}
+      transition={{ duration: 0.6, delay }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
 
@@ -156,7 +191,12 @@ const Home: React.FC = () => {
       <section className="bg-white py-12 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
-            <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7 }}
+              className="space-y-6"
+            >
               <h1 className="text-4xl font-bold tracking-tight text-[#012970] md:text-5xl lg:text-6xl">
                 Unlocking growth with PropChain smart solutions
               </h1>
@@ -164,28 +204,39 @@ const Home: React.FC = () => {
                 Transforming your business growth with cutting-edge, tailored property solutions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/login')}
                   className="inline-flex items-center justify-center gap-2 rounded bg-[#4154f1] px-8 py-3 text-base font-medium text-white transition hover:bg-[#3346d8]"
                 >
                   Get Started
                   <ArrowRight className="h-5 w-5" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/marketplace-preview')}
                   className="inline-flex items-center justify-center gap-2 rounded border-2 border-[#4154f1] bg-transparent px-8 py-3 text-base font-medium text-[#4154f1] transition hover:bg-[#4154f1] hover:text-white"
                 >
                   Explore Marketplace
-                </button>
+                </motion.button>
               </div>
-            </div>
-            <div className="order-first lg:order-last">
-              <img
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="order-first lg:order-last"
+            >
+              <motion.img
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 src="/assets/img/hero-img.png"
                 alt="PropChain Hero"
-                className="w-full h-auto animate-[float_4s_ease-in-out_infinite]"
+                className="w-full h-auto"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -194,26 +245,33 @@ const Home: React.FC = () => {
       <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 items-center">
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-[#4154f1]">Who We Are</h3>
-              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
-                At PropChain, we are revolutionizing the real estate industry by integrating blockchain technology to create a transparent, secure, and decentralized property marketplace.
-              </h2>
-              <p className="text-gray-600">
-                We are committed to making property transactions more efficient, cost-effective, and accessible to everyone. Join us in redefining how properties are bought and sold in the digital era.
-              </p>
-              <button className="inline-flex items-center gap-2 text-[#4154f1] font-medium hover:gap-3 transition-all">
-                Read More
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div>
-              <img
+            <AnimatedSection>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-semibold text-[#4154f1]">Who We Are</h3>
+                <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
+                  At PropChain, we are revolutionizing the real estate industry by integrating blockchain technology to create a transparent, secure, and decentralized property marketplace.
+                </h2>
+                <p className="text-gray-600">
+                  We are committed to making property transactions more efficient, cost-effective, and accessible to everyone. Join us in redefining how properties are bought and sold in the digital era.
+                </p>
+                <motion.button
+                  whileHover={{ x: 5 }}
+                  className="inline-flex items-center gap-2 text-[#4154f1] font-medium transition-all"
+                >
+                  Read More
+                  <ArrowRight className="h-4 w-4" />
+                </motion.button>
+              </div>
+            </AnimatedSection>
+            <AnimatedSection delay={0.2}>
+              <motion.img
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
                 src="/assets/img/about.jpg"
                 alt="About PropChain"
                 className="w-full h-auto rounded-lg shadow-lg"
               />
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </section>
@@ -221,24 +279,29 @@ const Home: React.FC = () => {
       {/* Values Section */}
       <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Our Values</h2>
-            <p className="mt-2 text-gray-600">What we value most</p>
-          </div>
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Our Values</h2>
+              <p className="mt-2 text-gray-600">What we value most</p>
+            </div>
+          </AnimatedSection>
           <div className="grid gap-8 md:grid-cols-3">
-            {values.map((value) => (
-              <div
-                key={value.title}
-                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
-              >
-                <img
-                  src={value.image}
-                  alt={value.title}
-                  className="mb-4 w-full h-auto"
-                />
-                <h3 className="mb-3 text-xl font-semibold text-[#012970]">{value.title}</h3>
-                <p className="text-sm text-gray-600">{value.description}</p>
-              </div>
+            {values.map((value, index) => (
+              <AnimatedSection key={value.title} delay={index * 0.1}>
+                <motion.div
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+                >
+                  <img
+                    src={value.image}
+                    alt={value.title}
+                    className="mb-4 w-full h-auto"
+                  />
+                  <h3 className="mb-3 text-xl font-semibold text-[#012970]">{value.title}</h3>
+                  <p className="text-sm text-gray-600">{value.description}</p>
+                </motion.div>
+              </AnimatedSection>
             ))}
           </div>
         </div>
@@ -247,27 +310,32 @@ const Home: React.FC = () => {
       {/* Features Section */}
       <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Features</h2>
-            <p className="mt-2 text-gray-600">Our Advanced Features</p>
-          </div>
+          <AnimatedSection>
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">Features</h2>
+              <p className="mt-2 text-gray-600">Our Advanced Features</p>
+            </div>
+          </AnimatedSection>
           <div className="grid gap-12 lg:grid-cols-2 items-center">
-            <div>
+            <AnimatedSection>
               <img
                 src="/assets/img/features.png"
                 alt="Features"
                 className="w-full h-auto"
               />
-            </div>
+            </AnimatedSection>
             <div className="grid gap-6 md:grid-cols-2">
-              {features.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition hover:shadow-md"
-                >
-                  <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-[#4154f1]" />
-                  <h3 className="font-semibold text-[#012970]">{feature.title}</h3>
-                </div>
+              {features.map((feature, index) => (
+                <AnimatedSection key={feature.title} delay={index * 0.1}>
+                  <motion.div
+                    whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                    transition={{ duration: 0.3 }}
+                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4"
+                  >
+                    <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-[#4154f1]" />
+                    <h3 className="font-semibold text-[#012970]">{feature.title}</h3>
+                  </motion.div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
@@ -279,23 +347,34 @@ const Home: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 items-center">
             <div className="grid gap-6 md:grid-cols-2">
-              {altFeatures.map((feature) => (
-                <div key={feature.title} className="space-y-2">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#4154f1]/10 text-[#4154f1]">
-                    <feature.icon className="h-6 w-6" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-[#012970]">{feature.title}</h4>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
-                </div>
+              {altFeatures.map((feature, index) => (
+                <AnimatedSection key={feature.title} delay={index * 0.1}>
+                  <motion.div
+                    whileHover={{ y: -5 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-2"
+                  >
+                    <motion.div
+                      whileHover={{ rotate: 5, scale: 1.1 }}
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[#4154f1]/10 text-[#4154f1]"
+                    >
+                      <feature.icon className="h-6 w-6" />
+                    </motion.div>
+                    <h4 className="text-lg font-semibold text-[#012970]">{feature.title}</h4>
+                    <p className="text-sm text-gray-600">{feature.description}</p>
+                  </motion.div>
+                </AnimatedSection>
               ))}
             </div>
-            <div className="order-first lg:order-last">
-              <img
-                src="/assets/img/alt-features.png"
-                alt="Additional Features"
-                className="w-full h-auto"
-              />
-            </div>
+            <AnimatedSection delay={0.3}>
+              <div className="order-first lg:order-last">
+                <img
+                  src="/assets/img/alt-features.png"
+                  alt="Additional Features"
+                  className="w-full h-auto"
+                />
+              </div>
+            </AnimatedSection>
           </div>
         </div>
       </section>
@@ -303,26 +382,35 @@ const Home: React.FC = () => {
       {/* How It Works */}
       <section className="bg-gray-50 py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 max-w-2xl">
-            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">How It Works</h2>
-            <p className="mt-3 text-gray-600">
-              From onboarding to smart-contract settlement, every step is orchestrated with trust and transparency.
-            </p>
-          </div>
+          <AnimatedSection>
+            <div className="mb-12 max-w-2xl">
+              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">How It Works</h2>
+              <p className="mt-3 text-gray-600">
+                From onboarding to smart-contract settlement, every step is orchestrated with trust and transparency.
+              </p>
+            </div>
+          </AnimatedSection>
           <div className="space-y-8">
             {howItWorks.map((step, index) => (
-              <div
-                key={step.title}
-                className="flex gap-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
-              >
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#4154f1] bg-white text-lg font-bold text-[#4154f1]">
-                  {index + 1}
-                </div>
-                <div>
-                  <h3 className="mb-2 text-xl font-semibold text-[#012970]">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
-                </div>
-              </div>
+              <AnimatedSection key={step.title} delay={index * 0.1}>
+                <motion.div
+                  whileHover={{ x: 10, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }}
+                  transition={{ duration: 0.3 }}
+                  className="flex gap-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-[#4154f1] bg-white text-lg font-bold text-[#4154f1]"
+                  >
+                    {index + 1}
+                  </motion.div>
+                  <div>
+                    <h3 className="mb-2 text-xl font-semibold text-[#012970]">{step.title}</h3>
+                    <p className="text-gray-600">{step.description}</p>
+                  </div>
+                </motion.div>
+              </AnimatedSection>
             ))}
           </div>
         </div>
@@ -331,34 +419,41 @@ const Home: React.FC = () => {
       {/* Testimonials */}
       <section className="bg-white py-16 md:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 max-w-2xl">
-            <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
-              Trusted by Buyers and Authorities
-            </h2>
-            <p className="mt-3 text-gray-600">
-              Built for regulators, institutions, and property participants who cannot compromise on security or transparency.
-            </p>
-          </div>
+          <AnimatedSection>
+            <div className="mb-12 max-w-2xl">
+              <h2 className="text-3xl font-bold text-[#012970] md:text-4xl">
+                Trusted by Buyers and Authorities
+              </h2>
+              <p className="mt-3 text-gray-600">
+                Built for regulators, institutions, and property participants who cannot compromise on security or transparency.
+              </p>
+            </div>
+          </AnimatedSection>
           <div className="grid gap-8 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-sm transition hover:shadow-md"
-              >
-                <p className="mb-4 text-gray-700 italic">&quot;{t.quote}&quot;</p>
-                <div>
-                  <p className="font-semibold text-[#012970]">{t.name}</p>
-                  <p className="text-sm text-[#4154f1]">{t.role}</p>
-                </div>
-              </div>
+            {testimonials.map((t, index) => (
+              <AnimatedSection key={t.name} delay={index * 0.1}>
+                <motion.div
+                  whileHover={{ y: -10, boxShadow: "0 15px 30px rgba(0,0,0,0.15)" }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-6 shadow-sm"
+                >
+                  <p className="mb-4 text-gray-700 italic">&quot;{t.quote}&quot;</p>
+                  <div>
+                    <p className="font-semibold text-[#012970]">{t.name}</p>
+                    <p className="text-sm text-[#4154f1]">{t.role}</p>
+                  </div>
+                </motion.div>
+              </AnimatedSection>
             ))}
           </div>
-          <div className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 text-xs uppercase tracking-wider text-gray-500">
-            <span>Municipal Land Offices</span>
-            <span>Registry Authorities</span>
-            <span>Compliance Teams</span>
-            <span>Title Insurance</span>
-          </div>
+          <AnimatedSection delay={0.4}>
+            <div className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 px-6 py-4 text-xs uppercase tracking-wider text-gray-500">
+              <span>Municipal Land Offices</span>
+              <span>Registry Authorities</span>
+              <span>Compliance Teams</span>
+              <span>Title Insurance</span>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
@@ -367,46 +462,59 @@ const Home: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-[2fr_1.4fr]">
             <div>
-              <h2 className="mb-6 text-3xl font-bold text-[#012970] md:text-4xl">
-                Frequently Asked Questions
-              </h2>
+              <AnimatedSection>
+                <h2 className="mb-6 text-3xl font-bold text-[#012970] md:text-4xl">
+                  Frequently Asked Questions
+                </h2>
+              </AnimatedSection>
               <div className="space-y-4">
-                {faqs.map((item) => (
-                  <details
-                    key={item.question}
-                    className="group rounded-lg border border-gray-200 bg-white p-5"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-[#012970]">
-                      <span>{item.question}</span>
-                      <span className="text-gray-400 group-open:hidden">+</span>
-                      <span className="hidden text-gray-400 group-open:inline">−</span>
-                    </summary>
-                    <p className="mt-3 text-gray-600">{item.answer}</p>
-                  </details>
+                {faqs.map((item, index) => (
+                  <AnimatedSection key={item.question} delay={index * 0.1}>
+                    <motion.details
+                      whileHover={{ x: 5 }}
+                      transition={{ duration: 0.2 }}
+                      className="group rounded-lg border border-gray-200 bg-white p-5"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-[#012970]">
+                        <span>{item.question}</span>
+                        <span className="text-gray-400 group-open:hidden">+</span>
+                        <span className="hidden text-gray-400 group-open:inline">−</span>
+                      </summary>
+                      <p className="mt-3 text-gray-600">{item.answer}</p>
+                    </motion.details>
+                  </AnimatedSection>
                 ))}
               </div>
             </div>
-            <div className="rounded-2xl bg-gradient-to-br from-[#4154f1]/10 to-white p-8 shadow-lg">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#4154f1]">
-                Final Step
-              </p>
-              <h3 className="mt-3 text-2xl font-bold text-[#012970] md:text-3xl">
-                Ready to Secure Your Land Transactions?
-              </h3>
-              <p className="mt-3 text-gray-600">
-                Bring your registry, marketplace, or portfolio into a single source of truth — anchored by blockchain.
-              </p>
-              <button
-                onClick={() => navigate('/login')}
-                className="mt-6 inline-flex items-center gap-2 rounded bg-[#4154f1] px-8 py-3 text-base font-medium text-white transition hover:bg-[#3346d8]"
+            <AnimatedSection delay={0.3}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-2xl bg-gradient-to-br from-[#4154f1]/10 to-white p-8 shadow-lg"
               >
-                Get Started
-                <ArrowRight className="h-5 w-5" />
-              </button>
-              <p className="mt-3 text-xs text-gray-500">
-                No blockchain expertise required. Your teams keep using workflows they know — with stronger guarantees underneath.
-              </p>
-            </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#4154f1]">
+                  Final Step
+                </p>
+                <h3 className="mt-3 text-2xl font-bold text-[#012970] md:text-3xl">
+                  Ready to Secure Your Land Transactions?
+                </h3>
+                <p className="mt-3 text-gray-600">
+                  Bring your registry, marketplace, or portfolio into a single source of truth — anchored by blockchain.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/login')}
+                  className="mt-6 inline-flex items-center gap-2 rounded bg-[#4154f1] px-8 py-3 text-base font-medium text-white transition hover:bg-[#3346d8]"
+                >
+                  Get Started
+                  <ArrowRight className="h-5 w-5" />
+                </motion.button>
+                <p className="mt-3 text-xs text-gray-500">
+                  No blockchain expertise required. Your teams keep using workflows they know — with stronger guarantees underneath.
+                </p>
+              </motion.div>
+            </AnimatedSection>
           </div>
         </div>
       </section>
