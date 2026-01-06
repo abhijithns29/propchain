@@ -35,6 +35,7 @@ interface LandMarketplaceProps {
 const LandMarketplace: React.FC<LandMarketplaceProps> = ({
   onNavigateToLand,
 }) => {
+  const { refreshUser } = useAuth();
   const [lands, setLands] = useState<Land[]>([]);
   const [myListings, setMyListings] = useState<Land[]>([]);
   const [likedLands, setLikedLands] = useState<Land[]>([]);
@@ -80,6 +81,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
       if (returnedFromDetails) {
         sessionStorage.removeItem('navigatedToDetails');
         console.log('Returned from details page, refreshing data...');
+        refreshUser();
       }
 
       // Refresh current tab when window gets focus
@@ -103,6 +105,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     if (returnedFromDetails) {
       sessionStorage.removeItem('navigatedToDetails');
       console.log('Component mounted after details page, refreshing...');
+      refreshUser();
     }
 
     // Also refresh on mount
@@ -149,7 +152,12 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     try {
       setLoading(true);
       const response = await apiService.getLikedLands({ limit: 100 });
-      setLikedLands(response.lands || []);
+      // Ensure each land in the liked tab is explicitly marked as liked
+      const processedLands = (response.lands || []).map((l: any) => ({
+        ...l,
+        isLiked: true
+      }));
+      setLikedLands(processedLands);
     } catch (error: any) {
       setError(error.message || "Failed to load liked lands");
     } finally {
@@ -677,18 +685,24 @@ const LandCard: React.FC<LandCardProps> = ({
   const [isProcessingLike, setIsProcessingLike] = useState<boolean>(false);
 
   useEffect(() => {
-    let initial = false;
-    if (typeof land.isLiked !== "undefined") {
-      initial = !!land.isLiked;
-    } else if (auth.user && Array.isArray((auth.user as any).likedLands)) {
-      initial = (auth.user as any).likedLands.some((id: any) => {
+    let initial = !!land.isLiked;
+
+    // Check user's likedLands as a definitive source if logged in
+    if (auth.user && Array.isArray((auth.user as any).likedLands)) {
+      const isActuallyLiked = (auth.user as any).likedLands.some((id: any) => {
         try {
           return id.toString() === land._id?.toString();
         } catch (e) {
           return id === land._id;
         }
       });
+
+      // If the user's list says it's liked, respect that even if land.isLiked is false/missing
+      if (isActuallyLiked) {
+        initial = true;
+      }
     }
+
     setIsFavorited(initial);
   }, [land._id, land.isLiked, auth.user]);
 
