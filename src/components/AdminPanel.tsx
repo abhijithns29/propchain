@@ -30,7 +30,7 @@ const AdminPanel: React.FC = () => {
   const [crossCheckResults, setCrossCheckResults] = useState<{
     [userId: string]: {
       isChecking: boolean;
-      results: Array<{ docType: string; matches: boolean; message: string }>;
+      results: Array<{ docType: string; matches: boolean; message: string; extractedText?: string }>;
     };
   }>({});
 
@@ -151,7 +151,7 @@ const AdminPanel: React.FC = () => {
       [userId]: { isChecking: true, results: [] }
     }));
 
-    const results: Array<{ docType: string; matches: boolean; message: string }> = [];
+    const results: Array<{ docType: string; matches: boolean; message: string; extractedText?: string }> = [];
 
     try {
       // Check PAN Card
@@ -170,10 +170,10 @@ const AdminPanel: React.FC = () => {
           const extractedPAN = extractedPANs ? extractedPANs[0] : null;
 
           if (cleanText.includes(cleanNumber)) {
-            results.push({ docType: 'PAN Card', matches: true, message: '✅ Number matches document' });
+            results.push({ docType: 'PAN Card', matches: true, message: '✅ Number matches document', extractedText: text });
           } else {
             const extractedInfo = extractedPAN ? ` (Found in document: ${extractedPAN})` : '';
-            results.push({ docType: 'PAN Card', matches: false, message: `❌ Number does NOT match document${extractedInfo}` });
+            results.push({ docType: 'PAN Card', matches: false, message: `❌ Number does NOT match document${extractedInfo}`, extractedText: text });
           }
         } catch (err) {
           results.push({ docType: 'PAN Card', matches: false, message: '⚠️ OCR failed - unclear image' });
@@ -198,10 +198,10 @@ const AdminPanel: React.FC = () => {
           // For Aadhaar, check last 4 digits as it's often masked
           const last4 = cleanNumber.slice(-4);
           if (cleanText.includes(cleanNumber) || cleanText.includes(last4)) {
-            results.push({ docType: 'Aadhaar Card', matches: true, message: '✅ Number matches document' });
+            results.push({ docType: 'Aadhaar Card', matches: true, message: '✅ Number matches document', extractedText: text });
           } else {
             const extractedInfo = extractedAadhaar ? ` (Found in document: ${extractedAadhaar})` : '';
-            results.push({ docType: 'Aadhaar Card', matches: false, message: `❌ Number does NOT match document${extractedInfo}` });
+            results.push({ docType: 'Aadhaar Card', matches: false, message: `❌ Number does NOT match document${extractedInfo}`, extractedText: text });
           }
         } catch (err) {
           results.push({ docType: 'Aadhaar Card', matches: false, message: '⚠️ OCR failed - unclear image' });
@@ -224,10 +224,10 @@ const AdminPanel: React.FC = () => {
           const extractedDL = extractedDLs ? extractedDLs[0] : null;
 
           if (cleanText.includes(cleanNumber)) {
-            results.push({ docType: 'Driving License', matches: true, message: '✅ Number matches document' });
+            results.push({ docType: 'Driving License', matches: true, message: '✅ Number matches document', extractedText: text });
           } else {
             const extractedInfo = extractedDL ? ` (Found in document: ${extractedDL})` : '';
-            results.push({ docType: 'Driving License', matches: false, message: `❌ Number does NOT match document${extractedInfo}` });
+            results.push({ docType: 'Driving License', matches: false, message: `❌ Number does NOT match document${extractedInfo}`, extractedText: text });
           }
         } catch (err) {
           results.push({ docType: 'Driving License', matches: false, message: '⚠️ OCR failed - unclear image' });
@@ -250,10 +250,10 @@ const AdminPanel: React.FC = () => {
           const extractedPassport = extractedPassports ? extractedPassports[0] : null;
 
           if (cleanText.includes(cleanNumber)) {
-            results.push({ docType: 'Passport', matches: true, message: '✅ Number matches document' });
+            results.push({ docType: 'Passport', matches: true, message: '✅ Number matches document', extractedText: text });
           } else {
             const extractedInfo = extractedPassport ? ` (Found in document: ${extractedPassport})` : '';
-            results.push({ docType: 'Passport', matches: false, message: `❌ Number does NOT match document${extractedInfo}` });
+            results.push({ docType: 'Passport', matches: false, message: `❌ Number does NOT match document${extractedInfo}`, extractedText: text });
           }
         } catch (err) {
           results.push({ docType: 'Passport', matches: false, message: '⚠️ OCR failed - unclear image' });
@@ -307,49 +307,49 @@ const AdminPanel: React.FC = () => {
     <div className="space-y-4">
       {pendingUsers.length === 0 ? (
         <div className="text-center py-12">
-          <Users className="mx-auto h-12 w-12 text-slate-500" />
-          <div className="text-slate-300 text-lg mt-4">No pending user verifications</div>
-          <p className="text-slate-400 mt-2">All users have been processed.</p>
+          <Users className="mx-auto h-12 w-12 text-gray-300" />
+          <div className="text-[#012970] text-lg font-bold mt-4">No pending user verifications</div>
+          <p className="text-gray-500 mt-2">All users have been processed.</p>
         </div>
       ) : (
         pendingUsers.map((user) => (
-          <div key={user._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+          <div key={user._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Users className="h-5 w-5 text-emerald-400" />
-                  <h3 className="text-lg font-semibold text-white">{user.fullName}</h3>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <Users className="h-5 w-5 text-[#4154f1]" />
+                  <h3 className="text-lg font-semibold text-[#012970]">{user.fullName}</h3>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-100">
                     PENDING VERIFICATION
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-300 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
                   <div>
-                    <span className="font-medium text-white">Email:</span> {user.email}
+                    <span className="font-medium text-[#012970]">Email:</span> {user.email}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Wallet:</span> {user.walletAddress?.substring(0, 10)}...
+                    <span className="font-medium text-[#012970]">Wallet:</span> {user.walletAddress?.substring(0, 10)}...
                   </div>
                 </div>
 
-                <div className="bg-slate-800/40 rounded-md p-4 mb-4 border border-slate-700/50">
-                  <h4 className="font-medium text-white mb-3">Submitted Verification Documents:</h4>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-100">
+                  <h4 className="font-medium text-[#012970] mb-3">Submitted Verification Documents:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     {user.verificationDocuments?.panCard && (
-                      <div className="bg-slate-800/60 rounded p-3 border border-slate-700">
+                      <div className="bg-white rounded p-3 border border-gray-200">
                         <div className="flex items-center mb-2">
-                          <FileText className="h-4 w-4 text-emerald-400 mr-2" />
-                          <span className="font-medium text-white">PAN Card</span>
+                          <FileText className="h-4 w-4 text-[#4154f1] mr-2" />
+                          <span className="font-medium text-[#012970]">PAN Card</span>
                         </div>
-                        <div className="text-slate-300">Number: {user.verificationDocuments.panCard.number}</div>
+                        <div className="text-gray-600">Number: {user.verificationDocuments.panCard.number}</div>
                         {user.verificationDocuments.panCard.documentUrl && (
                           <div className="mt-2">
                             <a
                               href={user.verificationDocuments.panCard.documentUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center transition-colors"
+                              className="text-[#4154f1] hover:underline text-xs flex items-center transition-colors"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               View Document
@@ -359,19 +359,19 @@ const AdminPanel: React.FC = () => {
                       </div>
                     )}
                     {user.verificationDocuments?.aadhaarCard && (
-                      <div className="bg-slate-800/60 rounded p-3 border border-slate-700">
+                      <div className="bg-white rounded p-3 border border-gray-200">
                         <div className="flex items-center mb-2">
-                          <FileText className="h-4 w-4 text-emerald-400 mr-2" />
-                          <span className="font-medium text-white">Aadhaar Card</span>
+                          <FileText className="h-4 w-4 text-[#4154f1] mr-2" />
+                          <span className="font-medium text-[#012970]">Aadhaar Card</span>
                         </div>
-                        <div className="text-slate-300">Number: {user.verificationDocuments.aadhaarCard.number}</div>
+                        <div className="text-gray-600">Number: {user.verificationDocuments.aadhaarCard.number}</div>
                         {user.verificationDocuments.aadhaarCard.documentUrl && (
                           <div className="mt-2">
                             <a
                               href={user.verificationDocuments.aadhaarCard.documentUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center transition-colors"
+                              className="text-[#4154f1] hover:underline text-xs flex items-center transition-colors"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               View Document
@@ -381,19 +381,19 @@ const AdminPanel: React.FC = () => {
                       </div>
                     )}
                     {user.verificationDocuments?.drivingLicense && (
-                      <div className="bg-slate-800/60 rounded p-3 border border-slate-700">
+                      <div className="bg-white rounded p-3 border border-gray-200">
                         <div className="flex items-center mb-2">
-                          <FileText className="h-4 w-4 text-emerald-400 mr-2" />
-                          <span className="font-medium text-white">Driving License</span>
+                          <FileText className="h-4 w-4 text-[#4154f1] mr-2" />
+                          <span className="font-medium text-[#012970]">Driving License</span>
                         </div>
-                        <div className="text-slate-300">Number: {user.verificationDocuments.drivingLicense.number}</div>
+                        <div className="text-gray-600">Number: {user.verificationDocuments.drivingLicense.number}</div>
                         {user.verificationDocuments.drivingLicense.documentUrl && (
                           <div className="mt-2">
                             <a
                               href={user.verificationDocuments.drivingLicense.documentUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center transition-colors"
+                              className="text-[#4154f1] hover:underline text-xs flex items-center transition-colors"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               View Document
@@ -403,19 +403,19 @@ const AdminPanel: React.FC = () => {
                       </div>
                     )}
                     {user.verificationDocuments?.passport && (
-                      <div className="bg-slate-800/60 rounded p-3 border border-slate-700">
+                      <div className="bg-white rounded p-3 border border-gray-200">
                         <div className="flex items-center mb-2">
-                          <FileText className="h-4 w-4 text-emerald-400 mr-2" />
-                          <span className="font-medium text-white">Passport</span>
+                          <FileText className="h-4 w-4 text-[#4154f1] mr-2" />
+                          <span className="font-medium text-[#012970]">Passport</span>
                         </div>
-                        <div className="text-slate-300">Number: {user.verificationDocuments.passport.number}</div>
+                        <div className="text-gray-600">Number: {user.verificationDocuments.passport.number}</div>
                         {user.verificationDocuments.passport.documentUrl && (
                           <div className="mt-2">
                             <a
                               href={user.verificationDocuments.passport.documentUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 text-xs flex items-center transition-colors"
+                              className="text-[#4154f1] hover:underline text-xs flex items-center transition-colors"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               View Document
@@ -432,10 +432,10 @@ const AdminPanel: React.FC = () => {
                 <button
                   onClick={() => handleVerifyUser(user._id, 'VERIFIED')}
                   disabled={processingId === user._id}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-semibold text-slate-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-emerald-500/40"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-green-500/20"
                 >
                   {processingId === user._id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950 mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   ) : (
                     <CheckCircle className="h-4 w-4 mr-2" />
                   )}
@@ -449,7 +449,7 @@ const AdminPanel: React.FC = () => {
                     }
                   }}
                   disabled={processingId === user._id}
-                  className="inline-flex items-center px-4 py-2 border border-slate-700 rounded-md text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full inline-flex items-center justify-center px-6 py-3 border border-red-200 rounded-xl text-sm font-bold text-red-600 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Reject
@@ -457,7 +457,7 @@ const AdminPanel: React.FC = () => {
                 <button
                   onClick={() => handleAICrossCheck(user)}
                   disabled={crossCheckResults[user._id]?.isChecking}
-                  className="inline-flex items-center px-4 py-2 border border-purple-700 rounded-md text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl text-sm font-bold text-white bg-[#012970] hover:bg-[#012970]/90 disabled:opacity-50 transition-all shadow-lg shadow-blue-900/20"
                 >
                   {crossCheckResults[user._id]?.isChecking ? (
                     <>
@@ -467,27 +467,44 @@ const AdminPanel: React.FC = () => {
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      AI Cross Check
+                      AI Audit
                     </>
                   )}
                 </button>
               </div>
-
-              {/* Display Cross Check Results */}
-              {crossCheckResults[user._id]?.results && crossCheckResults[user._id].results.length > 0 && (
-                <div className="mt-4 ml-4 bg-slate-800/60 rounded-lg p-4 border border-slate-700">
-                  <h4 className="text-sm font-medium text-white mb-2">AI Cross Check Results:</h4>
-                  <div className="space-y-2">
-                    {crossCheckResults[user._id].results.map((result, idx) => (
-                      <div key={idx} className={`text-sm flex items-start ${result.matches ? 'text-emerald-300' : 'text-red-300'}`}>
-                        <span className="font-medium mr-2">{result.docType}:</span>
-                        <span>{result.message}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
+
+            {crossCheckResults[user._id]?.results && crossCheckResults[user._id].results.length > 0 && (
+              <div className="mt-6 bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <h4 className="text-sm font-bold text-[#012970] mb-4 uppercase tracking-wider">Automated Audit Summary:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {crossCheckResults[user._id].results.map((res, idx) => (
+                    <div key={idx} className="flex flex-col space-y-2">
+                      <div className={`px-4 py-3 rounded-xl border text-sm font-bold flex items-center ${res.matches ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                        {res.matches ? (
+                          <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-2 text-red-500" />
+                        )}
+                        <span className="opacity-70 mr-2">{res.docType}:</span>
+                        {res.message}
+                      </div>
+
+                      {!res.matches && res.extractedText && (
+                        <details className="px-2">
+                          <summary className="text-xs font-bold text-gray-400 cursor-pointer hover:text-[#012970] transition-colors ml-1 mb-1">
+                            View AI Reading
+                          </summary>
+                          <div className="bg-white p-3 rounded-lg border border-gray-100 text-[10px] font-mono text-gray-500 max-h-32 overflow-y-auto shadow-inner">
+                            {res.extractedText}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))
       )}
@@ -498,9 +515,9 @@ const AdminPanel: React.FC = () => {
     <div className="space-y-4">
       {allTransactions.length === 0 ? (
         <div className="text-center py-12">
-          <FileText className="mx-auto h-12 w-12 text-slate-500" />
-          <div className="text-slate-300 text-lg mt-4">No transactions found</div>
-          <p className="text-slate-400 mt-2">Transaction history will appear here.</p>
+          <FileText className="mx-auto h-12 w-12 text-gray-300" />
+          <div className="text-[#012970] text-lg font-bold mt-4">No transactions found</div>
+          <p className="text-gray-500 mt-2">Transaction history will appear here.</p>
         </div>
       ) : (
         allTransactions.map((transaction) => {
@@ -508,24 +525,24 @@ const AdminPanel: React.FC = () => {
             switch (status) {
               case 'APPROVED':
               case 'COMPLETED':
-                return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                return 'bg-green-50 text-green-700 border-green-100';
               case 'REJECTED':
               case 'CANCELLED':
-                return 'bg-red-500/20 text-red-300 border-red-500/30';
+                return 'bg-red-50 text-red-700 border-red-100';
               case 'PENDING_ADMIN_APPROVAL':
-                return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                return 'bg-orange-50 text-orange-700 border-orange-100';
               default:
-                return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+                return 'bg-gray-50 text-gray-700 border-gray-100';
             }
           };
 
           return (
-            <div key={transaction._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+            <div key={transaction._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-4">
-                    <FileText className="h-6 w-6 text-blue-400" />
-                    <h3 className="text-xl font-bold text-white">
+                    <FileText className="h-6 w-6 text-[#4154f1]" />
+                    <h3 className="text-xl font-bold text-[#012970]">
                       Transaction #{transaction._id.slice(-6)}
                     </h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border uppercase ${getStatusColor(transaction.status)}`}>
@@ -534,34 +551,34 @@ const AdminPanel: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-slate-400 text-xs uppercase mb-1">Land Asset ID</div>
-                      <div className="text-white font-semibold">{transaction.landId?.assetId || 'N/A'}</div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-gray-500 text-xs uppercase font-semibold mb-1">Land Asset ID</div>
+                      <div className="text-[#012970] font-bold">{transaction.landId?.assetId || 'N/A'}</div>
                     </div>
-                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-slate-400 text-xs uppercase mb-1">Agreed Price</div>
-                      <div className="text-emerald-400 font-bold text-lg">{formatPrice(transaction.agreedPrice)}</div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-gray-500 text-xs uppercase font-semibold mb-1">Agreed Price</div>
+                      <div className="text-[#4154f1] font-bold text-lg">{formatPrice(transaction.agreedPrice)}</div>
                     </div>
-                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-slate-400 text-xs uppercase mb-1">Seller</div>
-                      <div className="text-white font-semibold">{transaction.seller?.fullName || 'N/A'}</div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-gray-500 text-xs uppercase font-semibold mb-1">Seller</div>
+                      <div className="text-[#012970] font-bold">{transaction.seller?.fullName || 'N/A'}</div>
                     </div>
-                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-slate-400 text-xs uppercase mb-1">Buyer</div>
-                      <div className="text-white font-semibold">{transaction.buyer?.fullName || 'N/A'}</div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-gray-500 text-xs uppercase font-semibold mb-1">Buyer</div>
+                      <div className="text-[#012970] font-bold">{transaction.buyer?.fullName || 'N/A'}</div>
                     </div>
                   </div>
 
                   {transaction.adminReview && transaction.adminReview.reviewedAt && (
-                    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-                      <div className="text-slate-400 text-xs uppercase mb-2">Admin Review</div>
-                      <div className="text-sm text-slate-300">
-                        <div>Reviewed: {new Date(transaction.adminReview.reviewedAt).toLocaleString()}</div>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                      <div className="text-gray-500 text-xs uppercase font-semibold mb-2">Admin Review</div>
+                      <div className="text-sm text-gray-600">
+                        <div><span className="font-bold">Reviewed:</span> {new Date(transaction.adminReview.reviewedAt).toLocaleString()}</div>
                         {transaction.adminReview.comments && (
-                          <div className="mt-1">Comments: {transaction.adminReview.comments}</div>
+                          <div className="mt-1"><span className="font-bold">Comments:</span> {transaction.adminReview.comments}</div>
                         )}
                         {transaction.adminReview.rejectionReason && (
-                          <div className="mt-1 text-red-300">Reason: {transaction.adminReview.rejectionReason}</div>
+                          <div className="mt-1 text-red-600 font-bold">Reason: {transaction.adminReview.rejectionReason}</div>
                         )}
                       </div>
                     </div>
@@ -585,42 +602,42 @@ const AdminPanel: React.FC = () => {
         </div>
       ) : (
         pendingTransactions.map((transaction) => (
-          <div key={transaction._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+          <div key={transaction._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-6">
-                  <ShoppingCart className="h-6 w-6 text-emerald-400" />
-                  <h3 className="text-xl font-bold text-white">
+                  <ShoppingCart className="h-6 w-6 text-[#4154f1]" />
+                  <h3 className="text-xl font-bold text-[#012970]">
                     Land Transfer Request
                   </h3>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-100 uppercase">
                     Pending Approval
                   </span>
                 </div>
 
                 {/* Land Details Card */}
-                <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-lg p-4 border border-slate-700/50 mb-4">
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-4">
                   <div className="flex items-center mb-3">
-                    <Database className="h-5 w-5 text-blue-400 mr-2" />
-                    <h4 className="font-bold text-white text-lg">Property Details</h4>
+                    <Database className="h-5 w-5 text-[#4154f1] mr-2" />
+                    <h4 className="font-bold text-[#012970] text-lg">Property Details</h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
-                      <span className="text-slate-400 text-xs uppercase">Asset ID</span>
-                      <div className="text-white font-semibold">{transaction.landId?.assetId || 'N/A'}</div>
+                    <div className="bg-white rounded p-3 border border-gray-200">
+                      <span className="text-gray-500 text-xs uppercase font-semibold">Asset ID</span>
+                      <div className="text-[#012970] font-bold">{transaction.landId?.assetId || 'N/A'}</div>
                     </div>
-                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
-                      <span className="text-slate-400 text-xs uppercase">Survey Number</span>
-                      <div className="text-white font-semibold">{transaction.landId?.surveyNumber || 'N/A'}</div>
+                    <div className="bg-white rounded p-3 border border-gray-200">
+                      <span className="text-gray-500 text-xs uppercase font-semibold">Survey Number</span>
+                      <div className="text-[#012970] font-bold">{transaction.landId?.surveyNumber || 'N/A'}</div>
                     </div>
-                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
-                      <span className="text-slate-400 text-xs uppercase">Location</span>
-                      <div className="text-white font-semibold">{transaction.landId?.village || 'N/A'}, {transaction.landId?.district || 'N/A'}</div>
+                    <div className="bg-white rounded p-3 border border-gray-200">
+                      <span className="text-gray-500 text-xs uppercase font-semibold">Location</span>
+                      <div className="text-[#012970] font-bold">{transaction.landId?.village || 'N/A'}, {transaction.landId?.district || 'N/A'}</div>
                     </div>
-                    <div className="bg-slate-900/40 rounded p-2 border border-slate-700/30">
-                      <span className="text-slate-400 text-xs uppercase">Type & Area</span>
-                      <div className="text-white font-semibold">{transaction.landId?.landType || 'N/A'} - {transaction.landId?.area?.acres || 0} Acres</div>
+                    <div className="bg-white rounded p-3 border border-gray-200">
+                      <span className="text-gray-500 text-xs uppercase font-semibold">Type & Area</span>
+                      <div className="text-[#012970] font-bold">{transaction.landId?.landType || 'N/A'} - {transaction.landId?.area?.acres || 0} Acres</div>
                     </div>
                   </div>
                 </div>
@@ -628,23 +645,23 @@ const AdminPanel: React.FC = () => {
                 {/* Transfer Details - From and To Boxes */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {/* FROM Box - Seller */}
-                  <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 rounded-lg p-4 border-2 border-red-500/30">
+                  <div className="bg-red-50 rounded-xl p-4 border border-red-100">
                     <div className="flex items-center mb-3">
-                      <div className="bg-red-500/20 rounded-full p-2 mr-3">
-                        <Users className="h-5 w-5 text-red-400" />
+                      <div className="bg-white rounded-full p-2 mr-3 shadow-sm">
+                        <Users className="h-5 w-5 text-red-600" />
                       </div>
                       <div>
-                        <div className="text-red-300 text-xs font-bold uppercase tracking-wide">From (Seller)</div>
-                        <div className="text-white font-bold text-lg">{transaction.seller?.fullName || 'N/A'}</div>
+                        <div className="text-red-700 text-xs font-bold uppercase tracking-wide">From (Seller)</div>
+                        <div className="text-[#012970] font-bold text-lg">{transaction.seller?.fullName || 'N/A'}</div>
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-slate-300">
-                        <span className="text-slate-400 mr-2">📧</span>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <span className="mr-2">📧</span>
                         {transaction.seller?.email || 'N/A'}
                       </div>
                       <div className="flex items-center">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-white text-red-700 border border-red-200">
                           Current Owner
                         </span>
                       </div>
@@ -652,23 +669,23 @@ const AdminPanel: React.FC = () => {
                   </div>
 
                   {/* TO Box - Buyer */}
-                  <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-lg p-4 border-2 border-emerald-500/30">
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-100">
                     <div className="flex items-center mb-3">
-                      <div className="bg-emerald-500/20 rounded-full p-2 mr-3">
-                        <Users className="h-5 w-5 text-emerald-400" />
+                      <div className="bg-white rounded-full p-2 mr-3 shadow-sm">
+                        <Users className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <div className="text-emerald-300 text-xs font-bold uppercase tracking-wide">To (Buyer)</div>
-                        <div className="text-white font-bold text-lg">{transaction.buyer?.fullName || 'N/A'}</div>
+                        <div className="text-green-700 text-xs font-bold uppercase tracking-wide">To (Buyer)</div>
+                        <div className="text-[#012970] font-bold text-lg">{transaction.buyer?.fullName || 'N/A'}</div>
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-slate-300">
-                        <span className="text-slate-400 mr-2">📧</span>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <span className="mr-2">📧</span>
                         {transaction.buyer?.email || 'N/A'}
                       </div>
                       <div className="flex items-center">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-white text-green-700 border border-green-200">
                           Prospective Owner
                         </span>
                       </div>
@@ -677,15 +694,15 @@ const AdminPanel: React.FC = () => {
                 </div>
 
                 {/* Transaction Info */}
-                <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/50">
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-slate-400 text-xs uppercase">Agreed Price</span>
-                      <div className="text-emerald-400 font-bold text-xl">{formatPrice(transaction.agreedPrice)}</div>
+                      <span className="text-blue-700 text-xs uppercase font-bold">Agreed Price</span>
+                      <div className="text-[#4154f1] font-bold text-2xl">{formatPrice(transaction.agreedPrice)}</div>
                     </div>
                     <div>
-                      <span className="text-slate-400 text-xs uppercase">Request Date</span>
-                      <div className="text-white font-semibold">{new Date(transaction.createdAt).toLocaleDateString()}</div>
+                      <span className="text-blue-700 text-xs uppercase font-bold">Request Date</span>
+                      <div className="text-[#012970] font-bold text-lg">{new Date(transaction.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
                 </div>
@@ -696,10 +713,10 @@ const AdminPanel: React.FC = () => {
                 <button
                   onClick={() => handleApproveTransaction(transaction._id)}
                   disabled={processingId === transaction._id}
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/40 hover:shadow-emerald-500/60"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-sm font-bold text-white bg-[#4154f1] hover:bg-[#3346d8] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
                 >
                   {processingId === transaction._id ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-950 mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                   ) : (
                     <CheckCircle className="h-5 w-5 mr-2" />
                   )}
@@ -713,7 +730,7 @@ const AdminPanel: React.FC = () => {
                     }
                   }}
                   disabled={processingId === transaction._id}
-                  className="inline-flex items-center justify-center px-6 py-3 border-2 border-red-500/50 rounded-lg text-sm font-bold text-red-300 bg-red-900/20 hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   <XCircle className="h-5 w-5 mr-2" />
                   Reject
@@ -730,45 +747,45 @@ const AdminPanel: React.FC = () => {
     <div className="space-y-4">
       {allLands.length === 0 ? (
         <div className="text-center py-12">
-          <Database className="mx-auto h-12 w-12 text-slate-500" />
-          <div className="text-slate-300 text-lg mt-4">No lands registered</div>
-          <p className="text-slate-400 mt-2">No lands have been added to the database yet.</p>
+          <Database className="mx-auto h-12 w-12 text-gray-300" />
+          <div className="text-[#012970] text-lg font-bold mt-4">No lands registered</div>
+          <p className="text-gray-500 mt-2">No lands have been added to the database yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {allLands.map((land) => (
-            <div key={land._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+            <div key={land._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">
+                  <h3 className="text-lg font-bold text-[#012970]">
                     Asset ID: {land.assetId}
                   </h3>
-                  <p className="text-sm text-slate-400">Survey: {land.surveyNumber}</p>
+                  <p className="text-sm text-gray-500">Survey: {land.surveyNumber}</p>
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${land.status === 'AVAILABLE' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                    land.status === 'FOR_SALE' ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' :
-                      'bg-slate-700/50 text-slate-300 border border-slate-600'
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold border ${land.status === 'AVAILABLE' ? 'bg-green-50 text-green-700 border-green-100' :
+                    land.status === 'FOR_SALE' ? 'bg-teal-50 text-teal-700 border-teal-100' :
+                      'bg-gray-50 text-gray-700 border-gray-100'
                     }`}>
                     {land.status.replace('_', ' ')}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${land.verificationStatus === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                    land.verificationStatus === 'PENDING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                      'bg-red-500/20 text-red-300 border border-red-500/30'
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold border ${land.verificationStatus === 'VERIFIED' ? 'bg-blue-50 text-[#4154f1] border-blue-100' :
+                    land.verificationStatus === 'PENDING' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                      'bg-red-50 text-red-700 border-red-100'
                     }`}>
                     {land.verificationStatus}
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm text-slate-300">
-                <div><span className="font-medium text-white">Location:</span> {land.village}, {land.district}</div>
-                <div><span className="font-medium text-white">Type:</span> {land.landType}</div>
-                <div><span className="font-medium text-white">Area:</span> {land.area.acres || 0} Acres</div>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div><span className="font-bold text-[#012970]">Location:</span> {land.village}, {land.district}</div>
+                <div><span className="font-bold text-[#012970]">Type:</span> {land.landType}</div>
+                <div><span className="font-bold text-[#012970]">Area:</span> {land.area.acres || 0} Acres</div>
                 {land.currentOwner && (
-                  <div><span className="font-medium text-white">Owner:</span> {land.currentOwner.fullName}</div>
+                  <div><span className="font-bold text-[#012970]">Owner:</span> {land.currentOwner.fullName}</div>
                 )}
-                <div><span className="font-medium text-white">Digitalized:</span> {land.digitalDocument?.isDigitalized ? 'Yes' : 'No'}</div>
+                <div><span className="font-bold text-[#012970]">Digitalized:</span> {land.digitalDocument?.isDigitalized ? 'Yes' : 'No'}</div>
               </div>
             </div>
           ))}
@@ -781,43 +798,43 @@ const AdminPanel: React.FC = () => {
     <div className="space-y-4">
       {landTransactions.length === 0 ? (
         <div className="text-center py-12">
-          <ShoppingCart className="mx-auto h-12 w-12 text-slate-500" />
-          <div className="text-slate-300 text-lg mt-4">No pending land transactions</div>
-          <p className="text-slate-400 mt-2">All land transactions have been processed.</p>
+          <ShoppingCart className="mx-auto h-12 w-12 text-gray-300" />
+          <div className="text-[#012970] text-lg font-bold mt-4">No pending land transactions</div>
+          <p className="text-gray-500 mt-2">All land transactions have been processed.</p>
         </div>
       ) : (
         landTransactions.map((transaction) => (
-          <div key={transaction._id} className="bg-slate-900/60 rounded-lg shadow-lg border border-slate-800 p-6">
+          <div key={transaction._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-4">
-                  <ShoppingCart className="h-5 w-5 text-emerald-400" />
-                  <h3 className="text-lg font-semibold text-white">
+                  <ShoppingCart className="h-5 w-5 text-[#4154f1]" />
+                  <h3 className="text-lg font-bold text-[#012970]">
                     Land Sale Transaction
                   </h3>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 border border-orange-100">
                     {transaction.status.replace('_', ' ')}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-300 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
                   <div>
-                    <span className="font-medium text-white">Asset ID:</span> {transaction.landId.assetId}
+                    <span className="font-bold text-[#012970]">Asset ID:</span> {transaction.landId.assetId}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Location:</span> {transaction.landId.village}, {transaction.landId.district}
+                    <span className="font-bold text-[#012970]">Location:</span> {transaction.landId.village}, {transaction.landId.district}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Seller:</span> {transaction.seller.fullName}
+                    <span className="font-bold text-[#012970]">Seller:</span> {transaction.seller.fullName}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Buyer:</span> {transaction.buyer.fullName}
+                    <span className="font-bold text-[#012970]">Buyer:</span> {transaction.buyer.fullName}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Agreed Price:</span> {formatPrice(transaction.agreedPrice)}
+                    <span className="font-bold text-[#012970]">Agreed Price:</span> {formatPrice(transaction.agreedPrice)}
                   </div>
                   <div>
-                    <span className="font-medium text-white">Date:</span> {new Date(transaction.createdAt).toLocaleDateString()}
+                    <span className="font-bold text-[#012970]">Date:</span> {new Date(transaction.createdAt).toLocaleDateString()}
                   </div>
                 </div>
               </div>
@@ -826,10 +843,10 @@ const AdminPanel: React.FC = () => {
                 <button
                   onClick={() => handleReviewLandTransaction(transaction._id, 'approve')}
                   disabled={processingId === transaction._id}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-sm font-semibold text-slate-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-emerald-500/40"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-green-500/20"
                 >
                   {processingId === transaction._id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950 mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   ) : (
                     <CheckCircle className="h-4 w-4 mr-2" />
                   )}
@@ -844,7 +861,7 @@ const AdminPanel: React.FC = () => {
                     }
                   }}
                   disabled={processingId === transaction._id}
-                  className="inline-flex items-center px-4 py-2 border border-slate-700 rounded-md text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Reject
@@ -860,20 +877,20 @@ const AdminPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-2xl font-bold text-[#012970]">Admin Panel</h1>
+        <p className="mt-1 text-sm text-gray-500">
           Manage users, transactions, and land registry
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-slate-800">
+      <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('users')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'users'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
             <Users className="inline h-4 w-4 mr-2" />
@@ -881,9 +898,9 @@ const AdminPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'transactions'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'transactions'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
             <FileText className="inline h-4 w-4 mr-2" />
@@ -891,9 +908,9 @@ const AdminPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('all-transactions')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'all-transactions'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'all-transactions'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
             <FileText className="inline h-4 w-4 mr-2" />
@@ -901,9 +918,9 @@ const AdminPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('land-transactions')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'land-transactions'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'land-transactions'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
             <ShoppingCart className="inline h-4 w-4 mr-2" />
@@ -911,9 +928,9 @@ const AdminPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('lands')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'lands'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'lands'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
             <Database className="inline h-4 w-4 mr-2" />
@@ -923,14 +940,15 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-md">
+        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-4 rounded-xl text-sm font-medium flex items-center">
+          <XCircle className="h-5 w-5 mr-3 text-red-500" />
           {error}
         </div>
       )}
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4154f1]"></div>
         </div>
       ) : (
         <>
@@ -945,15 +963,15 @@ const AdminPanel: React.FC = () => {
       {/* Success Animation Modal */}
       {showSuccessAnimation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-emerald-900/90 to-emerald-800/90 rounded-2xl p-8 shadow-2xl border-2 border-emerald-500/50 animate-bounce-in">
+          <div className="bg-white rounded-3xl p-10 shadow-2xl border border-gray-100 animate-bounce-in max-w-sm w-full mx-4">
             <div className="text-center">
-              <div className="mb-4 flex justify-center">
-                <div className="bg-emerald-500/20 rounded-full p-4 animate-pulse">
-                  <CheckCircle className="h-16 w-16 text-emerald-400" />
+              <div className="mb-6 flex justify-center">
+                <div className="bg-green-50 rounded-full p-6">
+                  <CheckCircle className="h-20 w-20 text-green-500" />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold text-white mb-2">{successMessage}</h2>
-              <p className="text-emerald-300 text-lg">The ownership has been transferred successfully.</p>
+              <h2 className="text-2xl font-bold text-[#012970] mb-3">{successMessage}</h2>
+              <p className="text-gray-500 font-medium">The operation has been completed successfully.</p>
             </div>
           </div>
         </div>
