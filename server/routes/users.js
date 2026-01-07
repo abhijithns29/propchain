@@ -470,7 +470,7 @@ router.get("/profile", auth, async (req, res) => {
 // Update user profile
 router.put("/profile", auth, async (req, res) => {
   try {
-    const { fullName, phoneNumber, address } = req.body;
+    const { fullName, phoneNumber, address, walletAddress } = req.body;
 
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -493,6 +493,7 @@ router.put("/profile", auth, async (req, res) => {
 
     // Update allowed fields
     if (fullName) user.fullName = fullName.trim();
+    if (walletAddress) user.walletAddress = walletAddress.trim().toLowerCase();
     if (phoneNumber !== undefined) {
       user.profile.phoneNumber = phoneNumber.trim();
     }

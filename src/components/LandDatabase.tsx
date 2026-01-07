@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
-  Search,
   MapPin,
   Home,
   Plus,
   Eye,
+  Search,
   CheckCircle,
   ShoppingCart,
   User,
   Shield,
   X,
   XCircle,
-  Edit,
+  Edit
 } from "lucide-react";
 import { Land } from "../types";
 import { useAuth } from "../hooks/useAuth";
@@ -588,6 +588,7 @@ const LandDatabase: React.FC = () => {
                         Edit
                       </button>
                     )}
+
                   </div>
 
                   {land.digitalDocument?.isDigitalized && (
@@ -708,7 +709,7 @@ const LandDatabase: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 pt-2">
-                        <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${selectedLand.currentOwner.verificationStatus === 'VERIFIED' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        <div className={`px - 3 py - 1 rounded - full text - [10px] font - bold uppercase tracking - widest ${selectedLand.currentOwner.verificationStatus === 'VERIFIED' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'} `}>
                           {selectedLand.currentOwner.verificationStatus === 'VERIFIED' ? 'Verified Owner' : 'Unverified'}
                         </div>
                       </div>

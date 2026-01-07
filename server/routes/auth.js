@@ -83,7 +83,7 @@ router.post("/verify-and-register", async (req, res) => {
 
     // Check wallet address if provided
     if (walletAddress) {
-      const existingWallet = await User.findOne({ walletAddress });
+      const existingWallet = await User.findOne({ walletAddress: walletAddress.trim().toLowerCase() });
       if (existingWallet) {
         return res.status(400).json({
           ok: false,
@@ -119,7 +119,7 @@ router.post("/verify-and-register", async (req, res) => {
 
     // Add wallet address if provided
     if (walletAddress) {
-      userData.walletAddress = walletAddress.trim();
+      userData.walletAddress = walletAddress.trim().toLowerCase();
     }
 
     const user = new User(userData);
@@ -360,7 +360,7 @@ router.post("/register", async (req, res) => {
 
     // Check wallet address if provided
     if (walletAddress) {
-      const existingWallet = await User.findOne({ walletAddress });
+      const existingWallet = await User.findOne({ walletAddress: walletAddress.trim().toLowerCase() });
       if (existingWallet) {
         return res.status(400).json({
           success: false,
@@ -394,7 +394,7 @@ router.post("/register", async (req, res) => {
 
     // Add wallet address if provided
     if (walletAddress) {
-      userData.walletAddress = walletAddress.trim();
+      userData.walletAddress = walletAddress.trim().toLowerCase();
     }
 
     const user = new User(userData);
@@ -489,7 +489,7 @@ router.post("/login", async (req, res) => {
     if (email) {
       user = await User.findByEmail(email);
     } else if (walletAddress) {
-      user = await User.findOne({ walletAddress: walletAddress.trim() });
+      user = await User.findOne({ walletAddress: walletAddress.trim().toLowerCase() });
     }
 
     if (!user) {
@@ -612,7 +612,7 @@ router.post("/verify-wallet", async (req, res) => {
     }
 
     // Find user by wallet address
-    const user = await User.findOne({ walletAddress: walletAddress.trim() });
+    const user = await User.findOne({ walletAddress: walletAddress.trim().toLowerCase() });
     if (!user) {
       return res.status(404).json({
         message: "No user found with this wallet address",

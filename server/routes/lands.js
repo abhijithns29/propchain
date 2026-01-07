@@ -281,34 +281,6 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
       `✅ Land successfully added with Asset ID: ${savedLand.assetId}`
     );
 
-    // Register land on blockchain
-    console.log("=== REGISTERING LAND ON BLOCKCHAIN ===");
-    try {
-      const blockchainResult = await blockchainService.registerLand(
-        savedLand.assetId,
-        savedLand.currentOwner.toString(),
-        savedLand.surveyNumber,
-        savedLand.area,
-        savedLand.coordinates
-      );
-
-      if (blockchainResult) {
-        // Update land with blockchain data
-        savedLand.blockchainTxHash = blockchainResult.transactionHash;
-        savedLand.blockchainId = blockchainResult.propertyId;
-        savedLand.blockchainBlock = blockchainResult.blockNumber;
-        await savedLand.save();
-        
-        console.log(`✅ Land registered on blockchain - TX: ${blockchainResult.transactionHash}`);
-        console.log(`✅ Blockchain Property ID: ${blockchainResult.propertyId}`);
-      } else {
-        console.log("⚠️  Blockchain registration skipped (blockchain not available)");
-      }
-    } catch (blockchainError) {
-      console.error("❌ Blockchain registration failed:", blockchainError.message);
-      console.log("⚠️  Land saved to database but not on blockchain");
-    }
-
     // Call digitalization with the saved document's _id
     console.log("=== DIGITALIZING LAND DOCUMENT ===");
     console.log("Land ID:", savedLand._id);
@@ -459,6 +431,32 @@ router.put("/:landId", adminAuth, async (req, res) => {
       };
     }
 
+    // If land was digitalized, reset it because data has changed
+    const wasDigitalized = land.digitalDocument?.isDigitalized;
+    if (wasDigitalized) {
+      console.log("⚠️ Land data edited - Resetting digitalization status");
+      land.digitalDocument.isDigitalized = false;
+      land.digitalDocument.generatedAt = new Date();
+      
+      // Also remove from user's owned lands until re-digitalized
+      if (land.currentOwner) {
+        const user = await User.findById(land.currentOwner);
+        if (user) {
+          user.ownedLands = user.ownedLands.filter(
+            (id) => id.toString() !== land._id.toString()
+          );
+          await user.save();
+          console.log(`✅ Land removed from user's owned lands due to edit: ${user.fullName}`);
+        }
+      }
+
+      // CLEAR blockchain fields so re-digitalization triggers a NEW registration with updated data
+      land.blockchainTxHash = undefined;
+      land.blockchainId = undefined;
+      land.blockchainBlock = undefined;
+      console.log("🔄 Blockchain metadata cleared for re-registration after edit");
+    }
+
     await land.save();
 
     // Log audit trail
@@ -523,6 +521,19 @@ router.delete("/:landId", adminAuth, async (req, res) => {
 
     // Delete the land
     await Land.findByIdAndDelete(req.params.landId);
+
+    // Remove from user's owned lands (all users just in case, or specific owner)
+    if (land.currentOwner) {
+      await User.findByIdAndUpdate(land.currentOwner, {
+        $pull: { ownedLands: land._id }
+      });
+    }
+
+    // Safety check: remove from ANY user who might have it in ownedLands
+    await User.updateMany(
+      { ownedLands: land._id },
+      { $pull: { ownedLands: land._id } }
+    );
 
     // Log audit trail
     await AuditLog.logAction(
@@ -659,6 +670,49 @@ router.post("/digitalize", adminAuth, async (req, res) => {
 
     await land.save();
 
+    // === NEW FLOW: Register on blockchain and add to user's owned lands ONLY when digitalized ===
+    console.log("=== CHECKING BLOCKCHAIN REGISTRATION STATUS ===");
+    try {
+      const owner = land.currentOwner;
+      if (owner) {
+        // IDEMPOTENCY CHECK: Only register if not already on blockchain
+        if (land.blockchainTxHash) {
+          console.log(`ℹ️ Land ${land.assetId} already registered on blockchain. Skipping duplicate registration.`);
+        } else {
+          const ownerAddress = owner.walletAddress || blockchainService.wallet?.address || "0x0000000000000000000000000000000000000000";
+          
+          console.log(`Using owner address for blockchain: ${ownerAddress}`);
+          
+          const blockchainResult = await blockchainService.registerLand(
+            land.assetId,
+            ownerAddress,
+            land.surveyNumber,
+            land.area,
+            land.coordinates
+          );
+
+          if (blockchainResult) {
+            land.blockchainTxHash = blockchainResult.transactionHash;
+            land.blockchainId = blockchainResult.propertyId;
+            land.blockchainBlock = blockchainResult.blockNumber;
+            await land.save();
+            console.log(`✅ Land registered on blockchain - TX: ${blockchainResult.transactionHash}`);
+          }
+        }
+
+        // Add to user's owned lands if not already present (Add back after digitalize/edit)
+        const user = await User.findById(owner._id);
+        if (user && !user.ownedLands.includes(land._id)) {
+          user.ownedLands.push(land._id);
+          await user.save();
+          console.log(`✅ Land added to user's owned lands: ${user.fullName}`);
+        }
+      }
+    } catch (blockchainError) {
+      console.error("❌ Blockchain/Ownership registration failed during digitalization:", blockchainError.message);
+    }
+    // ===========================================================================================
+
     // Log audit trail
     await AuditLog.logAction(
       "LAND_DIGITALIZE",
@@ -732,6 +786,18 @@ router.post("/undigitalize", adminAuth, async (req, res) => {
     };
 
     await land.save();
+
+    // Remove from user's owned lands
+    if (land.currentOwner) {
+      const user = await User.findById(land.currentOwner);
+      if (user) {
+        user.ownedLands = user.ownedLands.filter(
+          (id) => id.toString() !== land._id.toString()
+        );
+        await user.save();
+        console.log(`✅ Land removed from user's owned lands: ${user.fullName}`);
+      }
+    }
 
     // Log audit trail
     await AuditLog.logAction(
@@ -1374,6 +1440,7 @@ router.get("/my-lands", auth, async (req, res) => {
     // Build query for user's owned lands
     const query = {
       currentOwner: req.user._id,
+      "digitalDocument.isDigitalized": true,
     };
 
     // Add filters
@@ -1992,7 +2059,11 @@ router.get("/owned-by/:userId", auth, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Get lands owned by the user
-    const lands = await Land.find({ currentOwner: userId })
+    const query = { 
+      currentOwner: userId,
+      "digitalDocument.isDigitalized": true 
+    };
+    const lands = await Land.find(query)
       .populate("currentOwner", "name email")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -2000,7 +2071,7 @@ router.get("/owned-by/:userId", auth, async (req, res) => {
       .lean();
 
     // Get total count for pagination
-    const totalLands = await Land.countDocuments({ currentOwner: userId });
+    const totalLands = await Land.countDocuments(query);
 
     // Format the response
     const formattedLands = lands.map((land) => ({
@@ -2169,6 +2240,15 @@ router.delete("/:landId/remove-listing", auth, async (req, res) => {
     land.status = "AVAILABLE";
 
     await land.save();
+
+    // Delete associated chats as per user request
+    try {
+      const Chat = require('../models/Chat');
+      await Chat.deleteMany({ landId: land._id });
+      console.log(`✅ Deleted all chats for land ${land._id} after listing removal`);
+    } catch (chatError) {
+      console.error(`⚠️ Failed to delete chats for land ${land._id}:`, chatError);
+    }
 
     res.json({
       success: true,

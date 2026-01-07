@@ -110,6 +110,7 @@ const landTransactionSchema = new mongoose.Schema({
   
   // Blockchain information
   blockchainTxHash: String,
+  blockchainBlock: Number,
   escrowContractAddress: String,
   
   // Timeline tracking

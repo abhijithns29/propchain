@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
       trim: true,
+      lowercase: true,
       match: [/^0x[a-fA-F0-9]{40}$/, "Please enter a valid Ethereum address"],
     },
     role: {

@@ -12,7 +12,6 @@ import {
   Copy,
   Map,
   Calendar,
-  DollarSign,
   Eye,
   ShoppingCart,
   Scissors,
@@ -95,6 +94,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
     fullName: auth.user?.fullName || "",
     email: auth.user?.email || "",
     phoneNumber: auth.user?.profile?.phoneNumber || "",
+    walletAddress: auth.user?.walletAddress || "",
     address: {
       street: auth.user?.profile?.address?.street || "",
       city: auth.user?.profile?.address?.city || "",
@@ -102,6 +102,40 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       zipCode: auth.user?.profile?.address?.zipCode || "",
     },
   });
+
+  const handleConnectWallet = async () => {
+    if (typeof window.ethereum === "undefined") {
+      setError("MetaMask is not installed. Please install it to connect your wallet.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Request account access
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
+      const address = accounts[0];
+
+      // Update local state
+      setFormData(prev => ({ ...prev, walletAddress: address }));
+
+      // Save to profile immediately
+      await apiService.updateProfile({
+        walletAddress: address
+      } as any);
+
+      await refreshUser();
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err: any) {
+      console.error("Failed to connect wallet:", err);
+      setError(err.message || "Failed to connect wallet");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Generate QR code for user ID
   useEffect(() => {
@@ -152,7 +186,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       });
       console.log("Owned lands response:", response);
       setOwnedLands(response.lands || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching owned lands:", error);
       setError(
         `Failed to load owned lands: ${error.message || "Unknown error"}`
@@ -293,17 +327,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       // For now, we'll treat partition as a regular sale
       // In the future, this could create a new land record for the partitioned area
       const response = await apiService.listLandForSale(selectedLand._id, {
-        askingPrice: partitionData.askingPrice,
+        askingPrice: parseFloat(partitionData.askingPrice),
         description: partitionData.description,
         features: `Partition: ${partitionData.partitionType}`,
         nearbyAmenities: "",
-      });
+      } as any);
 
       console.log("Land partitioned and listed:", response);
       await fetchOwnedLands();
       setShowPartitionModal(false);
       setError("");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error partitioning land:", error);
       setError("Failed to partition land");
     } finally {
@@ -379,7 +413,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
         fullName: formData.fullName,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
-      });
+        walletAddress: formData.walletAddress,
+      } as any);
 
       console.log("Profile updated successfully:", response);
 
@@ -402,6 +437,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       fullName: auth.user?.fullName || "",
       email: auth.user?.email || "",
       phoneNumber: auth.user?.profile?.phoneNumber || "",
+      walletAddress: auth.user?.walletAddress || "",
       address: {
         street: auth.user?.profile?.address?.street || "",
         city: auth.user?.profile?.address?.city || "",
@@ -667,13 +703,35 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Wallet className="inline h-4 w-4 mr-1" />
-                Wallet Address
-              </label>
-              <p className="text-[#012970] font-mono text-sm break-all">
-                {auth.user.walletAddress}
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Wallet className="inline h-4 w-4 mr-1" />
+                  Wallet Address
+                </label>
+                {!auth.user.walletAddress && (
+                  <button
+                    onClick={handleConnectWallet}
+                    className="text-xs font-semibold text-[#4154f1] hover:text-[#3346d8] flex items-center"
+                  >
+                    <Wallet className="h-3 w-3 mr-1" />
+                    Connect MetaMask
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <p className={`flex-1 font-mono text-sm break-all ${auth.user.walletAddress ? "text-[#012970]" : "text-gray-400 italic"}`}>
+                  {auth.user.walletAddress || "No wallet connected"}
+                </p>
+                {auth.user.walletAddress && (
+                  <button
+                    onClick={handleConnectWallet}
+                    className="p-1.5 text-gray-400 hover:text-[#4154f1] hover:bg-blue-50 rounded-md transition-colors"
+                    title="Reconnect/Change Wallet"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -794,7 +852,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                 <div className="text-2xl font-bold text-[#4154f1]">
-                  {auth.user.ownedProperties?.length ?? 0}
+                  {auth.user.ownedLands?.length ?? 0}
                 </div>
                 <div className="text-sm text-emerald-600">Properties Owned</div>
               </div>

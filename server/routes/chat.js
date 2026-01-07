@@ -28,7 +28,8 @@ router.post('/start', auth, async (req, res) => {
     let chat = await Chat.findOne({
       landId,
       buyer: req.user._id,
-      seller: land.currentOwner._id
+      seller: land.currentOwner._id,
+      status: { $ne: 'COMPLETED' } // Ignore completed deals so a new chat can start
     });
 
     if (!chat) {

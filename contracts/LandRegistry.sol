@@ -113,7 +113,7 @@ contract LandRegistry {
         uint256 _amount
     ) external returns (uint256) {
         require(_propertyId <= propertyCounter, "Property does not exist");
-        require(properties[_propertyId].owner == msg.sender, "Only property owner can initiate transaction");
+        require(properties[_propertyId].owner == msg.sender || admins[msg.sender], "Only property owner or admin can initiate transaction");
         
         transactionCounter++;
         
