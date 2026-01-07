@@ -13,6 +13,7 @@ const DocumentWatermark = require("../utils/documentWatermark");
 const ipfsService = require("../config/ipfs");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require("mongoose");
+const blockchainService = require("../config/blockchain");
 
 const router = express.Router();
 
@@ -43,6 +44,8 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
       waterSource,
       roadAccess,
       electricityConnection,
+      hasProperty,
+      propertyDetails,
     } = req.body;
 
     console.log("Processing step 2: Field extraction completed");
@@ -85,6 +88,7 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
     let parsedArea = {};
     let parsedBoundaries = {};
     let parsedCoordinates = null;
+    let parsedPropertyDetails = null;
 
     try {
       parsedArea = area
@@ -102,11 +106,16 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
           ? JSON.parse(coordinates)
           : coordinates
         : null;
+      parsedPropertyDetails = propertyDetails
+        ? typeof propertyDetails === "string"
+          ? JSON.parse(propertyDetails)
+          : propertyDetails
+        : null;
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
       return res.status(400).json({
         message:
-          "Invalid JSON format in area, boundaries, or coordinates fields",
+          "Invalid JSON format in area, boundaries, coordinates, or propertyDetails fields",
       });
     }
 
@@ -248,6 +257,18 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
         electricityConnection:
           electricityConnection === "true" || electricityConnection === true,
       },
+      hasProperty: hasProperty === "true" || hasProperty === true,
+      propertyDetails: parsedPropertyDetails ? {
+        propertyType: parsedPropertyDetails.propertyType || "",
+        buildingType: parsedPropertyDetails.buildingType || "",
+        constructionYear: parsedPropertyDetails.constructionYear || "",
+        totalFloors: parsedPropertyDetails.totalFloors || "",
+        builtUpArea: parsedPropertyDetails.builtUpArea || "",
+        numberOfRooms: parsedPropertyDetails.numberOfRooms || "",
+        numberOfBathrooms: parsedPropertyDetails.numberOfBathrooms || "",
+        parkingSpaces: parsedPropertyDetails.parkingSpaces || "",
+        additionalFeatures: parsedPropertyDetails.additionalFeatures || "",
+      } : undefined,
     };
 
     // Generate and assign assetId
@@ -259,6 +280,34 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
     console.log(
       `✅ Land successfully added with Asset ID: ${savedLand.assetId}`
     );
+
+    // Register land on blockchain
+    console.log("=== REGISTERING LAND ON BLOCKCHAIN ===");
+    try {
+      const blockchainResult = await blockchainService.registerLand(
+        savedLand.assetId,
+        savedLand.currentOwner.toString(),
+        savedLand.surveyNumber,
+        savedLand.area,
+        savedLand.coordinates
+      );
+
+      if (blockchainResult) {
+        // Update land with blockchain data
+        savedLand.blockchainTxHash = blockchainResult.transactionHash;
+        savedLand.blockchainId = blockchainResult.propertyId;
+        savedLand.blockchainBlock = blockchainResult.blockNumber;
+        await savedLand.save();
+        
+        console.log(`✅ Land registered on blockchain - TX: ${blockchainResult.transactionHash}`);
+        console.log(`✅ Blockchain Property ID: ${blockchainResult.propertyId}`);
+      } else {
+        console.log("⚠️  Blockchain registration skipped (blockchain not available)");
+      }
+    } catch (blockchainError) {
+      console.error("❌ Blockchain registration failed:", blockchainError.message);
+      console.log("⚠️  Land saved to database but not on blockchain");
+    }
 
     // Call digitalization with the saved document's _id
     console.log("=== DIGITALIZING LAND DOCUMENT ===");
@@ -300,6 +349,205 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to add land to database",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+    });
+  }
+});
+
+// Update land record (Admin only)
+router.put("/:landId", adminAuth, async (req, res) => {
+  try {
+    console.log("=== UPDATING LAND RECORD ===");
+    console.log("Land ID:", req.params.landId);
+    console.log("Update data:", req.body);
+
+    const land = await Land.findById(req.params.landId);
+    if (!land) {
+      return res.status(404).json({
+        success: false,
+        message: "Land not found",
+      });
+    }
+
+    const {
+      surveyNumber,
+      subDivision,
+      village,
+      taluka,
+      district,
+      state,
+      pincode,
+      area,
+      boundaries,
+      landType,
+      classification,
+      coordinates,
+      soilType,
+      waterSource,
+      roadAccess,
+      electricityConnection,
+      hasProperty,
+      propertyDetails,
+    } = req.body;
+
+    // Update basic fields
+    if (surveyNumber) land.surveyNumber = surveyNumber.trim();
+    if (subDivision !== undefined) land.subDivision = subDivision?.trim() || "";
+    if (village) land.village = village.trim();
+    if (taluka) land.taluka = taluka.trim();
+    if (district) land.district = district.trim();
+    if (state) land.state = state.trim();
+    if (pincode) land.pincode = pincode.trim();
+    if (landType) land.landType = landType;
+    if (classification !== undefined) land.classification = classification || undefined;
+
+    // Update area
+    if (area) {
+      land.area = {
+        acres: parseFloat(area.acres) || 0,
+        guntas: parseFloat(area.guntas) || 0,
+        sqft: parseFloat(area.sqft) || 0,
+      };
+    }
+
+    // Update boundaries
+    if (boundaries) {
+      land.boundaries = {
+        north: boundaries.north || "",
+        south: boundaries.south || "",
+        east: boundaries.east || "",
+        west: boundaries.west || "",
+      };
+    }
+
+    // Update coordinates
+    if (coordinates) {
+      land.coordinates = {
+        latitude: parseFloat(coordinates.latitude),
+        longitude: parseFloat(coordinates.longitude),
+      };
+    }
+
+    // Update metadata
+    if (!land.metadata) land.metadata = {};
+    if (soilType !== undefined) land.metadata.soilType = soilType || "";
+    if (waterSource !== undefined) land.metadata.waterSource = waterSource || "";
+    if (roadAccess !== undefined) land.metadata.roadAccess = roadAccess === "true" || roadAccess === true;
+    if (electricityConnection !== undefined) {
+      land.metadata.electricityConnection = electricityConnection === "true" || electricityConnection === true;
+    }
+
+    // Update property details
+    if (hasProperty !== undefined) {
+      land.hasProperty = hasProperty === "true" || hasProperty === true;
+    }
+
+    if (propertyDetails) {
+      land.propertyDetails = {
+        propertyType: propertyDetails.propertyType || "",
+        buildingType: propertyDetails.buildingType || "",
+        constructionYear: propertyDetails.constructionYear || "",
+        totalFloors: propertyDetails.totalFloors || "",
+        builtUpArea: propertyDetails.builtUpArea || "",
+        numberOfRooms: propertyDetails.numberOfRooms || "",
+        numberOfBathrooms: propertyDetails.numberOfBathrooms || "",
+        parkingSpaces: propertyDetails.parkingSpaces || "",
+        additionalFeatures: propertyDetails.additionalFeatures || "",
+      };
+    }
+
+    await land.save();
+
+    // Log audit trail
+    await AuditLog.logAction(
+      "LAND_UPDATE",
+      req.user._id,
+      "LAND",
+      land._id.toString(),
+      {
+        assetId: land.assetId,
+        updatedFields: Object.keys(req.body),
+      },
+      req
+    );
+
+    console.log(`✅ Land ${land.assetId} updated successfully`);
+
+    res.json({
+      success: true,
+      message: "Land updated successfully",
+      land: await Land.findById(land._id)
+        .populate("currentOwner", "fullName email")
+        .populate("addedBy", "fullName")
+        .populate("verifiedBy", "fullName"),
+    });
+  } catch (error) {
+    console.error("❌ Update land error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update land",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+    });
+  }
+});
+
+// Delete land record (Admin only)
+router.delete("/:landId", adminAuth, async (req, res) => {
+  try {
+    console.log("=== DELETING LAND RECORD ===");
+    console.log("Land ID:", req.params.landId);
+
+    const land = await Land.findById(req.params.landId);
+    if (!land) {
+      return res.status(404).json({
+        success: false,
+        message: "Land not found",
+      });
+    }
+
+    // Store land info for audit log before deletion
+    const landInfo = {
+      assetId: land.assetId,
+      surveyNumber: land.surveyNumber,
+      village: land.village,
+      district: land.district,
+      state: land.state,
+    };
+
+    // Delete the land
+    await Land.findByIdAndDelete(req.params.landId);
+
+    // Log audit trail
+    await AuditLog.logAction(
+      "LAND_DELETE",
+      req.user._id,
+      "LAND",
+      req.params.landId,
+      {
+        deletedLand: landInfo,
+      },
+      req
+    );
+
+    console.log(`✅ Land ${landInfo.assetId} deleted successfully`);
+
+    res.json({
+      success: true,
+      message: "Land deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ Delete land error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete land",
       error:
         process.env.NODE_ENV === "development"
           ? error.message
@@ -443,6 +691,73 @@ router.post("/digitalize", adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to digitalize land document",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+    });
+  }
+});
+
+// Un-digitalize land document (Admin only)
+router.post("/undigitalize", adminAuth, async (req, res) => {
+  try {
+    const { landId } = req.body;
+    console.log("Un-digitalizing land with ID:", landId);
+
+    if (!landId) {
+      return res.status(400).json({ error: "landId is required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(landId)) {
+      return res.status(400).json({ error: "Invalid landId format" });
+    }
+
+    const land = await Land.findById(landId);
+    if (!land) {
+      return res.status(404).json({ error: "Land not found" });
+    }
+
+    if (!land.digitalDocument?.isDigitalized) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Land is not digitalized" 
+      });
+    }
+
+    // Reset digital document
+    land.digitalDocument = {
+      isDigitalized: false,
+      generatedAt: new Date()
+    };
+
+    await land.save();
+
+    // Log audit trail
+    await AuditLog.logAction(
+      "LAND_DIGITALIZE",
+      req.user._id,
+      "LAND",
+      land._id.toString(),
+      {
+        assetId: land.assetId,
+        action: "UN-DIGITALIZE",
+      },
+      req
+    );
+
+    console.log(`✅ Land ${land.assetId} un-digitalized successfully`);
+
+    res.json({
+      success: true,
+      message: "Land un-digitalized successfully",
+    });
+  } catch (error) {
+    console.error("❌ Un-digitalization error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to un-digitalize land document",
       error:
         process.env.NODE_ENV === "development"
           ? error.message

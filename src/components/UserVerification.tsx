@@ -77,7 +77,44 @@ const UserVerification: React.FC = () => {
   };
 
   const validateForm = () => {
-    // Check if at least one document is provided with its number
+    // Build a list of specific missing items
+    const missingItems: string[] = [];
+
+    // Check PAN Card
+    if (formData.panNumber && !files.panCard) {
+      missingItems.push("PAN Card document not uploaded");
+    } else if (!formData.panNumber && files.panCard) {
+      missingItems.push("PAN Number not provided");
+    }
+
+    // Check Aadhaar Card
+    if (formData.aadhaarNumber && !files.aadhaarCard) {
+      missingItems.push("Aadhaar Card document not uploaded");
+    } else if (!formData.aadhaarNumber && files.aadhaarCard) {
+      missingItems.push("Aadhaar Number not provided");
+    }
+
+    // Check Driving License
+    if (formData.dlNumber && !files.drivingLicense) {
+      missingItems.push("Driving License document not uploaded");
+    } else if (!formData.dlNumber && files.drivingLicense) {
+      missingItems.push("Driving License Number not provided");
+    }
+
+    // Check Passport
+    if (formData.passportNumber && !files.passport) {
+      missingItems.push("Passport document not uploaded");
+    } else if (!formData.passportNumber && files.passport) {
+      missingItems.push("Passport Number not provided");
+    }
+
+    // If there are specific missing items, show them
+    if (missingItems.length > 0) {
+      setError(missingItems.join(", "));
+      return false;
+    }
+
+    // Check if at least one complete document is provided
     const hasValidDoc =
       (formData.panNumber && files.panCard) ||
       (formData.aadhaarNumber && files.aadhaarCard) ||
@@ -85,7 +122,7 @@ const UserVerification: React.FC = () => {
       (formData.passportNumber && files.passport);
 
     if (!hasValidDoc) {
-      setError("Please provide at least one document with its number");
+      setError("Please provide at least one complete document (both number and file)");
       return false;
     }
 

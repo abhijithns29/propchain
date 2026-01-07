@@ -35,7 +35,20 @@ const AddLandForm: React.FC<AddLandFormProps> = ({ onClose, onSuccess }) => {
     soilType: '',
     waterSource: '',
     roadAccess: false,
-    electricityConnection: false
+    electricityConnection: false,
+    // Property Details (Optional)
+    hasProperty: false,
+    propertyDetails: {
+      propertyType: '',
+      buildingType: '',
+      constructionYear: '',
+      totalFloors: '',
+      builtUpArea: '',
+      numberOfRooms: '',
+      numberOfBathrooms: '',
+      parkingSpaces: '',
+      additionalFeatures: ''
+    }
   });
 
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -208,7 +221,19 @@ const AddLandForm: React.FC<AddLandFormProps> = ({ onClose, onSuccess }) => {
           soilType: '',
           waterSource: '',
           roadAccess: false,
-          electricityConnection: false
+          electricityConnection: false,
+          hasProperty: false,
+          propertyDetails: {
+            propertyType: '',
+            buildingType: '',
+            constructionYear: '',
+            totalFloors: '',
+            builtUpArea: '',
+            numberOfRooms: '',
+            numberOfBathrooms: '',
+            parkingSpaces: '',
+            additionalFeatures: ''
+          }
         });
         setDocumentFile(null);
         setError('');
@@ -660,6 +685,205 @@ const AddLandForm: React.FC<AddLandFormProps> = ({ onClose, onSuccess }) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Property Details (Optional) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#012970] flex items-center border-l-4 border-[#4154f1] pl-3">
+                <Home className="h-5 w-5 mr-2 text-[#4154f1]" />
+                Property on Land (Optional)
+              </h3>
+              <label className="flex items-center group cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="hasProperty"
+                  checked={formData.hasProperty}
+                  onChange={handleInputChange}
+                  className="rounded-lg border-gray-300 text-[#4154f1] bg-white focus:ring-[#4154f1]/30 h-5 w-5 transition-all"
+                />
+                <span className="ml-3 text-sm font-bold text-gray-700 group-hover:text-[#012970]">
+                  Has Building/Structure
+                </span>
+              </label>
+            </div>
+
+            {formData.hasProperty && (
+              <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 space-y-6 animate-fadeIn">
+                <p className="text-sm text-gray-600 font-medium">
+                  Provide details about any buildings, houses, or structures on this land.
+                </p>
+
+                {/* Property Type & Building Type */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Property Type
+                    </label>
+                    <select
+                      name="propertyDetails.propertyType"
+                      value={formData.propertyDetails.propertyType}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all cursor-pointer"
+                    >
+                      <option value="">Select Property Type</option>
+                      <option value="HOUSE">House</option>
+                      <option value="VILLA">Villa</option>
+                      <option value="APARTMENT">Apartment</option>
+                      <option value="FARMHOUSE">Farmhouse</option>
+                      <option value="WAREHOUSE">Warehouse</option>
+                      <option value="FACTORY">Factory</option>
+                      <option value="SHOP">Shop</option>
+                      <option value="OFFICE">Office Building</option>
+                      <option value="MIXED_USE">Mixed Use</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Building Type
+                    </label>
+                    <select
+                      name="propertyDetails.buildingType"
+                      value={formData.propertyDetails.buildingType}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all cursor-pointer"
+                    >
+                      <option value="">Select Building Type</option>
+                      <option value="INDEPENDENT">Independent</option>
+                      <option value="ROW_HOUSE">Row House</option>
+                      <option value="DUPLEX">Duplex</option>
+                      <option value="PENTHOUSE">Penthouse</option>
+                      <option value="STUDIO">Studio</option>
+                      <option value="BUNGALOW">Bungalow</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Construction Year & Floors */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Construction Year
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.constructionYear"
+                      min="1900"
+                      max={new Date().getFullYear()}
+                      value={formData.propertyDetails.constructionYear}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="2020"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Total Floors
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.totalFloors"
+                      min="1"
+                      value={formData.propertyDetails.totalFloors}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Built-up Area (Sq Ft)
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.builtUpArea"
+                      min="0"
+                      value={formData.propertyDetails.builtUpArea}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="1500"
+                    />
+                  </div>
+                </div>
+
+                {/* Rooms, Bathrooms & Parking */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Number of Rooms
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.numberOfRooms"
+                      min="0"
+                      value={formData.propertyDetails.numberOfRooms}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Number of Bathrooms
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.numberOfBathrooms"
+                      min="0"
+                      value={formData.propertyDetails.numberOfBathrooms}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Parking Spaces
+                    </label>
+                    <input
+                      type="number"
+                      name="propertyDetails.parkingSpaces"
+                      min="0"
+                      value={formData.propertyDetails.parkingSpaces}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all"
+                      placeholder="1"
+                    />
+                  </div>
+                </div>
+
+                {/* Additional Features */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Additional Features
+                  </label>
+                  <textarea
+                    name="propertyDetails.additionalFeatures"
+                    value={formData.propertyDetails.additionalFeatures}
+                    onChange={(e) => {
+                      const { name, value } = e.target;
+                      const [parent, child] = name.split('.');
+                      setFormData(prev => ({
+                        ...prev,
+                        [parent]: {
+                          ...(prev as any)[parent],
+                          [child]: value,
+                        },
+                      }));
+                    }}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 bg-white text-[#012970] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4154f1]/20 focus:border-[#4154f1] transition-all resize-none"
+                    placeholder="e.g., Swimming pool, Garden, Solar panels, Security system, etc."
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Document Upload */}

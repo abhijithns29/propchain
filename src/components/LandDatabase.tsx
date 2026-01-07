@@ -10,11 +10,14 @@ import {
   User,
   Shield,
   X,
+  XCircle,
+  Edit,
 } from "lucide-react";
 import { Land } from "../types";
 import { useAuth } from "../hooks/useAuth";
 import apiService from "../services/api";
 import AddLandForm from "./AddLandForm";
+import EditLandForm from "./EditLandForm";
 
 const LandDatabase: React.FC = () => {
   const { auth } = useAuth();
@@ -30,7 +33,9 @@ const LandDatabase: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [selectedLand, setSelectedLand] = useState<Land | null>(null);
+  const [landToEdit, setLandToEdit] = useState<Land | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -104,6 +109,16 @@ const LandDatabase: React.FC = () => {
       loadLands();
     } catch (error: any) {
       setError(error.message || "Failed to digitalize land");
+    }
+  };
+
+  const handleUnDigitalize = async (landId: string) => {
+    try {
+      console.log("Un-digitalizing land with ID:", landId);
+      await apiService.unDigitalizeLand(landId);
+      loadLands();
+    } catch (error: any) {
+      setError(error.message || "Failed to un-digitalize land");
     }
   };
 
@@ -549,6 +564,30 @@ const LandDatabase: React.FC = () => {
                           Digitalize
                         </button>
                       )}
+
+                    {auth.user?.role === "ADMIN" &&
+                      land.digitalDocument?.isDigitalized && (
+                        <button
+                          onClick={() => handleUnDigitalize(land._id || land.id)}
+                          className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-orange-200 rounded-lg text-sm font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition-all shadow-sm"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Un-digitalize
+                        </button>
+                      )}
+
+                    {auth.user?.role === "ADMIN" && (
+                      <button
+                        onClick={() => {
+                          setLandToEdit(land);
+                          setShowEditForm(true);
+                        }}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-sm"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </button>
+                    )}
                   </div>
 
                   {land.digitalDocument?.isDigitalized && (
@@ -714,6 +753,83 @@ const LandDatabase: React.FC = () => {
                 </div>
               )}
 
+              {/* Property Details */}
+              {selectedLand.hasProperty && selectedLand.propertyDetails && (
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100 p-6">
+                  <h3 className="text-lg font-bold text-[#012970] mb-6 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                      <Home className="w-4 h-4 text-purple-600" />
+                    </div>
+                    Property on Land
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {selectedLand.propertyDetails.propertyType && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Property Type</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.propertyType}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.buildingType && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Building Type</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.buildingType}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.constructionYear && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Construction Year</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.constructionYear}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.totalFloors && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Total Floors</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.totalFloors}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.builtUpArea && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Built-up Area</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.builtUpArea} Sq Ft</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.numberOfRooms && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Rooms</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.numberOfRooms}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.numberOfBathrooms && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Bathrooms</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.numberOfBathrooms}</p>
+                      </div>
+                    )}
+
+                    {selectedLand.propertyDetails.parkingSpaces && (
+                      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Parking Spaces</label>
+                        <p className="text-sm text-[#012970] font-bold">{selectedLand.propertyDetails.parkingSpaces}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedLand.propertyDetails.additionalFeatures && (
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Additional Features</label>
+                      <p className="text-sm text-gray-700">{selectedLand.propertyDetails.additionalFeatures}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Verification & Documents */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gray-50 rounded-2xl border border-gray-100 p-6">
@@ -782,6 +898,21 @@ const LandDatabase: React.FC = () => {
           onClose={() => setShowAddForm(false)}
           onSuccess={() => {
             setShowAddForm(false);
+            loadLands();
+          }}
+        />
+      )}
+
+      {showEditForm && landToEdit && (
+        <EditLandForm
+          land={landToEdit}
+          onClose={() => {
+            setShowEditForm(false);
+            setLandToEdit(null);
+          }}
+          onSuccess={() => {
+            setShowEditForm(false);
+            setLandToEdit(null);
             loadLands();
           }}
         />

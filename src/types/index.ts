@@ -122,6 +122,18 @@ export interface Land {
   createdAt: string;
   blockchainTxHash?: string;
   escrowContract?: string;
+  hasProperty?: boolean;
+  propertyDetails?: {
+    propertyType?: string;
+    buildingType?: string;
+    constructionYear?: string;
+    totalFloors?: string;
+    builtUpArea?: string;
+    numberOfRooms?: string;
+    numberOfBathrooms?: string;
+    parkingSpaces?: string;
+    additionalFeatures?: string;
+  };
 }
 
 export interface LandTransaction {

@@ -31,6 +31,7 @@ class PDFGenerator {
       this.addOwnerDeclaration(doc, pageWidth, land);
       this.addLandDetails(doc, pageWidth, land);
       this.addAreaDetails(doc, pageWidth, land);
+      this.addPropertyDetails(doc, pageWidth, land);
       this.addQRCode(doc, pageWidth, pageHeight, qrCodeDataURL);
       this.addFooter(doc, pageWidth, pageHeight);
 
@@ -450,13 +451,118 @@ class PDFGenerator {
     return yPos + 20;
   }
 
+  static addPropertyDetails(doc, pageWidth, land) {
+    // Only add this section if the land has property
+    if (!land.hasProperty) {
+      console.log("No property on land, skipping property details section");
+      return;
+    }
+
+    console.log("Adding property details section to certificate");
+    let yPos = 235;
+
+    // Section title
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(139, 69, 19); // Brown color for property section
+    doc.text('PROPERTY ON LAND', 20, yPos);
+
+    // Underline
+    doc.setDrawColor(139, 69, 19);
+    doc.setLineWidth(0.5);
+    doc.line(20, yPos + 3, 100, yPos + 3);
+
+    yPos += 12;
+
+    doc.setFontSize(8.5);
+
+    // Initialize propertyDetails if undefined
+    const propertyDetails = land.propertyDetails || {};
+
+    // Safe property details extraction
+    const getSafePropertyValue = (value, fieldName) => {
+      try {
+        if (value === null || value === undefined || value === '') {
+          return "Not Specified";
+        }
+        return value.toString();
+      } catch (error) {
+        console.error(`Error processing ${fieldName}:`, error);
+        return "Not Specified";
+      }
+    };
+
+    // Two-column layout for property details
+    const leftCol = 20;
+    const rightCol = pageWidth / 2 + 19;
+    const lineHeight = 6.5;
+    let leftY = yPos;
+    let rightY = yPos;
+
+    const leftData = [
+      { label: 'Property Type', value: getSafePropertyValue(propertyDetails.propertyType, 'Property Type') },
+      { label: 'Building Type', value: getSafePropertyValue(propertyDetails.buildingType, 'Building Type') },
+      { label: 'Construction Year', value: getSafePropertyValue(propertyDetails.constructionYear, 'Construction Year') },
+      { label: 'Total Floors', value: getSafePropertyValue(propertyDetails.totalFloors, 'Total Floors') },
+    ];
+
+    const rightData = [
+      { label: 'Built-up Area', value: getSafePropertyValue(propertyDetails.builtUpArea, 'Built-up Area') + (propertyDetails.builtUpArea ? ' Sq. Ft.' : '') },
+      { label: 'Rooms', value: getSafePropertyValue(propertyDetails.numberOfRooms, 'Rooms') },
+      { label: 'Bathrooms', value: getSafePropertyValue(propertyDetails.numberOfBathrooms, 'Bathrooms') },
+      { label: 'Parking Spaces', value: getSafePropertyValue(propertyDetails.parkingSpaces, 'Parking Spaces') },
+    ];
+
+    // Left column
+    leftData.forEach(item => {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(60, 60, 60);
+      doc.text(item.label + ':', leftCol, leftY);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(item.value, leftCol + 42, leftY);
+
+      leftY += lineHeight;
+    });
+
+    // Right column
+    rightData.forEach(item => {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(60, 60, 60);
+      doc.text(item.label + ':', rightCol, rightY);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(item.value, rightCol + 38, rightY);
+
+      rightY += lineHeight;
+    });
+
+    // Additional Features (full width if present)
+    if (propertyDetails.additionalFeatures && propertyDetails.additionalFeatures.trim() !== '') {
+      yPos = Math.max(leftY, rightY) + 3;
+
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(60, 60, 60);
+      doc.text('Additional Features:', leftCol, yPos);
+
+      yPos += 5;
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      const featureLines = doc.splitTextToSize(propertyDetails.additionalFeatures, pageWidth - 40);
+      doc.text(featureLines, leftCol, yPos);
+    }
+  }
+
   static addQRCode(doc, pageWidth, pageHeight, qrCodeDataURL) {
     if (!qrCodeDataURL) return;
 
     try {
-      const qrSize = 35;
+      const qrSize = 30;
       const qrX = pageWidth - qrSize - 15;
-      const qrY = pageHeight - qrSize - 45;
+      const qrY = 10; // Position below header, top right
 
       // QR container
       doc.setFillColor(248, 248, 248);

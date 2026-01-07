@@ -220,6 +220,19 @@ class ApiService {
     return await response.json();
   }
 
+  async updateLand(landId: string, landData: any) {
+    return this.request(`/lands/${landId}`, {
+      method: 'PUT',
+      body: JSON.stringify(landData),
+    });
+  }
+
+  async deleteLand(landId: string) {
+    return this.request(`/lands/${landId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getLands(params: any = {}) {
     const queryString = new URLSearchParams(params).toString();
     return this.request(`/lands${queryString ? `?${queryString}` : ''}`);
@@ -252,6 +265,14 @@ class ApiService {
   async digitalizeLand(landId: string) {
     if (!landId) throw new Error("❌ No landId provided to digitalize");
     return this.request(`/lands/digitalize`, {
+      method: 'POST',
+      body: JSON.stringify({ landId }),
+    });
+  }
+
+  async unDigitalizeLand(landId: string) {
+    if (!landId) throw new Error("❌ No landId provided to un-digitalize");
+    return this.request(`/lands/undigitalize`, {
       method: 'POST',
       body: JSON.stringify({ landId }),
     });

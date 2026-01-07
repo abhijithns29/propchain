@@ -10,6 +10,8 @@ const auditLogSchema = new mongoose.Schema({
       'USER_REGISTER',
       'USER_VERIFY',
       'LAND_ADD',
+      'LAND_UPDATE',
+      'LAND_DELETE',
       'LAND_DIGITALIZE',
       'LAND_CLAIM',
       'LAND_LIST_SALE',

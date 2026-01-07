@@ -164,6 +164,115 @@ class BlockchainService {
     }
   }
 
+  async registerLand(assetId, ownerId, surveyNumber, area, coordinates) {
+    try {
+      if (!this.contract) {
+        console.warn("⚠️  Blockchain not initialized, skipping land registration");
+        return null;
+      }
+
+      console.log("Registering land on blockchain...");
+      console.log({ assetId, ownerId, surveyNumber });
+
+      // Prepare land data
+      const location = surveyNumber || "Unknown";
+      const totalArea = area ? (area.acres || 0) * 43560 + (area.guntas || 0) * 1089 + (area.sqft || 0) : 0;
+      const ipfsHash = assetId; // Use assetId as identifier
+
+      // Register as property on blockchain
+      const gasEstimate = await this.contract.estimateGas.registerProperty(
+        ownerId,
+        ipfsHash,
+        location,
+        ethers.BigNumber.from(Math.floor(totalArea).toString()),
+        ethers.utils.parseEther("0") // Initial valuation
+      );
+
+      const gasLimit = gasEstimate.mul(120).div(100);
+
+      const tx = await this.contract.registerProperty(
+        ownerId,
+        ipfsHash,
+        location,
+        ethers.BigNumber.from(Math.floor(totalArea).toString()),
+        ethers.utils.parseEther("0"),
+        { gasLimit }
+      );
+
+      console.log("✅ Blockchain transaction sent:", tx.hash);
+      const receipt = await tx.wait();
+      console.log("✅ Land registered on blockchain. Gas used:", receipt.gasUsed.toString());
+
+      // Extract property ID from event
+      const event = receipt.events?.find(e => e.event === 'PropertyRegistered');
+      const propertyId = event?.args?.propertyId?.toNumber() || 0;
+
+      return {
+        transactionHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        propertyId: propertyId,
+        gasUsed: receipt.gasUsed.toString()
+      };
+    } catch (error) {
+      console.error("❌ Blockchain land registration error:", error.message);
+      // Don't throw error - allow land to be saved even if blockchain fails
+      return null;
+    }
+  }
+
+  async transferLandOwnership(propertyId, fromAddress, toAddress, amount = 0) {
+    try {
+      if (!this.contract) {
+        console.warn("⚠️  Blockchain not initialized, skipping ownership transfer");
+        return null;
+      }
+
+      console.log("Transferring land ownership on blockchain...");
+      console.log({ propertyId, from: fromAddress, to: toAddress });
+
+      // Initiate transfer transaction (type 3 = TRANSFER)
+      const gasEstimate = await this.contract.estimateGas.initiateTransaction(
+        propertyId,
+        toAddress,
+        3, // TRANSFER type
+        ethers.utils.parseEther(amount.toString())
+      );
+
+      const gasLimit = gasEstimate.mul(120).div(100);
+
+      const tx = await this.contract.initiateTransaction(
+        propertyId,
+        toAddress,
+        3,
+        ethers.utils.parseEther(amount.toString()),
+        { gasLimit }
+      );
+
+      console.log("✅ Transfer transaction sent:", tx.hash);
+      const receipt = await tx.wait();
+
+      // Auto-approve the transfer (admin action)
+      const transactionIndex = 0; // Latest transaction
+      const approveTx = await this.contract.approveTransaction(
+        propertyId,
+        transactionIndex,
+        "" // No certificate hash for now
+      );
+
+      const approveReceipt = await approveTx.wait();
+      console.log("✅ Ownership transferred on blockchain");
+
+      return {
+        transactionHash: receipt.transactionHash,
+        approvalHash: approveReceipt.transactionHash,
+        blockNumber: approveReceipt.blockNumber
+      };
+    } catch (error) {
+      console.error("❌ Blockchain ownership transfer error:", error.message);
+      return null;
+    }
+  }
+
   async getProperty(propertyId) {
     try {
       if (!this.contract) throw new Error("Contract not initialized");

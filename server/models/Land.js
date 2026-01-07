@@ -188,6 +188,29 @@ const landSchema = new mongoose.Schema({
     }
   },
   
+  // Property details (for land with buildings/structures)
+  hasProperty: {
+    type: Boolean,
+    default: false
+  },
+  
+  propertyDetails: {
+    propertyType: String,
+    buildingType: String,
+    constructionYear: String,
+    totalFloors: String,
+    builtUpArea: String,
+    numberOfRooms: String,
+    numberOfBathrooms: String,
+    parkingSpaces: String,
+    additionalFeatures: String
+  },
+  
+  // Blockchain integration
+  blockchainTxHash: String, // Transaction hash when land was registered
+  blockchainId: Number, // Property ID on blockchain
+  blockchainBlock: Number, // Block number where land was registered
+  
   // Valuation history
   valuationHistory: [{
     value: Number,

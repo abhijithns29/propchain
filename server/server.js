@@ -180,6 +180,7 @@ app.use("/api/2fa", require("./routes/twoFactorRoutes"));
 app.use("/api/buy-requests", require("./routes/buyRequests"));
 app.use("/api/admin/transactions", require("./routes/adminTransactions"));
 app.use("/api/chatbot", require("./routes/chatbotRoutes"));
+app.use("/api/blockchain", require("./routes/blockchain"));
 
 // Serve PDF documents
 app.get("/api/documents/:filename", (req, res) => {
