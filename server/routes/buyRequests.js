@@ -314,4 +314,166 @@ router.post('/:chatId/cancel', auth, async (req, res) => {
   }
 });
 
+// Admin approve/reject buy request (Admin only)
+router.post('/:buyRequestId/admin-review', auth, async (req, res) => {
+  try {
+    const { action, comments } = req.body;
+    
+    // Check if user is admin
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can review buy requests' });
+    }
+    
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Invalid action. Must be approve or reject' });
+    }
+
+    const buyRequest = await BuyRequest.findById(req.params.buyRequestId)
+      .populate('landId seller buyer');
+
+    if (!buyRequest) {
+      return res.status(404).json({ message: 'Buy request not found' });
+    }
+
+    if (buyRequest.status !== 'PENDING_ADMIN_APPROVAL') {
+      return res.status(400).json({ message: 'Buy request is not pending admin approval' });
+    }
+
+    if (action === 'reject') {
+      buyRequest.rejectByAdmin(req.user._id, comments);
+      await buyRequest.save();
+      
+      return res.json({
+        message: 'Buy request rejected successfully',
+        buyRequest
+      });
+    }
+
+    // === ADMIN APPROVAL WITH BLOCKCHAIN TRANSFER ===
+    const blockchainService = require('../config/blockchain');
+    const land = buyRequest.landId;
+    const newOwner = buyRequest.buyer;
+    const oldOwner = buyRequest.seller;
+    
+    console.log('[Admin Review] Starting blockchain transfer...');
+    console.log(`  Land: ${land.assetId} (Blockchain ID: ${land.blockchainId})`);
+    console.log(`  From: ${oldOwner.walletAddress}`);
+    console.log(`  To: ${newOwner.walletAddress}`);
+    
+    // Validate prerequisites
+    if (!land.blockchainId) {
+      return res.status(400).json({ 
+        message: 'Cannot approve: Land is not registered on blockchain. Please digitalize the land first.' 
+      });
+    }
+    
+    if (!oldOwner.walletAddress || !newOwner.walletAddress) {
+      return res.status(400).json({ 
+        message: 'Cannot approve: Both seller and buyer must have wallet addresses configured.' 
+      });
+    }
+    
+    let blockchainResult;
+    try {
+      blockchainResult = await blockchainService.transferLandOwnership(
+        land.blockchainId,
+        oldOwner.walletAddress,
+        newOwner.walletAddress,
+        buyRequest.agreedPrice
+      );
+      
+      if (!blockchainResult) {
+        throw new Error('Blockchain service returned null - transfer failed');
+      }
+      
+      console.log(`✅ [Admin Review] Blockchain transfer successful - TX: ${blockchainResult.transactionHash}, Block: ${blockchainResult.blockNumber}`);
+      
+    } catch (blockchainError) {
+      console.error('❌ [Admin Review] Blockchain transfer failed:', blockchainError);
+      return res.status(500).json({ 
+        success: false,
+        message: `Blockchain transfer failed: ${blockchainError.message}. Transaction NOT approved.` 
+      });
+    }
+    
+    // Only proceed with database updates if blockchain succeeded
+    try {
+      buyRequest.blockchainTxHash = blockchainResult.transactionHash;
+      buyRequest.approveByAdmin(req.user._id, comments);
+      buyRequest.status = 'COMPLETED';
+      buyRequest.timeline.push({
+        event: 'BLOCKCHAIN_PROCESSED',
+        timestamp: new Date(),
+        performedBy: req.user._id,
+        description: `Blockchain transfer completed - TX: ${blockchainResult.transactionHash}`,
+        metadata: { 
+          transactionHash: blockchainResult.transactionHash,
+          blockNumber: blockchainResult.blockNumber
+        }
+      });
+      
+      // Update land ownership in database
+      land.currentOwner = newOwner._id;
+      land.ownershipHistory.push({
+        owner: newOwner._id,
+        acquiredDate: new Date(),
+        transferType: 'SALE',
+        price: buyRequest.agreedPrice,
+        documentHash: blockchainResult.transactionHash
+      });
+      land.status = 'AVAILABLE';
+      land.marketInfo.isForSale = false;
+      await land.save();
+      
+      // Update user's owned lands
+      const User = require('../models/User');
+      const oldOwnerUser = await User.findById(oldOwner._id);
+      const newOwnerUser = await User.findById(newOwner._id);
+      
+      if (oldOwnerUser) {
+        oldOwnerUser.ownedLands = oldOwnerUser.ownedLands.filter(
+          landId => landId.toString() !== land._id.toString()
+        );
+        await oldOwnerUser.save();
+      }
+      
+      if (newOwnerUser) {
+        if (!newOwnerUser.ownedLands.includes(land._id)) {
+          newOwnerUser.ownedLands.push(land._id);
+          await newOwnerUser.save();
+        }
+      }
+      
+      // Delete the chat
+      const Chat = require('../models/Chat');
+      await Chat.deleteMany({ landId: land._id });
+      console.log(`✅ [Admin Review] Deleted all chats for land ${land._id}`);
+      
+      await buyRequest.save();
+
+      res.json({
+        success: true,
+        message: 'Buy request approved and blockchain transfer completed',
+        buyRequest,
+        blockchainTx: {
+          hash: blockchainResult.transactionHash,
+          blockNumber: blockchainResult.blockNumber
+        }
+      });
+      
+    } catch (dbError) {
+      console.error('❌ [Admin Review] Database update failed after blockchain success:', dbError);
+      // This is critical - blockchain succeeded but DB failed
+      return res.status(500).json({ 
+        success: false,
+        message: 'CRITICAL: Blockchain transfer succeeded but database update failed. Please contact support.',
+        blockchainTx: blockchainResult.transactionHash
+      });
+    }
+  } catch (error) {
+    console.error('Admin review buy request error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

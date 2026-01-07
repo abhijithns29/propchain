@@ -320,6 +320,13 @@ async function approveTransaction(transaction, adminId, req) {
   const newOwner = transaction.buyer;
   const oldOwner = transaction.seller;
 
+  if (!land) {
+    console.error(`❌ Transaction ${transaction.transactionId} has no associated Land (Orphaned). Skipping blockchain transfer.`);
+    // We can continue to 'complete' it in DB or throw error. 
+    // Throwing error is safer to alert admin.
+    throw new Error("Transaction is linked to a non-existent (deleted) land. Please reject or delete this transaction.");
+  }
+
   try {
     // Deploy escrow contract
     const escrowService = new EscrowService(blockchainService.provider, blockchainService.wallet);
@@ -334,6 +341,66 @@ async function approveTransaction(transaction, adminId, req) {
   } catch (escrowError) {
     console.error('Escrow deployment failed:', escrowError);
   }
+
+  // === BLOCKCHAIN OWNERSHIP TRANSFER ===
+  console.log('\n========== BLOCKCHAIN TRANSFER ATTEMPT ==========');
+  console.log(`[DEBUG] Checking Blockchain ID for land ${land._id}:`, land.blockchainId);
+  console.log(`[DEBUG] Land Asset ID: ${land.assetId}`);
+  console.log(`[DEBUG] Old Owner ID: ${oldOwner._id}, Wallet: ${oldOwner.walletAddress}`);
+  console.log(`[DEBUG] New Owner ID: ${newOwner._id}, Wallet: ${newOwner.walletAddress}`);
+  console.log(`[DEBUG] Transaction Price: ${transaction.agreedPrice}`);
+  
+  try {
+    if (!land.blockchainId) {
+      console.error('❌ [BLOCKCHAIN] Land has NO blockchainId - cannot transfer!');
+      console.error('   This land was never digitalized/registered on blockchain');
+      // Don't throw - let transaction complete for now
+    } else if (!oldOwner.walletAddress) {
+      console.error('❌ [BLOCKCHAIN] Seller has NO wallet address!');
+      console.error(`   Seller: ${oldOwner.email} (${oldOwner._id})`);
+      // Don't throw - let transaction complete for now
+    } else if (!newOwner.walletAddress) {
+      console.error('❌ [BLOCKCHAIN] Buyer has NO wallet address!');
+      console.error(`   Buyer: ${newOwner.email} (${newOwner._id})`);
+      // Don't throw - let transaction complete for now
+    } else {
+      console.log(`[DEBUG] ✅ All prerequisites met - attempting blockchain transfer...`);
+      console.log(`[DEBUG] Calling blockchainService.transferLandOwnership with:`);
+      console.log(`   - Property ID: ${land.blockchainId}`);
+      console.log(`   - From: ${oldOwner.walletAddress}`);
+      console.log(`   - To: ${newOwner.walletAddress}`);
+      console.log(`   - Amount: ${transaction.agreedPrice}`);
+      
+      const blockchainResult = await blockchainService.transferLandOwnership(
+        land.blockchainId,
+        oldOwner.walletAddress,
+        newOwner.walletAddress,
+        transaction.agreedPrice
+      );
+
+      console.log('[DEBUG] Blockchain transfer result:', JSON.stringify(blockchainResult, null, 2));
+
+      if (blockchainResult && blockchainResult.transactionHash) {
+        transaction.blockchainTxHash = blockchainResult.transactionHash;
+        transaction.blockchainBlock = blockchainResult.blockNumber;
+        console.log(`✅✅✅ [BLOCKCHAIN] Transfer SUCCESS!`);
+        console.log(`   TX Hash: ${blockchainResult.transactionHash}`);
+        console.log(`   Block Number: ${blockchainResult.blockNumber}`);
+      } else {
+        console.error('❌ [BLOCKCHAIN] Transfer returned NULL or invalid result');
+        console.error('   Result:', blockchainResult);
+        // Don't throw - let transaction complete for now so we can debug
+      }
+    }
+  } catch (blockchainError) {
+    console.error('\n❌❌❌ [BLOCKCHAIN] Transfer EXCEPTION:');
+    console.error('Error Message:', blockchainError.message);
+    console.error('Error Stack:', blockchainError.stack);
+    console.error('Full Error:', JSON.stringify(blockchainError, null, 2));
+    // Don't throw - let transaction complete for now so we can debug
+  }
+  console.log('========== END BLOCKCHAIN TRANSFER ==========\n');
+  // =====================================
 
   // Generate certificates with QR codes
   const qrData = {
@@ -411,6 +478,17 @@ async function approveTransaction(transaction, adminId, req) {
 
   transaction.status = 'COMPLETED';
   transaction.addTimelineEvent('COMPLETED', adminId, 'Transaction approved and completed by admin');
+  
+  // Delete ALL chats associated with this land to ensure a clean slate
+  try {
+    const Chat = require('../models/Chat');
+    const landIdToDelete = transaction.landId._id || transaction.landId; // Handle populated or unpopulated
+    const deleteResult = await Chat.deleteMany({ landId: landIdToDelete });
+    console.log(`✅ Deleted ${deleteResult.deletedCount} chats for land ${landIdToDelete} (Transaction Completed)`);
+  } catch (chatError) {
+    console.error(`⚠️ Failed to delete chats for land:`, chatError);
+  }
+
   await transaction.save();
 
   // Update land ownership

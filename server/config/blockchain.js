@@ -164,7 +164,7 @@ class BlockchainService {
     }
   }
 
-  async registerLand(assetId, ownerId, surveyNumber, area, coordinates) {
+  async registerLand(assetId, ownerAddress, surveyNumber, area, coordinates) {
     try {
       if (!this.contract) {
         console.warn("⚠️  Blockchain not initialized, skipping land registration");
@@ -172,7 +172,7 @@ class BlockchainService {
       }
 
       console.log("Registering land on blockchain...");
-      console.log({ assetId, ownerId, surveyNumber });
+      console.log({ assetId, ownerAddress, surveyNumber });
 
       // Prepare land data
       const location = surveyNumber || "Unknown";
@@ -181,7 +181,7 @@ class BlockchainService {
 
       // Register as property on blockchain
       const gasEstimate = await this.contract.estimateGas.registerProperty(
-        ownerId,
+        ownerAddress,
         ipfsHash,
         location,
         ethers.BigNumber.from(Math.floor(totalArea).toString()),
@@ -191,7 +191,7 @@ class BlockchainService {
       const gasLimit = gasEstimate.mul(120).div(100);
 
       const tx = await this.contract.registerProperty(
-        ownerId,
+        ownerAddress,
         ipfsHash,
         location,
         ethers.BigNumber.from(Math.floor(totalArea).toString()),
@@ -251,8 +251,13 @@ class BlockchainService {
       console.log("✅ Transfer transaction sent:", tx.hash);
       const receipt = await tx.wait();
 
+      // Get the correct transaction index (it will be the last one in the array)
+      const propTransactions = await this.contract.getPropertyTransactions(propertyId);
+      const transactionIndex = propTransactions.length - 1;
+
+      console.log(`Approving transaction at index ${transactionIndex} for property ${propertyId}`);
+
       // Auto-approve the transfer (admin action)
-      const transactionIndex = 0; // Latest transaction
       const approveTx = await this.contract.approveTransaction(
         propertyId,
         transactionIndex,
@@ -261,11 +266,20 @@ class BlockchainService {
 
       const approveReceipt = await approveTx.wait();
       console.log("✅ Ownership transferred on blockchain");
+      
+      console.log('[DEBUG] Initiate Receipt:', {
+        hash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber
+      });
+      console.log('[DEBUG] Approve Receipt:', {
+        hash: approveReceipt.transactionHash,
+        blockNumber: approveReceipt.blockNumber
+      });
 
       return {
-        transactionHash: receipt.transactionHash,
-        approvalHash: approveReceipt.transactionHash,
-        blockNumber: approveReceipt.blockNumber
+        transactionHash: receipt.transactionHash, // Return initiate hash (original)
+        blockNumber: approveReceipt.blockNumber, // But use approve block number
+        approvalHash: approveReceipt.transactionHash
       };
     } catch (error) {
       console.error("❌ Blockchain ownership transfer error:", error.message);

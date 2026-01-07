@@ -295,6 +295,18 @@ class ApiService {
     return this.request('/blockchain/health');
   }
 
+  async getBlock(blockNumber: number) {
+    return this.request(`/blockchain/block/${blockNumber}`);
+  }
+
+  async verifyLandOwnership(assetId: string) {
+    return this.request(`/blockchain/verify/${assetId}`);
+  }
+
+  async getTransactionById(hash: string) {
+    return this.request(`/blockchain/transaction/${hash}`);
+  }
+
   async downloadCertificate(landId: string) {
     const response = await fetch(`${API_BASE_URL}/lands/${landId}/certificate`, {
       method: 'GET',
@@ -498,9 +510,13 @@ class ApiService {
     return this.request('/admin/transactions/pending');
   }
 
-  async approveTransaction(transactionId: string) {
-    return this.request(`/admin/transactions/${transactionId}/approve`, {
+  async approveTransaction(buyRequestId: string) {
+    return this.request(`/buy-requests/${buyRequestId}/admin-review`, {
       method: 'POST',
+      body: JSON.stringify({
+        action: 'approve',
+        comments: 'Approved by admin'
+      }),
     });
   }
 
