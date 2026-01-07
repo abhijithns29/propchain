@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, Users, Database, FileText, ShoppingCart, Sparkles } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, Users, Database, FileText, ShoppingCart, Sparkles, Cpu } from 'lucide-react';
+import BlockchainDashboard from './BlockchainDashboard';
 import { User, Land, BuyRequest } from '../types';
 import apiService from '../services/api';
 import OCRVerificationModal from './OCRVerificationModal';
 import Tesseract from 'tesseract.js';
 
 const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'land-transactions' | 'all-transactions'>('users');
+  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'land-transactions' | 'all-transactions' | 'blockchain'>('users');
   const [pendingTransactions, setPendingTransactions] = useState<BuyRequest[]>([]);
   const [allTransactions, setAllTransactions] = useState<BuyRequest[]>([]);
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
@@ -936,6 +937,16 @@ const AdminPanel: React.FC = () => {
             <Database className="inline h-4 w-4 mr-2" />
             All Lands
           </button>
+          <button
+            onClick={() => setActiveTab('blockchain')}
+            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'blockchain'
+              ? 'border-[#4154f1] text-[#4154f1]'
+              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
+              }`}
+          >
+            <Cpu className="inline h-4 w-4 mr-2" />
+            Blockchain
+          </button>
         </nav>
       </div>
 
@@ -957,6 +968,7 @@ const AdminPanel: React.FC = () => {
           {activeTab === 'all-transactions' && renderAllTransactions()}
           {activeTab === 'lands' && renderLands()}
           {activeTab === 'land-transactions' && renderLandTransactions()}
+          {activeTab === 'blockchain' && <BlockchainDashboard />}
         </>
       )}
 

@@ -282,6 +282,19 @@ class ApiService {
     return this.request(`/lands/search/${assetId}`);
   }
 
+  // Blockchain Dashboard Methods
+  async getBlockchainStats() {
+    return this.request('/blockchain/stats');
+  }
+
+  async getBlockchainTransactions(limit = 50) {
+    return this.request(`/blockchain/transactions?limit=${limit}`);
+  }
+
+  async getBlockchainHealth() {
+    return this.request('/blockchain/health');
+  }
+
   async downloadCertificate(landId: string) {
     const response = await fetch(`${API_BASE_URL}/lands/${landId}/certificate`, {
       method: 'GET',
