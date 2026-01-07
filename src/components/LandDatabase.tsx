@@ -151,11 +151,33 @@ const LandDatabase: React.FC = () => {
       // Check document status first
       const status = await apiService.checkDocumentStatus(landId);
 
-      if (!status.data.digitalDocument || !status.data.digitalDocument.exists || !status.data.digitalDocument.isDigitalized) {
-        setError("Digital certificate not found or land is not digitalized");
+      // Check if digitalDocument status is available
+      if (!status.data.digitalDocument) {
+        setError("Unable to retrieve document status. Please try again.");
         return;
       }
 
+      const docStatus = status.data.digitalDocument;
+
+      // Check if land is not digitalized
+      if (!docStatus.isDigitalized) {
+        setError("This land has not been digitalized yet. Please contact an administrator to digitalize this land.");
+        return;
+      }
+
+      // Check if digitalized but certificate data is missing
+      if (docStatus.isDigitalized && !docStatus.hash) {
+        setError("Land is marked as digitalized but certificate data is missing. Please contact an administrator to re-digitalize this land.");
+        return;
+      }
+
+      // Check if certificate file doesn't exist in IPFS
+      if (!docStatus.exists) {
+        setError(docStatus.error || "Digital certificate file not found. Please contact an administrator.");
+        return;
+      }
+
+      // All checks passed, proceed with download
       const blob = await apiService.downloadCertificate(landId);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');

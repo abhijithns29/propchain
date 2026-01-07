@@ -1808,20 +1808,30 @@ router.get("/:landId/certificate", async (req, res) => {
       });
     }
 
-    if (!land.digitalDocument || !land.digitalDocument.isDigitalized) {
-      console.error(`Land not digitalized: ${landId}`);
+    // Check if digitalDocument exists
+    if (!land.digitalDocument) {
+      console.error(`No digitalDocument object found for land: ${landId}`);
       return res.status(400).json({
         success: false,
-        error:
-          "Land is not digitalized. Please contact an administrator to digitalize this land first.",
+        error: "Land has not been digitalized. Please contact an administrator to digitalize this land first.",
       });
     }
 
-    if (!land.digitalDocument.hash) {
-      console.error(`No digital document hash found for land: ${landId}`);
-      return res.status(404).json({
+    // Check if land is marked as digitalized
+    if (!land.digitalDocument.isDigitalized) {
+      console.error(`Land not digitalized: ${landId}`);
+      return res.status(400).json({
         success: false,
-        error: "Digital certificate hash not found",
+        error: "Land is not digitalized. Please contact an administrator to digitalize this land first.",
+      });
+    }
+
+    // Check if hash exists (this is the key issue we're fixing)
+    if (!land.digitalDocument.hash) {
+      console.error(`Land marked as digitalized but hash is missing: ${landId}`);
+      return res.status(400).json({
+        success: false,
+        error: "Land is marked as digitalized but certificate data is missing. Please contact an administrator to re-digitalize this land.",
       });
     }
 
@@ -2006,21 +2016,49 @@ router.get("/:landId/document-status", async (req, res) => {
       };
     }
 
-    // Check digital document
-    if (land.digitalDocument && land.digitalDocument.hash) {
-      const digitalExists = await ipfsService.fileExists(
-        land.digitalDocument.hash
-      );
-      const digitalInfo = await ipfsService.getFileInfo(
-        land.digitalDocument.hash
-      );
+    // Check digital document - Always return status, even if hash is missing
+    if (land.digitalDocument) {
+      // If digitalDocument exists but has no hash
+      if (!land.digitalDocument.hash) {
+        status.digitalDocument = {
+          exists: false,
+          isDigitalized: land.digitalDocument.isDigitalized || false,
+          hash: null,
+          size: 0,
+          url: null,
+          error: land.digitalDocument.isDigitalized 
+            ? "Land is marked as digitalized but certificate hash is missing. Please contact admin to re-digitalize this land."
+            : "Land has not been digitalized yet."
+        };
+      } else {
+        // Hash exists, check if file is accessible
+        const digitalExists = await ipfsService.fileExists(
+          land.digitalDocument.hash
+        );
+        const digitalInfo = await ipfsService.getFileInfo(
+          land.digitalDocument.hash
+        );
 
+        status.digitalDocument = {
+          exists: digitalExists,
+          isDigitalized: land.digitalDocument.isDigitalized,
+          hash: land.digitalDocument.hash,
+          size: digitalInfo ? digitalInfo.size : 0,
+          url: ipfsService.getFileUrl(land.digitalDocument.hash),
+          error: !digitalExists 
+            ? "Certificate file not found in IPFS. Please contact admin."
+            : null
+        };
+      }
+    } else {
+      // No digitalDocument object at all
       status.digitalDocument = {
-        exists: digitalExists,
-        isDigitalized: land.digitalDocument.isDigitalized,
-        hash: land.digitalDocument.hash,
-        size: digitalInfo ? digitalInfo.size : 0,
-        url: ipfsService.getFileUrl(land.digitalDocument.hash),
+        exists: false,
+        isDigitalized: false,
+        hash: null,
+        size: 0,
+        url: null,
+        error: "Land has not been digitalized yet."
       };
     }
 
