@@ -7,7 +7,7 @@ import OCRVerificationModal from './OCRVerificationModal';
 import Tesseract from 'tesseract.js';
 
 const AdminPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'land-transactions' | 'all-transactions' | 'blockchain'>('users');
+  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'all-transactions' | 'blockchain'>('users');
   const [pendingTransactions, setPendingTransactions] = useState<BuyRequest[]>([]);
   const [allTransactions, setAllTransactions] = useState<BuyRequest[]>([]);
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
@@ -72,10 +72,6 @@ const AdminPanel: React.FC = () => {
         case 'lands':
           const landsResponse = await apiService.getLands({ limit: 100 });
           setAllLands(landsResponse.lands);
-          break;
-        case 'land-transactions':
-          const landTransResponse = await apiService.getPendingLandTransactions();
-          setLandTransactions(landTransResponse.transactions);
           break;
       }
     } catch (error: any) {
@@ -918,16 +914,6 @@ const AdminPanel: React.FC = () => {
             All Transactions
           </button>
           <button
-            onClick={() => setActiveTab('land-transactions')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'land-transactions'
-              ? 'border-[#4154f1] text-[#4154f1]'
-              : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
-              }`}
-          >
-            <ShoppingCart className="inline h-4 w-4 mr-2" />
-            Land Transactions
-          </button>
-          <button
             onClick={() => setActiveTab('lands')}
             className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'lands'
               ? 'border-[#4154f1] text-[#4154f1]'
@@ -967,7 +953,7 @@ const AdminPanel: React.FC = () => {
           {activeTab === 'transactions' && renderTransactions()}
           {activeTab === 'all-transactions' && renderAllTransactions()}
           {activeTab === 'lands' && renderLands()}
-          {activeTab === 'land-transactions' && renderLandTransactions()}
+
           {activeTab === 'blockchain' && <BlockchainDashboard />}
         </>
       )}

@@ -171,8 +171,14 @@ class BlockchainService {
         return null;
       }
 
+      // Validate wallet address format
+      if (!ownerAddress || !ethers.utils.isAddress(ownerAddress)) {
+        throw new Error(`Invalid owner wallet address: ${ownerAddress}`);
+      }
+
       console.log("Registering land on blockchain...");
       console.log({ assetId, ownerAddress, surveyNumber });
+      console.log(`✅ Wallet address validated: ${ownerAddress}`);
 
       // Prepare land data
       const location = surveyNumber || "Unknown";
@@ -206,6 +212,8 @@ class BlockchainService {
       // Extract property ID from event
       const event = receipt.events?.find(e => e.event === 'PropertyRegistered');
       const propertyId = event?.args?.propertyId?.toNumber() || 0;
+
+      console.log(`✅ Property registered with ID: ${propertyId} for owner: ${ownerAddress}`);
 
       return {
         transactionHash: receipt.transactionHash,

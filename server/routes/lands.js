@@ -679,9 +679,27 @@ router.post("/digitalize", adminAuth, async (req, res) => {
         if (land.blockchainTxHash) {
           console.log(`ℹ️ Land ${land.assetId} already registered on blockchain. Skipping duplicate registration.`);
         } else {
-          const ownerAddress = owner.walletAddress || blockchainService.wallet?.address || "0x0000000000000000000000000000000000000000";
+          // Re-fetch user to ensure we have the latest wallet address
+          const User = require('../models/User');
+          const freshOwner = await User.findById(owner._id).select('walletAddress fullName email');
           
-          console.log(`Using owner address for blockchain: ${ownerAddress}`);
+          if (!freshOwner) {
+            throw new Error(`Owner not found: ${owner._id}`);
+          }
+          
+          if (!freshOwner.walletAddress) {
+            throw new Error(
+              `Cannot digitalize land: Owner "${freshOwner.fullName}" (${freshOwner.email}) does not have a wallet address. ` +
+              `Please ensure the user completes wallet verification before digitalizing their land.`
+            );
+          }
+          
+          const ownerAddress = freshOwner.walletAddress;
+          
+          console.log(`🔐 Registering land on blockchain with owner wallet:`);
+          console.log(`   Owner: ${freshOwner.fullName} (${freshOwner.email})`);
+          console.log(`   Wallet: ${ownerAddress}`);
+          console.log(`   Asset ID: ${land.assetId}`);
           
           const blockchainResult = await blockchainService.registerLand(
             land.assetId,
@@ -697,6 +715,8 @@ router.post("/digitalize", adminAuth, async (req, res) => {
             land.blockchainBlock = blockchainResult.blockNumber;
             await land.save();
             console.log(`✅ Land registered on blockchain - TX: ${blockchainResult.transactionHash}`);
+            console.log(`✅ Blockchain ID: ${blockchainResult.propertyId}`);
+            console.log(`✅ Owner wallet used: ${ownerAddress}`);
           }
         }
 
@@ -710,6 +730,10 @@ router.post("/digitalize", adminAuth, async (req, res) => {
       }
     } catch (blockchainError) {
       console.error("❌ Blockchain/Ownership registration failed during digitalization:", blockchainError.message);
+      // Re-throw the error if it's a validation error (no wallet address)
+      if (blockchainError.message.includes('does not have a wallet address')) {
+        throw blockchainError;
+      }
     }
     // ===========================================================================================
 
