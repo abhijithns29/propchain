@@ -505,6 +505,13 @@ class ApiService {
     return this.request(`/buy-requests/${chatId}`);
   }
 
+  async cancelBuyRequest(chatId: string, reason?: string) {
+    return this.request(`/buy-requests/${chatId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
   // ==================== ADMIN TRANSACTIONS ====================
   async getPendingTransactions() {
     return this.request('/admin/transactions/pending');

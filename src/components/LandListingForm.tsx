@@ -172,19 +172,19 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-white">List Land for Sale</h2>
-            <p className="text-slate-400 mt-1">
+            <h2 className="text-2xl font-bold text-[#012970]">List Land for Sale</h2>
+            <p className="text-gray-600 mt-1">
               {land.village}, {land.district}, {land.state} - Survey No. {land.surveyNumber}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -193,31 +193,31 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Land Info Summary */}
-          <div className="bg-slate-800/30 rounded-lg p-4">
-            <h3 className="font-semibold text-white mb-2">Land Information</h3>
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <h3 className="font-semibold text-[#012970] mb-2">Land Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-slate-400">Area:</span>
-                <span className="ml-2 font-medium text-white">{formatArea(land)}</span>
+                <span className="text-gray-600">Area:</span>
+                <span className="ml-2 font-medium text-[#012970]">{formatArea(land)}</span>
               </div>
               <div>
-                <span className="text-slate-400">Land Type:</span>
-                <span className="ml-2 font-medium text-white">{land.landType}</span>
+                <span className="text-gray-600">Land Type:</span>
+                <span className="ml-2 font-medium text-[#012970]">{land.landType}</span>
               </div>
               <div>
-                <span className="text-slate-400">Asset ID:</span>
-                <span className="ml-2 font-medium text-white">{land.assetId}</span>
+                <span className="text-gray-600">Asset ID:</span>
+                <span className="ml-2 font-medium text-[#012970]">{land.assetId}</span>
               </div>
               <div>
-                <span className="text-slate-400">Status:</span>
-                <span className="ml-2 font-medium text-emerald-300">Verified & Digitalized</span>
+                <span className="text-gray-600">Status:</span>
+                <span className="ml-2 font-medium text-emerald-600">Verified & Digitalized</span>
               </div>
             </div>
           </div>
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               <DollarSign className="inline w-4 h-4 mr-1" />
               Asking Price (₹)
             </label>
@@ -225,14 +225,13 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
               type="number"
               value={formData.askingPrice}
               onChange={(e) => handleInputChange('askingPrice', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-[#012970] rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
               placeholder="Enter your asking price"
               min="0"
-              step="1000"
               required
             />
             {formData.askingPrice && (
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-gray-600 mt-1">
                 ₹{parseInt(formData.askingPrice).toLocaleString('en-IN')}
               </p>
             )}
@@ -240,32 +239,32 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               <FileText className="inline w-4 h-4 mr-1" />
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-[#012970] rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
               placeholder="Describe your land, its features, and why it's a great investment..."
               rows={4}
               required
             />
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-gray-600 mt-1">
               {formData.description.length}/2000 characters
             </p>
           </div>
 
           {/* Images Upload */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               <Camera className="inline w-4 h-4 mr-1" />
               Upload Photos (1-7 images)
             </label>
             
             {/* Upload Area */}
-            <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center bg-slate-800/20">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
               <input
                 type="file"
                 multiple
@@ -278,16 +277,16 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                 htmlFor="image-upload"
                 className="cursor-pointer flex flex-col items-center"
               >
-                <Upload className="w-8 h-8 text-slate-500 mb-2" />
-                <p className="text-slate-300">Click to upload images</p>
-                <p className="text-sm text-slate-400">PNG, JPG up to 10MB each</p>
+                <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                <p className="text-[#012970]">Click to upload images</p>
+                <p className="text-sm text-gray-500">PNG, JPG up to 10MB each</p>
               </label>
             </div>
 
             {/* Image Previews */}
             {imagePreviews.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium text-white mb-2">
+                <h4 className="text-sm font-medium text-[#012970] mb-2">
                   Uploaded Images ({imagePreviews.length}/7)
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -296,7 +295,7 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                       <img
                         src={preview}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border border-slate-700"
+                        className="w-full h-24 object-cover rounded-lg border border-gray-200"
                       />
                       <button
                         type="button"
@@ -314,7 +313,7 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
 
           {/* Features */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               Land Features
             </label>
             <div className="flex gap-2 mb-3">
@@ -322,14 +321,14 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                 type="text"
                 value={newFeature}
                 onChange={(e) => setNewFeature(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+                className="flex-1 px-3 py-2 border border-gray-200 bg-gray-50 text-[#012970] rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
                 placeholder="e.g., Fertile soil, Water connection"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
               />
               <button
                 type="button"
                 onClick={addFeature}
-                className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 shadow-md shadow-emerald-500/40"
+                className="px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] shadow-md shadow-blue-500/20 font-bold"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -339,13 +338,13 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                 {formData.features.map((feature, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm border border-emerald-500/30"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-[#4154f1] rounded-full text-sm border border-blue-200 font-medium"
                   >
                     {feature}
                     <button
                       type="button"
                       onClick={() => removeFeature(index)}
-                      className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                      className="text-[#4154f1] hover:text-[#3346d8] transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -357,7 +356,7 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
 
           {/* Nearby Amenities */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               Nearby Amenities
             </label>
             <div className="flex gap-2 mb-3">
@@ -365,14 +364,14 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                 type="text"
                 value={newAmenity}
                 onChange={(e) => setNewAmenity(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+                className="flex-1 px-3 py-2 border border-gray-200 bg-gray-50 text-[#012970] rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
                 placeholder="e.g., School, Hospital, Market"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
               />
               <button
                 type="button"
                 onClick={addAmenity}
-                className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 shadow-md shadow-emerald-500/40"
+                className="px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] shadow-md shadow-blue-500/20 font-bold"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -382,13 +381,13 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
                 {formData.nearbyAmenities.map((amenity, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-sm border border-emerald-500/30"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-[#4154f1] rounded-full text-sm border border-blue-200 font-medium"
                   >
                     {amenity}
                     <button
                       type="button"
                       onClick={() => removeAmenity(index)}
-                      className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                      className="text-[#4154f1] hover:text-[#3346d8] transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -400,38 +399,38 @@ const LandListingForm: React.FC<LandListingFormProps> = ({ land, onClose, onSucc
 
           {/* Virtual Tour */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">
+            <label className="block text-sm font-medium text-[#012970] mb-2">
               Virtual Tour URL (Optional)
             </label>
             <input
               type="url"
               value={formData.virtualTourUrl}
               onChange={(e) => handleInputChange('virtualTourUrl', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-700 bg-slate-900/50 text-white rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500"
+              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 text-[#012970] rounded-lg focus:ring-2 focus:ring-[#4154f1] focus:border-transparent placeholder-gray-400"
               placeholder="https://..."
             />
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4">
-              <p className="text-red-300">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700">{error}</p>
             </div>
           )}
 
           {/* Submit Buttons */}
-          <div className="flex gap-4 pt-6 border-t border-slate-800">
+          <div className="flex gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-slate-700 text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors font-semibold"
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/40 transition-colors font-semibold"
+              className="flex-1 px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/20 transition-colors font-bold"
             >
               {loading ? 'Listing...' : 'List for Sale'}
             </button>

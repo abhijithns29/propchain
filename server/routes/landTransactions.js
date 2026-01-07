@@ -511,6 +511,21 @@ async function approveTransaction(transaction, adminId, req) {
   land.addOwnershipRecord(newOwner._id, 'SALE', transaction.transactionId);
   land.status = 'AVAILABLE';
   land.marketInfo.isForSale = false;
+  
+  // ✅ UPDATE: Regenerate digital document to point to new ownership certificate
+  // This ensures that when users download the certificate, they get the updated
+  // certificate with the new owner information, not the old one
+  land.digitalDocument = {
+    hash: ownershipCertificateHash,
+    url: ipfsService.getFileUrl(ownershipCertificateHash),
+    digitalizedBy: adminId,
+    verifiedBy: adminId,
+    generatedAt: new Date(),
+    isDigitalized: true
+  };
+  
+  console.log(`✅ Updated land digitalDocument to new ownership certificate: ${ownershipCertificateHash}`);
+  
   await land.save();
 
   // Update chat if exists

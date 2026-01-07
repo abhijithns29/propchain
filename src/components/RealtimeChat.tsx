@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreVertical, X, DollarSign, Check, X as XIcon, Eye } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, X, DollarSign, Check, X as XIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import apiService from '../services/api';
 import io, { Socket } from 'socket.io-client';
@@ -995,20 +995,31 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
               Initiate Buy Request
             </button>
             <button
-              onClick={() => loadExistingBuyRequest(chat?._id || '')}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors flex items-center justify-center gap-2 shadow-sm"
-              title="Check for existing buy request"
-            >
-              <Eye className="w-4 h-4" />
-              Check Status
-            </button>
-            <button
-              onClick={() => setBuyRequestStatus('NONE')}
-              className="px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-500/40"
-              title="Reset buy request status (for testing)"
+              onClick={async () => {
+                if (window.confirm('Are you sure you want to stop this transaction? This action cannot be undone.')) {
+                  try {
+                    const chatId = chat?._id || '';
+                    await apiService.cancelBuyRequest(chatId, 'Buyer cancelled the transaction');
+                    setBuyRequestStatus('NONE');
+                    setCurrentOffer(null);
+                    setError('');
+                    // Add a message to chat
+                    const messageData = {
+                      message: 'Transaction cancelled by buyer',
+                      messageType: 'SYSTEM'
+                    };
+                    await apiService.sendMessage(chatId, messageData);
+                  } catch (error: any) {
+                    console.error('Error cancelling transaction:', error);
+                    setError(error.message || 'Failed to cancel transaction');
+                  }
+                }
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-500/40"
+              title="Stop the transaction"
             >
               <X className="w-4 h-4" />
-              Reset
+              Stop the Transaction
             </button>
           </div>
         </div>

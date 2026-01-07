@@ -309,7 +309,7 @@ const MyLands: React.FC = () => {
                   </p>
                 )}
 
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 relative z-10">
                   <button
                     onClick={() => {
                       console.log("Land Details:", land);
@@ -319,16 +319,22 @@ const MyLands: React.FC = () => {
                       console.log("Amenities:", land.marketInfo?.nearbyAmenities);
                       setSelectedLandView(land);
                     }}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     View Details
                   </button>
                   
-                  {!land.marketInfo?.isForSale && auth.user?.role === "USER" && (
+                  {!land.marketInfo?.isForSale && (
                     <button
-                      onClick={() => handleListForSale(land)}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("List for Sale clicked for land:", land.surveyNumber);
+                        console.log("isForSale:", land.marketInfo?.isForSale);
+                        handleListForSale(land);
+                      }}
+                      className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors cursor-pointer pointer-events-auto"
+                      style={{ pointerEvents: 'auto' }}
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       List for Sale
