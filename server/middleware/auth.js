@@ -50,7 +50,18 @@ const auth = async (req, res, next) => {
 
 const adminAuth = async (req, res, next) => {
   try {
-    await auth(req, res, () => {});
+    // Call auth middleware and wait for it to complete
+    await new Promise((resolve, reject) => {
+      auth(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // If auth failed, response was already sent, so return
+    if (res.headersSent) {
+      return;
+    }
 
     if (!["ADMIN"].includes(req.user.role)) {
       // Log unauthorized access attempt
@@ -74,16 +85,30 @@ const adminAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: "Authorization failed",
-    });
+    // Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      res.status(401).json({
+        success: false,
+        message: "Authorization failed",
+      });
+    }
   }
 };
 
 const auditorAuth = async (req, res, next) => {
   try {
-    await auth(req, res, () => {});
+    // Call auth middleware and wait for it to complete
+    await new Promise((resolve, reject) => {
+      auth(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // If auth failed, response was already sent, so return
+    if (res.headersSent) {
+      return;
+    }
 
     if (!["ADMIN", "AUDITOR"].includes(req.user.role)) {
       return res.status(403).json({
@@ -94,10 +119,13 @@ const auditorAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: "Authorization failed",
-    });
+    // Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      res.status(401).json({
+        success: false,
+        message: "Authorization failed",
+      });
+    }
   }
 };
 

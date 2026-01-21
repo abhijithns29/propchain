@@ -50,6 +50,113 @@ graph LR
     style F fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
+### Research & Development Methodology Flow
+
+The following diagram illustrates the comprehensive methodology framework for the PropChain blockchain land registry system, structured according to formal research and engineering principles:
+
+```mermaid
+graph TB
+    subgraph "A. Problem Definition"
+        A1[Identify Traditional Registry Limitations]
+        A2[Define Research Objectives]
+        A3[Establish Success Criteria]
+        A1 --> A2 --> A3
+    end
+    
+    subgraph "B. System Architecture Design"
+        B1[High-Level Architecture]
+        B2[Component Specification]
+        B3[Integration Design]
+        B4[Data Flow Modeling]
+        B1 --> B2 --> B3 --> B4
+    end
+    
+    subgraph "C. Theoretical Modeling"
+        C1[Blockchain Consensus Theory]
+        C2[Cryptographic Foundations]
+        C3[Smart Contract Logic]
+        C4[Data Integrity Models]
+        C1 --> C2 --> C3 --> C4
+    end
+    
+    subgraph "D. Simulation & Computational Layer"
+        D1[Local Blockchain Setup]
+        D2[Smart Contract Testing]
+        D3[Transaction Simulation]
+        D4[Performance Profiling]
+        D1 --> D2 --> D3 --> D4
+    end
+    
+    subgraph "E. Implementation"
+        E1[Smart Contract Development]
+        E2[Backend API Development]
+        E3[Frontend UI Development]
+        E4[Database Integration]
+        E1 --> E2 --> E3 --> E4
+    end
+    
+    subgraph "F. Control & Feedback Mechanisms"
+        F1[Authentication & Authorization]
+        F2[Transaction Validation]
+        F3[Real-time Monitoring]
+        F4[Error Handling]
+        F1 --> F2 --> F3 --> F4
+    end
+    
+    subgraph "G. Validation & Testing"
+        G1[Unit Testing]
+        G2[Integration Testing]
+        G3[Security Auditing]
+        G4[Performance Testing]
+        G1 --> G2 --> G3 --> G4
+    end
+    
+    subgraph "H. Data Collection & Analysis"
+        H1[Transaction Logging]
+        H2[Performance Metrics]
+        H3[User Analytics]
+        H4[Blockchain Analytics]
+        H1 --> H2 --> H3 --> H4
+    end
+    
+    subgraph "I. Documentation & Collaboration"
+        I1[Technical Documentation]
+        I2[API Documentation]
+        I3[User Guides]
+        I4[Open-Source Repository]
+        I1 --> I2 --> I3 --> I4
+    end
+    
+    A3 ==> B1
+    B4 ==> C1
+    C4 ==> D1
+    D4 ==> E1
+    E4 ==> F1
+    F4 ==> G1
+    G4 ==> H1
+    H4 ==> I1
+    
+    I4 -.Feedback Loop.-> A1
+    
+    style A1 fill:#ff9999,stroke:#333,stroke-width:2px
+    style C3 fill:#f9f,stroke:#333,stroke-width:3px
+    style E1 fill:#f9f,stroke:#333,stroke-width:2px
+    style G3 fill:#bbf,stroke:#333,stroke-width:2px
+    style I4 fill:#99ff99,stroke:#333,stroke-width:2px
+```
+
+**Methodology Summary:**
+
+1. **Problem Definition**: Analyze limitations of centralized land registries (fraud, corruption, inefficiency)
+2. **Architecture Design**: Multi-layered system with blockchain, backend, and frontend separation
+3. **Theoretical Foundation**: Based on Ethereum consensus, cryptographic hashing, and smart contract theory
+4. **Simulation Environment**: Ganache/Hardhat local blockchain for controlled testing
+5. **Implementation**: Solidity contracts, Express.js API, React frontend with TypeScript
+6. **Control Systems**: JWT authentication, role-based access, transaction approval workflows
+7. **Validation**: Comprehensive testing including security audits and gas optimization
+8. **Analytics**: Real-time monitoring of transactions, user behavior, and system performance
+9. **Collaboration**: Open-source model with comprehensive documentation and version control
+
 ### Development Phases
 
 #### **Phase 1: Requirements & Planning**
@@ -218,6 +325,326 @@ graph TB
     style BLOCKCHAIN_SVC fill:#bbf,stroke:#333,stroke-width:2px
     style MONGO fill:#9f9,stroke:#333,stroke-width:2px
 ```
+
+### Simplified PropChain Architecture
+
+The following diagram provides a high-level overview of PropChain's architecture with the essential components:
+
+```mermaid
+graph TB
+    subgraph "CLIENT LAYER"
+        CLIENT[Web/Mobile Browser]
+    end
+    
+    subgraph "FRONTEND LAYER"
+        REACT[React + TypeScript Application]
+        COMPONENTS[Dashboard | Marketplace | Chat | Profile]
+    end
+    
+    subgraph "BACKEND LAYER"
+        API[Express.js API Server]
+        SOCKET[Socket.io - Real-time Chat]
+        AUTH[Authentication + 2FA/OTP]
+        CHATBOT[AI Chatbot - Hybrid NLP]
+    end
+    
+    subgraph "BUSINESS SERVICES"
+        LAND_SVC[Land Management]
+        TRANS_SVC[Transaction Processing]
+        ADMIN_SVC[Admin Approval]
+        BLOCKCHAIN_SVC[Blockchain Service]
+    end
+    
+    subgraph "DATA & STORAGE"
+        MONGO[(MongoDB)]
+        GRIDFS[(GridFS)]
+        FILES[Documents & Images]
+    end
+    
+    subgraph "BLOCKCHAIN"
+        CONTRACT[LandRegistry.sol Smart Contract]
+        GANACHE[Ganache/Hardhat]
+        FUNCTIONS[registerProperty | transferOwnership | approveTransaction]
+    end
+    
+    subgraph "EXTERNAL"
+        EMAIL[Email Service - OTP/Notifications]
+        AI_API[AI APIs - Optional]
+    end
+    
+    %% Main Flow
+    CLIENT --> REACT
+    REACT --> COMPONENTS
+    COMPONENTS --> API
+    COMPONENTS --> SOCKET
+    
+    API --> AUTH
+    API --> CHATBOT
+    API --> LAND_SVC
+    API --> TRANS_SVC
+    
+    LAND_SVC --> BLOCKCHAIN_SVC
+    TRANS_SVC --> ADMIN_SVC
+    TRANS_SVC --> BLOCKCHAIN_SVC
+    
+    BLOCKCHAIN_SVC --> CONTRACT
+    CONTRACT --> GANACHE
+    CONTRACT --> FUNCTIONS
+    
+    LAND_SVC --> MONGO
+    TRANS_SVC --> MONGO
+    LAND_SVC --> GRIDFS
+    GRIDFS --> FILES
+    
+    AUTH --> EMAIL
+    CHATBOT -.Optional.-> AI_API
+    
+    %% Styling
+    style CONTRACT fill:#ff99ff,stroke:#333,stroke-width:4px
+    style BLOCKCHAIN_SVC fill:#bbddff,stroke:#333,stroke-width:3px
+    style MONGO fill:#99ff99,stroke:#333,stroke-width:2px
+    style GRIDFS fill:#99ff99,stroke:#333,stroke-width:2px
+    style AUTH fill:#ffbbbb,stroke:#333,stroke-width:2px
+    style ADMIN_SVC fill:#ffffbb,stroke:#333,stroke-width:2px
+    style CHATBOT fill:#ffbbff,stroke:#333,stroke-width:2px
+```
+
+**Simplified Architecture Overview:**
+
+- **Client Layer**: Web and mobile browser access
+- **Frontend**: React application with dashboard, marketplace, and chat interfaces
+- **Backend**: Express.js API with authentication, real-time chat, and AI chatbot
+- **Business Services**: Land management, transactions, admin approvals, and blockchain integration
+- **Data Storage**: MongoDB for records, GridFS for large files
+- **Blockchain**: LandRegistry smart contract on Ethereum (Ganache for development)
+- **External Services**: Email for OTP/notifications, optional AI APIs for chatbot
+
+---
+
+### PropChain System Architecture - Complete Methodology Diagram (new)
+
+The following diagram illustrates the complete PropChain system architecture with all components, services, and layers specific to the blockchain land registry implementation:
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Browser]
+        MOBILE[Mobile Browser]
+    end
+    
+    subgraph "Presentation Layer"
+        REACT[React Application]
+        ROUTER[React Router]
+        STATE[State Management]
+        UI_COMP[UI Components]
+    end
+    
+    subgraph "Application Layer"
+        API[Express.js API Server]
+        SOCKET[Socket.io Server]
+        MIDDLEWARE[Middleware Stack]
+    end
+    
+    subgraph "Authentication & Security"
+        AUTH[Authentication Service]
+        JWT[JWT Token Manager]
+        TFA[2FA/OTP Service]
+        RBAC[Role-Based Access Control]
+    end
+    
+    subgraph "Business Logic Layer"
+        LAND[Land Service]
+        TRANS[Transaction Service]
+        USER[User Service]
+        CHAT[Chat Service]
+        ADMIN[Admin Approval Service]
+        AUDIT[Audit Log Service]
+        QR[QR Code Generator]
+        DOC_VERIFY[Document Verification]
+    end
+    
+    subgraph "AI & Intelligence Layer"
+        CHATBOT[Hybrid NLP Chatbot]
+        INTENT[Intent Recognition]
+        NLP[NLP Filter Extraction]
+        AI_FALLBACK[AI APIs - Optional Fallback]
+    end
+    
+    subgraph "Blockchain Service Layer"
+        BLOCKCHAIN_SVC[Blockchain Service]
+        ETHERS[Ethers.js Library]
+        TX_MANAGER[Transaction Manager]
+    end
+    
+    subgraph "Data Layer"
+        MONGO[(MongoDB)]
+        GRIDFS[(GridFS - Documents)]
+        CACHE[(Redis - Optional)]
+    end
+    
+    subgraph "Blockchain Layer"
+        ETH[Ethereum Network]
+        CONTRACT[LandRegistry.sol]
+        GANACHE[Ganache/Hardhat Local]
+        FUNCTIONS[Smart Contract Functions]
+    end
+    
+    subgraph "External Services"
+        EMAIL[Nodemailer - Email Service]
+        IPFS[IPFS - Optional Storage]
+        OPENAI[OpenAI API - Optional]
+        GEMINI[Google Gemini - Optional]
+    end
+    
+    %% Client to Presentation
+    WEB --> REACT
+    MOBILE --> REACT
+    
+    %% Presentation Layer Internal
+    REACT --> ROUTER
+    REACT --> STATE
+    REACT --> UI_COMP
+    
+    %% Presentation to Application
+    UI_COMP --> API
+    UI_COMP --> SOCKET
+    
+    %% Application Layer
+    API --> MIDDLEWARE
+    MIDDLEWARE --> AUTH
+    
+    %% Authentication Flow
+    AUTH --> JWT
+    AUTH --> TFA
+    AUTH --> RBAC
+    AUTH --> EMAIL
+    
+    %% API to Business Logic
+    API --> LAND
+    API --> TRANS
+    API --> USER
+    API --> CHAT
+    API --> ADMIN
+    API --> CHATBOT
+    
+    %% Socket.io to Chat
+    SOCKET --> CHAT
+    
+    %% Business Logic Interactions
+    LAND --> QR
+    LAND --> DOC_VERIFY
+    LAND --> BLOCKCHAIN_SVC
+    LAND --> GRIDFS
+    
+    TRANS --> ADMIN
+    TRANS --> BLOCKCHAIN_SVC
+    TRANS --> AUDIT
+    
+    USER --> RBAC
+    
+    ADMIN --> AUDIT
+    
+    %% Chatbot Architecture
+    CHATBOT --> INTENT
+    INTENT --> NLP
+    NLP --> LAND
+    CHATBOT -.Fallback.-> AI_FALLBACK
+    AI_FALLBACK -.-> OPENAI
+    AI_FALLBACK -.-> GEMINI
+    
+    %% Blockchain Service
+    BLOCKCHAIN_SVC --> ETHERS
+    ETHERS --> ETH
+    BLOCKCHAIN_SVC --> TX_MANAGER
+    
+    %% Blockchain Layer
+    ETH --> CONTRACT
+    ETH --> GANACHE
+    CONTRACT --> FUNCTIONS
+    
+    %% Data Layer Connections
+    LAND --> MONGO
+    TRANS --> MONGO
+    USER --> MONGO
+    CHAT --> MONGO
+    ADMIN --> MONGO
+    AUDIT --> MONGO
+    
+    MONGO -.Cache.-> CACHE
+    
+    %% External Services
+    LAND -.Optional.-> IPFS
+    
+    %% Styling
+    style CONTRACT fill:#f9f,stroke:#333,stroke-width:4px
+    style BLOCKCHAIN_SVC fill:#bbf,stroke:#333,stroke-width:3px
+    style MONGO fill:#9f9,stroke:#333,stroke-width:3px
+    style GRIDFS fill:#9f9,stroke:#333,stroke-width:2px
+    style AUTH fill:#fbb,stroke:#333,stroke-width:2px
+    style TFA fill:#fbb,stroke:#333,stroke-width:2px
+    style ADMIN fill:#ffb,stroke:#333,stroke-width:2px
+    style QR fill:#bff,stroke:#333,stroke-width:2px
+    style CHATBOT fill:#fbf,stroke:#333,stroke-width:2px
+    style INTENT fill:#fbf,stroke:#333,stroke-width:1px
+```
+
+**Key Architecture Components:**
+
+#### **1. Client & Presentation Layer**
+- Web and mobile browser support
+- React 18 with TypeScript
+- Component-based UI architecture
+- Centralized state management
+
+#### **2. Application Layer**
+- Express.js API server with RESTful endpoints
+- Socket.io for real-time communication
+- Middleware stack (CORS, validation, logging)
+
+#### **3. Authentication & Security**
+- JWT-based session management
+- Two-Factor Authentication (2FA) via email OTP
+- Role-Based Access Control (Admin, User, Auditor)
+- Secure password hashing with bcrypt
+
+#### **4. Business Logic Layer**
+- **Land Service**: Property registration, listing, search
+- **Transaction Service**: Buy/sell workflow management
+- **Admin Service**: Approval workflows for transactions
+- **Chat Service**: Real-time buyer-seller communication
+- **QR Generator**: Unique QR codes for land verification
+- **Document Verification**: Validation of uploaded documents
+- **Audit Service**: Comprehensive logging of all activities
+
+#### **5. AI & Intelligence Layer**
+- **Hybrid NLP Chatbot**: Primary rule-based system
+- **Intent Recognition**: 7 built-in intents (SEARCH, PRICE, RECOMMENDATION, etc.)
+- **NLP Filter Extraction**: Extract search criteria from natural language
+- **AI Fallback**: Optional OpenAI/Gemini integration for complex queries
+
+#### **6. Blockchain Service Layer**
+- Abstraction layer for blockchain interactions
+- Ethers.js for Ethereum communication
+- Transaction manager for gas optimization
+- Event listening and processing
+
+#### **7. Data Layer**
+- **MongoDB**: Primary database for all records
+- **GridFS**: Large file storage (images, PDFs)
+- **Redis**: Optional caching layer (future enhancement)
+
+#### **8. Blockchain Layer**
+- **LandRegistry.sol**: Core smart contract
+- Key functions: `registerProperty()`, `transferOwnership()`, `approveTransaction()`
+- **Ganache/Hardhat**: Local development blockchain
+- Production-ready for Ethereum mainnet/testnet
+
+#### **9. External Services**
+- **Nodemailer**: Email notifications and OTP delivery
+- **IPFS**: Optional decentralized document storage
+- **AI APIs**: Optional fallback for complex chatbot queries
+
+---
 
 ### Detailed Component Architecture
 
