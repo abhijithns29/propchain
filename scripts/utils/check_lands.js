@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 require('dotenv').config({ path: 'server/.env' });
-const Land = require('./server/models/Land');
+const Land = require('../../server/models/Land');
 
 async function checkLands() {
   try {

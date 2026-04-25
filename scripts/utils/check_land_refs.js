@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-require('./server/models/Land');
-require('./server/models/User');
-require('./server/models/LandTransaction');
+require('../../server/models/Land');
+require('../../server/models/User');
+require('../../server/models/LandTransaction');
 
 const Land = mongoose.model('Land');
 const LandTransaction = mongoose.model('LandTransaction');

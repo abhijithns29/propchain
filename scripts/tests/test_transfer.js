@@ -1,5 +1,8 @@
-require('dotenv').config({ path: './server/.env' });
-const blockchainService = require('./server/config/blockchain');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+if (require('fs').existsSync(require('path').resolve(__dirname, '../../.env.local'))) {
+    require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env.local'), override: true });
+}
+const blockchainService = require('../../server/config/blockchain');
 
 async function testTransfer() {
     try {

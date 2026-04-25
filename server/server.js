@@ -11,7 +11,11 @@ const ipfsService = require("./config/ipfs");
 const { initGridFS } = require("./config/gridfs");
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// Load .env.local if it exists (for machine-specific overrides)
+if (fs.existsSync(path.resolve(__dirname, "../.env.local"))) {
+  dotenv.config({ path: path.resolve(__dirname, "../.env.local"), override: true });
+}
 console.log("DEBUG CONTRACT_ADDRESS:", process.env.CONTRACT_ADDRESS);
 
 // Check for CONTRACT_ADDRESS

@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+if (require('fs').existsSync(require('path').resolve(__dirname, '../.env.local'))) {
+    require('dotenv').config({ path: require('path').resolve(__dirname, '../.env.local'), override: true });
+}
 
 // User schema (simplified for seeding)
 const userSchema = new mongoose.Schema({

@@ -3,8 +3,8 @@ require('dotenv').config({ path: 'server/.env' });
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/propchain');
 
-const Land = require('./server/models/Land');
-const User = require('./server/models/User');
+const Land = require('../../server/models/Land');
+const User = require('../../server/models/User');
 
 async function fixOwnership() {
   try {

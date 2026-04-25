@@ -1,4 +1,7 @@
-require("dotenv").config(); // <-- Add this line at the very top
+require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
+if (require("fs").existsSync(require("path").resolve(__dirname, "../../.env.local"))) {
+  require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env.local"), override: true });
+}
 
 const { ethers } = require("ethers");
 

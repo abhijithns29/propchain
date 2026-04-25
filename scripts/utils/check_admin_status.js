@@ -1,5 +1,8 @@
 const ethers = require('ethers');
-require('dotenv').config({ path: './server/.env' });
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+if (fs.existsSync(path.resolve(__dirname, '../../.env.local'))) {
+    require('dotenv').config({ path: path.resolve(__dirname, '../../.env.local'), override: true });
+}
 const fs = require('fs');
 const path = require('path');
 
@@ -24,7 +27,7 @@ async function checkAdmin() {
         console.log(`Server Admin Wallet: ${wallet.address}`);
 
         // Read ABI
-        const artifactPath = path.join(__dirname, 'server', 'config', 'LandRegistry.json');
+        const artifactPath = path.join(__dirname, '../../server', 'config', 'LandRegistry.json');
         let abi;
         
         if (fs.existsSync(artifactPath)) {

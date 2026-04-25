@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-require('./server/models/BuyRequest');
+require('../../server/models/BuyRequest');
 
 const BuyRequest = mongoose.model('BuyRequest');
 

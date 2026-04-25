@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-require('./server/models/Chat');
-require('./server/models/Land');
-require('./server/models/User');
+require('../../server/models/Chat');
+require('../../server/models/Land');
+require('../../server/models/User');
 
 const Chat = mongoose.model('Chat');
 

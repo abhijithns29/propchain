@@ -1,8 +1,11 @@
-require('dotenv').config({ path: './server/.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+if (require('fs').existsSync(require('path').resolve(__dirname, '../../.env.local'))) {
+    require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env.local'), override: true });
+}
 const mongoose = require('mongoose');
-require('./server/models/BuyRequest');
-require('./server/models/Land');
-require('./server/models/User');
+require('../../server/models/BuyRequest');
+require('../../server/models/Land');
+require('../../server/models/User');
 
 const BuyRequest = mongoose.model('BuyRequest');
 
