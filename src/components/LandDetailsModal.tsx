@@ -1,11 +1,17 @@
 import React from "react";
+import { Land } from "../types";
 
-export default function LandDetailsModal({ land, onClose }) {
+interface LandDetailsModalProps {
+  land: Land | any;
+  onClose: () => void;
+}
+
+export default function LandDetailsModal({ land, onClose }: LandDetailsModalProps) {
   if (!land) return null;
   const mi = land.marketInfo || {};
 
   // Helper for area display
-  const formatArea = (area) => {
+  const formatArea = (area: any) => {
     if (typeof area === "object" && area !== null) {
       return `${area.acres || 0} Acres, ${area.guntas || 0} Guntas`;
     }
@@ -88,7 +94,7 @@ export default function LandDetailsModal({ land, onClose }) {
               <strong>Images:</strong>
               {mi.images?.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  {mi.images.map((img, i) => (
+                  {mi.images.map((img: string, i: number) => (
                     <img
                       key={i}
                       src={img}
@@ -107,6 +113,3 @@ export default function LandDetailsModal({ land, onClose }) {
     </div>
   );
 }
-// No changes needed in this file for the backend upload/field fix.
-// Your modal already parses and displays images correctly.
-// Ensure your backend and frontend use the key "images" for uploads and FormData.
