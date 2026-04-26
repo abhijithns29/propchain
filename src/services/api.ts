@@ -307,8 +307,8 @@ class ApiService {
     return this.request(`/blockchain/transaction/${hash}`);
   }
 
-  async downloadCertificate(landId: string) {
-    const response = await fetch(`${API_BASE_URL}/lands/${landId}/certificate`, {
+  async downloadBlob(endpoint: string) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -317,26 +317,18 @@ class ApiService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || 'Failed to download certificate');
+      throw new Error(errorData.error || errorData.message || 'Failed to download file');
     }
 
     return response.blob();
   }
 
+  async downloadCertificate(landId: string) {
+    return this.downloadBlob(`/lands/${landId}/certificate`);
+  }
+
   async downloadOriginalDocument(landId: string) {
-    const response = await fetch(`${API_BASE_URL}/lands/${landId}/original-document`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || 'Failed to download original document');
-    }
-
-    return response.blob();
+    return this.downloadBlob(`/lands/${landId}/original-document`);
   }
 
   async checkDocumentStatus(landId: string) {
@@ -540,7 +532,11 @@ class ApiService {
 
   // ==================== DOCUMENT DOWNLOAD ====================
   async downloadOwnershipDocument(landId: string) {
-    return this.request(`/lands/${landId}/download-document`);
+    return this.downloadBlob(`/lands/${landId}/download-document`);
+  }
+
+  async downloadLandOriginalDocument(landId: string) {
+    return this.downloadBlob(`/lands/${landId}/download-original-document`);
   }
 
   // ==================== LAND TRANSACTIONS ====================

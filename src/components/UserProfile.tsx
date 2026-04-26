@@ -226,32 +226,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
     try {
       setLoading(true);
 
-      // Create a temporary link to download the PDF
-      const token = localStorage.getItem('token');
-      const downloadUrl = `http://localhost:5000/api/lands/${landId}/download-document`;
+      // Use apiService to get the blob with authentication
+      const blob = await apiService.downloadOwnershipDocument(landId);
+      
+      // Create a local URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
 
       // Create a temporary anchor element to trigger download
       const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `land_document_${landId}.pdf`;
-
-      // Add authorization header by creating a fetch request first
-      const response = await fetch(downloadUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to download document');
-      }
-
-      // Get the blob and create a download URL
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      // Trigger download
+      link.href = blobUrl;
+      
       // Determine extension from MIME type
       let extension = '.pdf'; // default
       if (blob.type === 'image/jpeg') extension = '.jpg';
@@ -277,26 +261,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem('token');
-      const downloadUrl = `http://localhost:5000/api/lands/${landId}/download-original-document`;
+      // Use apiService to get the blob with authentication
+      const blob = await apiService.downloadLandOriginalDocument(landId);
+      
+      const blobUrl = window.URL.createObjectURL(blob);
 
       const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `original_document_${landId}.pdf`;
-
-      const response = await fetch(downloadUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to download original document');
-      }
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      link.href = blobUrl;
 
       // Determine extension from MIME type
       let extension = '.pdf'; // default
