@@ -16,42 +16,29 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 if (fs.existsSync(path.resolve(__dirname, "../.env.local"))) {
   dotenv.config({ path: path.resolve(__dirname, "../.env.local"), override: true });
 }
-console.log("DEBUG CONTRACT_ADDRESS:", process.env.CONTRACT_ADDRESS);
+// Environment Health Check
+const requiredEnv = [
+  { key: "CONTRACT_ADDRESS", tip: "Run: npm run blockchain:deploy:ganache" },
+  { key: "MONGODB_URI", tip: "Ensure MongoDB is running and URI is in .env" },
+  { key: "ADMIN_PRIVATE_KEY", tip: "Add your Ganache/Hardhat account private key to .env" }
+];
 
-// Check for CONTRACT_ADDRESS
-if (!process.env.CONTRACT_ADDRESS || process.env.CONTRACT_ADDRESS === "") {
-  console.error(
-    "⚠️  CONTRACT_ADDRESS not found. Please deploy the contract first."
-  );
-  console.error("Run: npm run blockchain:deploy:ganache");
-  console.error(
-    "DEBUG: process.env.CONTRACT_ADDRESS value:",
-    process.env.CONTRACT_ADDRESS
-  );
-  console.error(
-    "DEBUG: typeof process.env.CONTRACT_ADDRESS:",
-    typeof process.env.CONTRACT_ADDRESS
-  );
-  console.error(
-    "DEBUG: .env file loaded from:",
-    require("path").resolve(process.cwd(), ".env")
-  );
-  // Print .env file contents for debugging
-  const fs = require("fs");
-  const envPath = require("path").resolve(process.cwd(), ".env");
-  if (fs.existsSync(envPath)) {
-    console.error(
-      "DEBUG: .env file contents:\n",
-      fs.readFileSync(envPath, "utf8")
-    );
-  } else {
-    console.error("DEBUG: .env file not found at", envPath);
-  }
-  // Print stack trace to pinpoint where the error is triggered
-  console.error("DEBUG: Stack trace:\n", new Error().stack);
-  process.exit(1); // Stop server if contract address is missing
-} else {
-  console.log("✅ CONTRACT_ADDRESS loaded:", process.env.CONTRACT_ADDRESS);
+const missingEnv = requiredEnv.filter(env => !process.env[env.key] || process.env[env.key].trim() === "");
+
+if (missingEnv.length > 0) {
+  console.error("❌ Critical Error: Missing required environment variables.");
+  console.log("");
+  console.log("🔍 Missing Fields:");
+  missingEnv.forEach(env => console.log(`   - ${env.key}`));
+  console.log("");
+  console.log("🔍 Troubleshooting Info:");
+  console.log(`   - Root Directory: ${path.resolve(__dirname, "..")}`);
+  console.log(`   - Loading .env from: ${path.resolve(__dirname, "../.env")}`);
+  console.log("");
+  console.log("💡 Possible Solutions:");
+  missingEnv.forEach((env, index) => console.log(`   ${index + 1}. ${env.tip}`));
+  console.log("");
+  process.exit(1);
 }
 
 // Initialize services
@@ -105,9 +92,6 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Serve uploaded files (for development)
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // Custom route to serve documents with proper headers for inline viewing
 app.get("/uploads/:filename", (req, res) => {
   const filename = req.params.filename;
@@ -115,6 +99,11 @@ app.get("/uploads/:filename", (req, res) => {
   
   // Check if file exists
   if (!fs.existsSync(filePath)) {
+    // If not found, try adding .pdf extension as a fallback
+    const pdfPath = filePath + ".pdf";
+    if (fs.existsSync(pdfPath)) {
+      return res.redirect(`/uploads/${filename}.pdf`);
+    }
     return res.status(404).json({ error: "File not found" });
   }
   
@@ -122,33 +111,60 @@ app.get("/uploads/:filename", (req, res) => {
   const ext = path.extname(filename).toLowerCase();
   let contentType = 'application/octet-stream'; // default
   
-  switch (ext) {
-    case '.pdf':
+  // Detection logic for extensionless files (like IPFS hashes) using magic numbers
+  if (ext === '') {
+    const buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' });
+    const header = buffer.slice(0, 4);
+    // PDF: %PDF
+    if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
       contentType = 'application/pdf';
-      break;
-    case '.jpg':
-    case '.jpeg':
-      contentType = 'image/jpeg';
-      break;
-    case '.png':
+    } 
+    // PNG: \x89PNG
+    else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
       contentType = 'image/png';
-      break;
-    case '.gif':
-      contentType = 'image/gif';
-      break;
-    case '.webp':
-      contentType = 'image/webp';
-      break;
+    } 
+    // JPEG: FF D8 FF
+    else if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+      contentType = 'image/jpeg';
+    }
+  } else {
+    switch (ext) {
+      case '.pdf':
+        contentType = 'application/pdf';
+        break;
+      case '.jpg':
+      case '.jpeg':
+        contentType = 'image/jpeg';
+        break;
+      case '.png':
+        contentType = 'image/png';
+        break;
+      case '.gif':
+        contentType = 'image/gif';
+        break;
+      case '.webp':
+        contentType = 'image/webp';
+        break;
+    }
   }
   
-  // Set headers to display inline instead of downloading
+  // Set headers
   res.setHeader('Content-Type', contentType);
-  res.setHeader('Content-Disposition', 'inline; filename="' + filename + '"');
+  
+  // If it's a PDF without extension, suggest a .pdf filename for download/display
+  const suggestedFilename = (ext === '' && contentType === 'application/pdf') 
+    ? `${filename}.pdf` 
+    : filename;
+    
+  res.setHeader('Content-Disposition', 'inline; filename="' + suggestedFilename + '"');
   
   // Stream the file
   const fileStream = fs.createReadStream(filePath);
   fileStream.pipe(res);
 });
+
+// Serve uploaded files (for development)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Serve GridFS images
 app.get("/api/images/:filename", (req, res) => {
@@ -196,9 +212,15 @@ app.get("/api/documents/:filename", (req, res) => {
     return res.status(404).json({ error: "Document not found" });
   }
   
+  // Get file extension
+  const ext = path.extname(filename).toLowerCase();
+  
   // Set headers for PDF download/viewing
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  
+  // Suggest .pdf extension if missing
+  const suggestedFilename = ext === '' ? `${filename}.pdf` : filename;
+  res.setHeader('Content-Disposition', `inline; filename="${suggestedFilename}"`);
   
   // Stream the file
   const fileStream = fs.createReadStream(filePath);
@@ -400,7 +422,7 @@ const startServer = async () => {
       console.log("🏗️  System Components:");
       console.log("   ✅ Express Server");
       console.log("   ✅ MongoDB Database");
-      console.log("   ✅ Blockchain Service (Ganache)");
+      console.log(`   ✅ Blockchain Service (${blockchainService.networkName})`);
       console.log("   ✅ IPFS Storage");
       console.log("   ✅ JWT Authentication");
       console.log("");

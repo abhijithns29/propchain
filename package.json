@@ -9,7 +9,7 @@
     "blockchain:deploy:ganache": "npx hardhat run scripts/deploy.js --network ganache",
     "blockchain:deploy:hardhat": "node scripts/deploy-hardhat.js",
     "blockchain:compile": "npx hardhat compile",
-    "server:dev": "cd server && node server.js",
+    "server:dev": "cd server && node --no-deprecation server.js",
     "client:dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

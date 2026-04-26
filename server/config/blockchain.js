@@ -10,6 +10,7 @@ class BlockchainService {
     this.provider = null;
     this.contract = null;
     this.wallet = null;
+    this.networkName = "Blockchain";
     this.contractAddress = process.env.CONTRACT_ADDRESS;
     this.contractABI = [
       // Property registration
@@ -58,12 +59,16 @@ class BlockchainService {
       );
 
       if (network.chainId === 5777) {
-        console.log("✅ Connected to Ganache local network");
+        this.networkName = "Ganache";
       } else if (network.chainId === 1337) {
-        console.log("✅ Connected to Hardhat local network");
+        this.networkName = "Hardhat";
+      } else if (network.chainId === 11155111) {
+        this.networkName = "Sepolia";
       } else {
-        console.log(`✅ Connected to network: ${network.name}`);
+        this.networkName = network.name !== "unknown" ? network.name : `Chain ${network.chainId}`;
       }
+
+      console.log(`✅ Connected to ${this.networkName} network (ID: ${network.chainId})`);
 
       // Create wallet from private key
       const privateKey = process.env.ADMIN_PRIVATE_KEY;
@@ -118,6 +123,10 @@ class BlockchainService {
       if (error.message.includes("CONTRACT_ADDRESS")) {
         console.log(
           "💡 Solution: Deploy the contract first with: npm run blockchain:deploy:ganache"
+        );
+      } else if (error.message.includes("ECONNREFUSED")) {
+        console.log(
+          "💡 Solution: Ensure your blockchain node (Ganache or Hardhat) is running on the correct port."
         );
       }
       // Don't throw error to allow server to start without blockchain

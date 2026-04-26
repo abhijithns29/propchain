@@ -9,6 +9,12 @@ const connectDB = async () => {
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error("❌ Database connection error:", error.message);
+    console.log("");
+    console.log("💡 Troubleshooting:");
+    console.log("   - Is your MongoDB service running?");
+    console.log("   - Check if MONGODB_URI is correct in your root .env file.");
+    console.log("   - Run: 'services.msc' (Windows) or 'brew services list' (Mac) to check status.");
+    console.log("");
     process.exit(1);
   }
 };

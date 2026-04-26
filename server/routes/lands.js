@@ -1961,14 +1961,33 @@ router.get("/:landId/original-document", async (req, res) => {
       `Successfully retrieved original document for land: ${land.assetId}, size: ${fileBuffer.length} bytes`
     );
 
-    // Detect file type from filename
+    // Detect file type
     const mime = require("mime-types");
     const path = require("path");
 
-    const originalFilename = land.originalDocument.filename;
-    const ext = path.extname(originalFilename).toLowerCase();
-    const mimeType =
-      mime.lookup(originalFilename) || "application/octet-stream";
+    const originalFilename = land.originalDocument.filename || "document";
+    let ext = path.extname(originalFilename).toLowerCase();
+    let mimeType = mime.lookup(originalFilename) || "application/octet-stream";
+
+    // Smart detection for extensionless files (like IPFS hashes) using magic numbers
+    if (ext === "" || mimeType === "application/octet-stream") {
+      const header = fileBuffer.slice(0, 4);
+      // PDF: %PDF (25 50 44 46)
+      if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
+        mimeType = "application/pdf";
+        ext = ".pdf";
+      } 
+      // PNG: \x89PNG (89 50 4E 47)
+      else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+        mimeType = "image/png";
+        ext = ".png";
+      } 
+      // JPEG: FF D8 FF
+      else if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+        mimeType = "image/jpeg";
+        ext = ".jpg";
+      }
+    }
 
     // Generate download filename
     const downloadFilename = `land-document-${land.assetId}${ext}`;
@@ -2527,14 +2546,33 @@ router.get("/:landId/download-original-document", auth, async (req, res) => {
       `Successfully retrieved original document for land: ${land.assetId}, size: ${fileBuffer.length} bytes`
     );
 
-    // Detect file type from filename
+    // Detect file type
     const mime = require("mime-types");
     const path = require("path");
 
-    const originalFilename = land.originalDocument.filename;
-    const ext = path.extname(originalFilename).toLowerCase();
-    const mimeType =
-      mime.lookup(originalFilename) || "application/octet-stream";
+    const originalFilename = land.originalDocument.filename || "document";
+    let ext = path.extname(originalFilename).toLowerCase();
+    let mimeType = mime.lookup(originalFilename) || "application/octet-stream";
+
+    // Smart detection for extensionless files (like IPFS hashes) using magic numbers
+    if (ext === "" || mimeType === "application/octet-stream") {
+      const header = fileBuffer.slice(0, 4);
+      // PDF: %PDF (25 50 44 46)
+      if (header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46) {
+        mimeType = "application/pdf";
+        ext = ".pdf";
+      } 
+      // PNG: \x89PNG (89 50 4E 47)
+      else if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+        mimeType = "image/png";
+        ext = ".png";
+      } 
+      // JPEG: FF D8 FF
+      else if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) {
+        mimeType = "image/jpeg";
+        ext = ".jpg";
+      }
+    }
 
     // Generate download filename
     const downloadFilename = `land-document-${land.assetId}${ext}`;

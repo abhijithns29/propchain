@@ -252,7 +252,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       const blobUrl = window.URL.createObjectURL(blob);
 
       // Trigger download
-      link.href = blobUrl;
+      // Determine extension from MIME type
+      let extension = '.pdf'; // default
+      if (blob.type === 'image/jpeg') extension = '.jpg';
+      else if (blob.type === 'image/png') extension = '.png';
+      else if (blob.type === 'image/webp') extension = '.webp';
+
+      link.download = `land_document_${landId}${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -292,7 +298,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
 
-      link.href = blobUrl;
+      // Determine extension from MIME type
+      let extension = '.pdf'; // default
+      if (blob.type === 'image/jpeg') extension = '.jpg';
+      else if (blob.type === 'image/png') extension = '.png';
+      else if (blob.type === 'image/webp') extension = '.webp';
+
+      link.download = `original_document_${landId}${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -38,10 +38,12 @@ const User = mongoose.model('User', userSchema);
 
 async function seedAdminUsers() {
   try {
-    // Connect to MongoDB
-    const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/landregistry";
-    await mongoose.connect(mongoURI);
-    console.log('✅ Connected to MongoDB');
+    // Connect to MongoDB if not already connected
+    if (mongoose.connection.readyState === 0) {
+      const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/landregistry";
+      await mongoose.connect(mongoURI);
+      console.log('✅ Connected to MongoDB');
+    }
 
     // Check if admin users already exist
     const existingAdmin1 = await User.findOne({ email: 'admin@landregistry.gov' });

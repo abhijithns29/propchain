@@ -133,10 +133,18 @@ const LandDatabase: React.FC = () => {
       }
 
       const blob = await apiService.downloadOriginalDocument(landId);
+      
+      // Determine extension from MIME type
+      let extension = '';
+      if (blob.type === 'application/pdf') extension = '.pdf';
+      else if (blob.type === 'image/jpeg') extension = '.jpg';
+      else if (blob.type === 'image/png') extension = '.png';
+      else if (blob.type === 'image/webp') extension = '.webp';
+      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `land-document-${assetId}`;
+      link.download = `land-document-${assetId}${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
