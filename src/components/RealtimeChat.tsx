@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreVertical, X, DollarSign, Check, X as XIcon } from 'lucide-react';
+import { Send, X, DollarSign, Check, X as XIcon, MoreVertical } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import apiService from '../services/api';
 import io, { Socket } from 'socket.io-client';
@@ -737,23 +737,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Phone className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Video className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <MoreVertical className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
-            </button>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400 hover:text-[#4154f1]" />
-              </button>
-            )}
+
           </div>
         </div>
       )}
