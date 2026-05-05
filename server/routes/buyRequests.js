@@ -43,6 +43,11 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
+    // Verify agreedPrice
+    if (!agreedPrice || typeof agreedPrice !== 'number' || agreedPrice <= 0) {
+      return res.status(400).json({ message: 'Agreed price must be a valid number greater than 0' });
+    }
+
     // Verify user is the buyer
     if (req.user._id.toString() !== buyerId.toString()) {
       return res.status(403).json({ message: 'Only the buyer can initiate buy request' });

@@ -162,8 +162,10 @@ const ChatSystem: React.FC = () => {
     }
   };
 
-  const handleMakeOffer = async () => {
-    if (!selectedChat || !offerAmount) return;
+    if (!selectedChat || !offerAmount || parseFloat(offerAmount) <= 0) {
+      setError('Please enter a valid offer amount greater than 0');
+      return;
+    }
 
     try {
       await apiService.makeOffer(selectedChat._id, parseFloat(offerAmount));
@@ -175,8 +177,10 @@ const ChatSystem: React.FC = () => {
     }
   };
 
-  const handleCounterOffer = async () => {
-    if (!selectedChat || !offerAmount) return;
+    if (!selectedChat || !offerAmount || parseFloat(offerAmount) <= 0) {
+      setError('Please enter a valid counter-offer amount greater than 0');
+      return;
+    }
 
     try {
       await apiService.makeCounterOffer(selectedChat._id, parseFloat(offerAmount));

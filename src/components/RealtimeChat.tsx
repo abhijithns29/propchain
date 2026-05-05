@@ -266,16 +266,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         setChat(chatData.chat);
         setMessages(chatData.chat.messages || []);
 
-        // Set current offer if it exists
-        if (chatData.chat.currentOffer) {
+        // Set current offer if it exists and has a valid amount
+        if (chatData.chat.currentOffer && chatData.chat.currentOffer.amount > 0) {
           setCurrentOffer(chatData.chat.currentOffer);
         } else {
-          // Fallback: check if there's a recent offer message
+          // Fallback: check if there's a recent offer message with a valid amount
           const recentOfferMessage = chatData.chat.messages
-            ?.filter((msg: any) => msg.messageType === 'OFFER')
+            ?.filter((msg: any) => msg.messageType === 'OFFER' && msg.offerAmount > 0)
             ?.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 
-          if (recentOfferMessage && recentOfferMessage.offerAmount) {
+          if (recentOfferMessage && recentOfferMessage.offerAmount > 0) {
             // Check if this offer hasn't been accepted or rejected yet
             const hasResponse = chatData.chat.messages?.some((msg: any) =>
               (msg.messageType === 'ACCEPTANCE' || msg.messageType === 'REJECTION') &&
@@ -487,7 +487,10 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
   // Buy request functions
   const initiateBuyRequest = async () => {
     try {
-      if (!chat || !currentOffer) return;
+      if (!chat || !currentOffer || !currentOffer.amount || currentOffer.amount <= 0) {
+        setError('A valid offer amount is required to initiate a buy request.');
+        return;
+      }
 
       const chatId = chat._id;
       console.log('Initiating buy request:', {
@@ -928,9 +931,9 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
         currentOffer: !!currentOffer,
         offerStatus: currentOffer?.status,
         isUserSeller: isSeller(),
-        shouldShowActions: currentOffer && currentOffer.status === 'PENDING' && isSeller()
+        shouldShowActions: currentOffer && currentOffer.amount > 0 && currentOffer.status === 'PENDING' && isSeller()
       })}
-      {currentOffer && currentOffer.status === 'PENDING' && isSeller() && (
+      {currentOffer && currentOffer.amount > 0 && currentOffer.status === 'PENDING' && isSeller() && (
         <div className="p-4 border-t border-amber-200 bg-amber-50">
           <div className="text-center mb-3">
             <p className="text-sm text-gray-700">
@@ -957,7 +960,7 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
       )}
 
       {/* Buy Request Actions (for buyer after offer accepted) */}
-      {currentOffer && currentOffer.status === 'ACCEPTED' && isBuyer() && buyRequestStatus === 'NONE' && (
+      {currentOffer && currentOffer.amount > 0 && currentOffer.status === 'ACCEPTED' && isBuyer() && buyRequestStatus === 'NONE' && (
         <div className="p-4 border-t border-teal-200 bg-teal-50">
           <div className="text-center mb-3">
             <p className="text-sm text-gray-700">

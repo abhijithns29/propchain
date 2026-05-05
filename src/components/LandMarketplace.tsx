@@ -638,6 +638,7 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
                 recipientId={selectedLand.currentOwner?.id}
                 recipientName={selectedLand.currentOwner?.fullName}
                 onClose={() => setShowChat(false)}
+                showHeader={false}
               />
             </div>
           </div>

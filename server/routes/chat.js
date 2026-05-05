@@ -211,6 +211,10 @@ router.post('/:chatId/offer', auth, async (req, res) => {
   try {
     const { offerAmount } = req.body;
     
+    if (!offerAmount || typeof offerAmount !== 'number' || offerAmount <= 0) {
+      return res.status(400).json({ message: 'Offer amount must be a valid number greater than 0' });
+    }
+
     const chat = await Chat.findById(req.params.chatId)
       .populate('landId', 'marketInfo');
     
@@ -254,6 +258,10 @@ router.post('/:chatId/counter-offer', auth, async (req, res) => {
   try {
     const { counterAmount } = req.body;
     
+    if (!counterAmount || typeof counterAmount !== 'number' || counterAmount <= 0) {
+      return res.status(400).json({ message: 'Counter offer amount must be a valid number greater than 0' });
+    }
+
     const chat = await Chat.findById(req.params.chatId);
     if (!chat) {
       return res.status(404).json({ message: 'Chat not found' });
