@@ -47,6 +47,51 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
   const [pendingChat, setPendingChat] = useState<{ landId: string, recipientId: string, recipientName: string } | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const [notifications, setNotifications] = useState({
+    chats: false,
+    verifications: false,
+    transactions: false
+  });
+
+  // Fetch notifications globally
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const newNotifications = { chats: false, verifications: false, transactions: false };
+        
+        // Check chats
+        if (auth.user) {
+          const chatsRes = await apiService.getMyChats();
+          const chatsList = chatsRes.chats || (Array.isArray(chatsRes) ? chatsRes : chatsRes.data) || [];
+          newNotifications.chats = chatsList.some((chat: any) => 
+            chat.messages && chat.messages.some((m: any) => !m.isRead && m.sender?._id !== auth.user?.id && m.sender?.id !== auth.user?.id)
+          );
+        }
+        
+        if (auth.user?.role === 'ADMIN') {
+          const verificationsRes = await apiService.getPendingVerifications();
+          if (verificationsRes.users && verificationsRes.users.length > 0) {
+            newNotifications.verifications = true;
+          }
+          
+          const transactionsRes = await apiService.getPendingTransactions();
+          if (transactionsRes.transactions && transactionsRes.transactions.length > 0) {
+            newNotifications.transactions = true;
+          }
+        }
+        
+        setNotifications(newNotifications);
+      } catch (err) {
+        console.error("Error fetching notifications", err);
+      }
+    };
+
+    if (auth.user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000); // 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [auth.user]);
 
   // Update activeTab when initialTab prop changes
   useEffect(() => {
@@ -88,6 +133,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
 
     newSocket.on('new-message', (data) => {
       console.log('Dashboard: New message received:', data);
+
+      if (data.message.sender?._id !== auth.user?.id && data.message.sender?.id !== auth.user?.id) {
+        setNotifications(prev => ({ ...prev, chats: true }));
+      }
 
       // 1. Update the chat list (sidebar)
       setChats(prev => {
@@ -532,7 +581,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
         return <UserProfile onNavigateToLand={onNavigateToLand} />;
       case "admin":
         return auth.user?.role === "ADMIN" ? (
-          <AdminPanel />
+          <AdminPanel notifications={notifications} />
         ) : null;
       case "auditor":
         return auth.user?.role === "AUDITOR" ? <AuditorDashboard /> : null;
@@ -657,7 +706,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLand, initialTab, ini
 
   return (
     <div className="min-h-screen bg-[#f6f9ff]">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} notifications={notifications} />
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="rounded-2xl bg-transparent p-0 shadow-none border-0 animate-fadeIn">

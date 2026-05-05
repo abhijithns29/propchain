@@ -6,7 +6,15 @@ import apiService from '../services/api';
 import OCRVerificationModal from './OCRVerificationModal';
 import Tesseract from 'tesseract.js';
 
-const AdminPanel: React.FC = () => {
+interface AdminPanelProps {
+  notifications?: {
+    chats: boolean;
+    verifications: boolean;
+    transactions: boolean;
+  };
+}
+
+const AdminPanel: React.FC<AdminPanelProps> = ({ notifications }) => {
   const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'lands' | 'all-transactions' | 'blockchain'>('users');
   const [pendingTransactions, setPendingTransactions] = useState<BuyRequest[]>([]);
   const [allTransactions, setAllTransactions] = useState<BuyRequest[]>([]);
@@ -882,55 +890,61 @@ const AdminPanel: React.FC = () => {
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-hide">
           <button
             onClick={() => setActiveTab('users')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'users'
+            className={`flex items-center py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'users'
               ? 'border-[#4154f1] text-[#4154f1]'
               : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
-            <Users className="inline h-4 w-4 mr-2" />
+            <Users className="h-4 w-4 mr-2" />
             User Verifications
+            {notifications?.verifications && (
+              <span className="ml-1.5 h-2 w-2 bg-red-500 rounded-full" />
+            )}
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'transactions'
+            className={`flex items-center py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'transactions'
               ? 'border-[#4154f1] text-[#4154f1]'
               : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
-            <FileText className="inline h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2" />
             Buy Requests
+            {notifications?.transactions && (
+              <span className="ml-1.5 h-2 w-2 bg-red-500 rounded-full" />
+            )}
           </button>
           <button
             onClick={() => setActiveTab('all-transactions')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'all-transactions'
+            className={`flex items-center py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'all-transactions'
               ? 'border-[#4154f1] text-[#4154f1]'
               : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
-            <FileText className="inline h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2" />
             All Transactions
           </button>
           <button
             onClick={() => setActiveTab('lands')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'lands'
+            className={`flex items-center py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'lands'
               ? 'border-[#4154f1] text-[#4154f1]'
               : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
-            <Database className="inline h-4 w-4 mr-2" />
+            <Database className="h-4 w-4 mr-2" />
             All Lands
           </button>
           <button
             onClick={() => setActiveTab('blockchain')}
-            className={`py-4 px-1 border-b-2 font-bold text-sm transition-all ${activeTab === 'blockchain'
+            className={`flex items-center py-4 px-1 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'blockchain'
               ? 'border-[#4154f1] text-[#4154f1]'
               : 'border-transparent text-gray-500 hover:text-[#012970] hover:border-gray-300'
               }`}
           >
-            <Cpu className="inline h-4 w-4 mr-2" />
+            <Cpu className="h-4 w-4 mr-2" />
             Blockchain
           </button>
         </nav>

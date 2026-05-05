@@ -12,7 +12,9 @@ import {
   Shield,
   Edit2,
   Trash2,
-  Share2
+  Share2,
+  Download,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Land } from '../types';
@@ -47,6 +49,8 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
   const [isLiked, setIsLiked] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   useEffect(() => {
     loadLandDetails();
@@ -133,19 +137,25 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
     setShowEditForm(true);
   };
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemove = async () => {
     if (!land || !land._id) return;
 
-    if (window.confirm('Are you sure you want to remove this listing?')) {
-      try {
-        await apiService.removeListing(land._id);
-        // Navigate back to marketplace
-        if (onBack) {
-          onBack();
-        }
-      } catch (error: any) {
-        setError(error.message || 'Failed to remove listing');
+    try {
+      setIsRemoving(true);
+      await apiService.removeListing(land._id);
+      // Navigate back to marketplace
+      if (onBack) {
+        onBack();
       }
+    } catch (error: any) {
+      setError(error.message || 'Failed to remove listing');
+      setShowRemoveConfirm(false);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -157,6 +167,52 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
     if (guntas && guntas > 0) areaStr += ` ${guntas} guntas`;
     if (sqft && sqft > 0) areaStr += ` ${sqft} sqft`;
     return areaStr || 'Area not specified';
+  };
+
+  const handleDownloadDocument = async (id: string) => {
+    try {
+      setLoading(true);
+      const blob = await apiService.downloadOwnershipDocument(id);
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      let extension = '.pdf';
+      if (blob.type === 'image/jpeg') extension = '.jpg';
+      else if (blob.type === 'image/png') extension = '.png';
+      else if (blob.type === 'image/webp') extension = '.webp';
+      link.download = `land_document_${id}${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error: any) {
+      setError(error.message || 'Failed to download document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadOriginalDocument = async (id: string) => {
+    try {
+      setLoading(true);
+      const blob = await apiService.downloadLandOriginalDocument(id);
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      let extension = '.pdf';
+      if (blob.type === 'image/jpeg') extension = '.jpg';
+      else if (blob.type === 'image/png') extension = '.png';
+      else if (blob.type === 'image/webp') extension = '.webp';
+      link.download = `original_document_${id}${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error: any) {
+      setError(error.message || 'Failed to download original document');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getImageUrl = (imageHash: string) => {
@@ -490,6 +546,36 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
               </div>
             </DetailCard>
 
+            {/* Documents (Owner Only) */}
+            {isOwner && (land.originalDocument || land.digitalDocument) && (
+              <DetailCard delay={0.45}>
+                <h3 className="font-semibold text-[#012970] mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-[#4154f1]" />
+                  Documents
+                </h3>
+                <div className="space-y-3">
+                  {land.digitalDocument && (
+                    <button
+                      onClick={() => handleDownloadDocument(land._id!)}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-emerald-50 text-[#4154f1] border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-all font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Digitized Doc
+                    </button>
+                  )}
+                  {land.originalDocument && (
+                    <button
+                      onClick={() => handleDownloadOriginalDocument(land._id!)}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Original Doc
+                    </button>
+                  )}
+                </div>
+              </DetailCard>
+            )}
+
             {/* Listing Information */}
             <DetailCard delay={0.5}>
               <h3 className="font-semibold text-[#012970] mb-4 flex items-center gap-2">
@@ -580,6 +666,45 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
             }}
           />
         )}
+        {/* Remove Confirmation Modal */}
+        {showRemoveConfirm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-[#012970] text-center mb-2">Remove Listing?</h3>
+              <p className="text-gray-600 text-center mb-6">
+                Are you sure you want to remove this land from the marketplace? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRemoveConfirm(false)}
+                  disabled={isRemoving}
+                  className="flex-1 py-2 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmRemove}
+                  disabled={isRemoving}
+                  className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center shadow-md shadow-red-500/30 disabled:opacity-50"
+                >
+                  {isRemoving ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    'Yes, Remove'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
       </div>
     </div>
   );

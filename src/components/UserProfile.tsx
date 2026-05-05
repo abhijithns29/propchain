@@ -992,13 +992,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                                 <ShoppingCart className="h-4 w-4 mr-1" />
                                 List for Sale
                               </button>
-                              <button
-                                onClick={() => handlePartitionLand(land)}
-                                className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-sm transition-colors"
-                              >
-                                <Scissors className="h-4 w-4 mr-1" />
-                                Partition
-                              </button>
                             </div>
                           )}
 
@@ -1008,13 +1001,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
                                 <ShoppingCart className="h-4 w-4 mr-1" />
                                 Listed for Sale
                               </span>
-                              <button
-                                onClick={() => handlePartitionLand(land)}
-                                className="inline-flex items-center px-3 py-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 rounded-lg text-sm transition-colors"
-                              >
-                                <Scissors className="h-4 w-4 mr-1" />
-                                Partition
-                              </button>
                             </div>
                           )}
                         </div>

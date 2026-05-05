@@ -50,6 +50,8 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
   const [selectedLandForEdit, setSelectedLandForEdit] = useState<Land | null>(
     null
   );
+  const [landToRemove, setLandToRemove] = useState<Land | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [activeTab, setActiveTab] = useState<"browse" | "my-ads" | "liked">(
     "browse"
   );
@@ -329,16 +331,29 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
     setShowEditForm(true);
   };
 
-  const handleRemoveListing = async (land: Land) => {
-    if (window.confirm("Are you sure you want to remove this listing?")) {
-      try {
-        if (land._id) {
-          await apiService.removeListing(land._id);
-          loadMyListings(); // Refresh the list
-        }
-      } catch (error: any) {
-        setError(error.message || "Failed to remove listing");
-      }
+  const handleRemoveListing = (land: Land) => {
+    setLandToRemove(land);
+  };
+
+  const confirmRemove = async () => {
+    if (!landToRemove || !landToRemove._id) return;
+    try {
+      setIsRemoving(true);
+      const targetId = landToRemove._id;
+      await apiService.removeListing(targetId);
+      
+      // Optimistically remove from state so it disappears instantly
+      setMyListings(prev => prev.filter(land => land._id !== targetId));
+      setLands(prev => prev.filter(land => land._id !== targetId));
+      
+      setLandToRemove(null);
+      // Still refresh from server to ensure perfect sync
+      loadMyListings();
+    } catch (error: any) {
+      setError(error.message || "Failed to remove listing");
+      setLandToRemove(null);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -648,6 +663,41 @@ const LandMarketplace: React.FC<LandMarketplaceProps> = ({
             }
           }}
         />
+      )}
+
+      {/* Remove Confirmation Modal */}
+      {landToRemove && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full transform transition-all">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-[#012970] text-center mb-2">Remove Listing?</h3>
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to remove this land from the marketplace? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setLandToRemove(null)}
+                disabled={isRemoving}
+                className="flex-1 py-2 px-4 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemove}
+                disabled={isRemoving}
+                className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center shadow-md shadow-red-500/30 disabled:opacity-50"
+              >
+                {isRemoving ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Yes, Remove'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

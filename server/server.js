@@ -266,6 +266,13 @@ app.get("/api", (req, res) => {
 app.use((error, req, res, next) => {
   console.error("Server Error:", error);
 
+  // Handle errors with explicit status codes
+  if (error.status) {
+    return res.status(error.status).json({
+      message: error.message,
+    });
+  }
+
   // Handle specific error types
   if (error.name === "ValidationError") {
     return res.status(400).json({
@@ -286,8 +293,14 @@ app.use((error, req, res, next) => {
     });
   }
 
+  if (error.name === "MulterError" || (error.message && error.message.includes("Invalid file type"))) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+
   res.status(500).json({
-    message: "Internal Server Error",
+    message: error.message && error.message.includes("Invalid file type") ? error.message : "Internal Server Error",
     error:
       process.env.NODE_ENV === "development"
         ? error.message

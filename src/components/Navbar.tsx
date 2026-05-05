@@ -5,9 +5,14 @@ import { useAuth } from '../hooks/useAuth';
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  notifications?: {
+    chats: boolean;
+    verifications: boolean;
+    transactions: boolean;
+  };
 }
 
-const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, notifications }) => {
   const { auth, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -101,17 +106,25 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
             {primaryItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+              
+              const hasNotification = 
+                (item.id === 'chats' && notifications?.chats) ||
+                (item.id === 'admin' && notifications?.transactions);
+
               return (
                 <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  className={`flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
+                  className={`relative flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
                       ? 'bg-blue-50 text-[#4154f1] border border-[#4154f1]/30 shadow-sm'
                       : 'text-gray-600 hover:text-[#012970] hover:bg-gray-50'
                     }`}
                 >
                   <Icon className={`h-4 w-4 mr-2 ${isActive ? 'text-[#4154f1]' : ''}`} />
                   {item.label}
+                  {hasNotification && (
+                    <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full" />
+                  )}
                   {item.id === 'verification' && auth.user?.verificationStatus === 'PENDING' && (
                     <AlertCircle className="h-3 w-3 ml-1 text-yellow-400" />
                   )}
@@ -143,13 +156,16 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
                         <button
                           key={item.id}
                           onClick={() => handleTabClick(item.id)}
-                          className={`w-full flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${isActive
+                          className={`relative w-full flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${isActive
                               ? 'bg-blue-50 text-[#4154f1]'
                               : 'text-gray-600 hover:text-[#012970] hover:bg-gray-50'
                             }`}
                         >
                           <Icon className={`h-4 w-4 mr-3 ${isActive ? 'text-[#4154f1]' : 'text-gray-400'}`} />
                           {item.label}
+                          {item.id === 'verification' && notifications?.verifications && (
+                            <span className="h-2 w-2 bg-red-500 rounded-full ml-auto mr-1" />
+                          )}
                           {item.id === 'verification' && auth.user?.verificationStatus === 'PENDING' && (
                             <AlertCircle className="h-3 w-3 ml-auto text-yellow-400" />
                           )}
@@ -195,17 +211,25 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
             {primaryItems.slice(0, 4).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+              
+              const hasNotification = 
+                (item.id === 'chats' && notifications?.chats) ||
+                (item.id === 'admin' && notifications?.transactions);
+
               return (
                 <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  className={`flex items-center px-3 py-2 rounded-md text-xs font-medium transition-colors ${isActive
+                  className={`relative flex items-center px-3 py-2 rounded-md text-xs font-medium transition-colors ${isActive
                       ? 'bg-blue-50 text-[#4154f1]'
                       : 'text-gray-600 hover:text-[#012970] hover:bg-gray-50'
                     }`}
                 >
                   <Icon className="h-3 w-3 mr-1" />
                   {item.label}
+                  {hasNotification && (
+                    <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-red-500 rounded-full" />
+                  )}
                 </button>
               );
             })}

@@ -687,8 +687,8 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
     );
   }
 
-  // Error fallback to prevent white screen
-  if (error && !messages.length) {
+  // Error fallback if chat failed to load completely
+  if (error && !chat) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4">
         <div className="text-red-400 mb-4">
@@ -702,26 +702,10 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
             setError('');
             loadChat();
           }}
-          className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-md hover:bg-emerald-400 text-sm font-semibold shadow-md shadow-emerald-500/40 transition"
+          className="px-4 py-2 bg-[#4154f1] text-white rounded-md hover:bg-[#3346d8] text-sm font-semibold shadow-md shadow-blue-500/40 transition"
         >
           Retry
         </button>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button
-            onClick={loadChat}
-            className="px-4 py-2 bg-[#4154f1] text-white rounded-lg hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/40 transition"
-          >
-            Try Again
-          </button>
-        </div>
       </div>
     );
   }
@@ -771,6 +755,16 @@ const RealtimeChat: React.FC<RealtimeChatProps> = ({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Global Error Banner */}
+      {error && !showOfferInput && !showTwoFactorModal && (
+        <div className="bg-red-50 p-3 border-b border-red-200 flex justify-between items-center z-10 relative">
+          <p className="text-sm text-red-600 font-medium">{error}</p>
+          <button onClick={() => setError('')} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 

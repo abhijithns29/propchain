@@ -171,16 +171,16 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800 p-6 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-white">QR Code Verification</h2>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div className="bg-white/95 backdrop-blur-xl rounded-2xl border border-gray-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-white/95 backdrop-blur-xl border-b border-gray-100 p-6 flex items-center justify-between z-10">
+          <h2 className="text-2xl font-bold text-[#012970]">QR Code Verification</h2>
           <button
             onClick={() => {
               stopScanning();
               onClose();
             }}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-[#012970]"
           >
             <X className="h-6 w-6" />
           </button>
@@ -188,7 +188,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
 
         <div className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg flex items-center">
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg flex items-center shadow-sm">
               <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
               {error}
             </div>
@@ -196,50 +196,50 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
 
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4154f1]"></div>
             </div>
           )}
 
           {landData && !loading && (
-            <div className="space-y-4">
-              <div className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-lg flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+            <div className="space-y-6">
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg flex items-center shadow-sm">
+                <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0 text-emerald-600" />
                 <span className="font-semibold">Verified Successfully!</span>
               </div>
 
               {/* Land Information */}
-              <div className="bg-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
-                <h3 className="text-xl font-semibold text-white mb-4">Land Information</h3>
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="text-xl font-semibold text-[#012970] mb-4">Land Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Asset ID</label>
-                    <p className="text-white mt-1 font-mono">{landData.assetId}</p>
+                    <label className="text-sm font-medium text-gray-500">Asset ID</label>
+                    <p className="text-[#012970] mt-1 font-mono font-medium">{landData.assetId}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Survey Number</label>
-                    <p className="text-white mt-1">{landData.surveyNumber}</p>
+                    <label className="text-sm font-medium text-gray-500">Survey Number</label>
+                    <p className="text-[#012970] mt-1 font-medium">{landData.surveyNumber}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Land Type</label>
+                    <label className="text-sm font-medium text-gray-500">Land Type</label>
                     <div className="flex items-center gap-2 mt-1">
-                      <Home className="h-4 w-4 text-slate-400" />
-                      <p className="text-white">{landData.landType}</p>
+                      <Home className="h-4 w-4 text-[#4154f1]" />
+                      <p className="text-[#012970] font-medium">{landData.landType}</p>
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Area</label>
-                    <p className="text-white mt-1">{formatArea(landData.area)}</p>
+                    <label className="text-sm font-medium text-gray-500">Area</label>
+                    <p className="text-[#012970] mt-1 font-medium">{formatArea(landData.area)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Status</label>
-                    <p className="text-white mt-1">{landData.status.replace('_', ' ')}</p>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <p className="text-[#012970] mt-1 font-medium">{landData.status.replace('_', ' ')}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-400">Verification</label>
+                    <label className="text-sm font-medium text-gray-500">Verification</label>
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold mt-1 ${
                       landData.verificationStatus === 'VERIFIED' 
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                     }`}>
                       {landData.verificationStatus}
                     </span>
@@ -248,31 +248,31 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
               </div>
 
               {/* Location */}
-              <div className="bg-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
-                <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-emerald-400" />
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="text-xl font-semibold text-[#012970] mb-4 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-[#4154f1]" />
                   Location
                 </h3>
                 <div className="space-y-2">
-                  <p className="text-white">{landData.village}</p>
-                  <p className="text-white">{landData.taluka}, {landData.district}</p>
-                  <p className="text-white">{landData.state}</p>
+                  <p className="text-gray-700">{landData.village}</p>
+                  <p className="text-gray-700">{landData.taluka}, {landData.district}</p>
+                  <p className="text-gray-700">{landData.state}</p>
                 </div>
               </div>
 
               {/* Owner Information */}
               {landData.currentOwner && (
-                <div className="bg-slate-800/40 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                    <User className="w-5 h-5 text-emerald-400" />
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                  <h3 className="text-xl font-semibold text-[#012970] mb-4 flex items-center gap-2">
+                    <User className="w-5 h-5 text-[#4154f1]" />
                     Current Owner
                   </h3>
                   <div className="space-y-2">
-                    <p className="text-white font-medium">{landData.currentOwner.fullName}</p>
-                    <p className="text-slate-400 text-sm">{landData.currentOwner.email}</p>
+                    <p className="text-[#012970] font-medium">{landData.currentOwner.fullName}</p>
+                    <p className="text-gray-600 text-sm">{landData.currentOwner.email}</p>
                     <div className="flex items-center gap-2 mt-3">
-                      <Shield className="w-4 h-4 text-emerald-400" />
-                      <span className="text-sm text-emerald-400 font-medium">
+                      <Shield className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm text-emerald-600 font-medium">
                         {landData.currentOwner.verificationStatus === 'VERIFIED' ? 'Verified Owner' : 'Unverified'}
                       </span>
                     </div>
@@ -285,7 +285,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
                   setLandData(null);
                   setError('');
                 }}
-                className="w-full px-4 py-3 bg-emerald-500 text-slate-950 rounded-lg hover:bg-emerald-400 font-semibold shadow-md shadow-emerald-500/40 transition-colors"
+                className="w-full px-4 py-3 bg-[#4154f1] text-white rounded-xl hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/30 transition-all transform hover:-translate-y-0.5"
               >
                 Scan Another QR Code
               </button>
@@ -293,25 +293,28 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
           )}
 
           {!scanning && !landData && !loading && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Camera className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-300 mb-4">
-                  Scan the QR code on the digitized land certificate to verify ownership and land details
+            <div className="space-y-6">
+              <div className="text-center py-8">
+                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <Camera className="h-10 w-10 text-[#4154f1]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#012970] mb-2">Scan Document</h3>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+                  Scan the QR code on the digitized land certificate to instantly verify ownership and land details.
                 </p>
                 <button
                   onClick={startScanning}
-                  className="w-full bg-emerald-500 text-slate-950 py-3 px-4 rounded-lg hover:bg-emerald-400 font-semibold shadow-md shadow-emerald-500/40 transition-colors"
+                  className="w-full bg-[#4154f1] text-white py-3.5 px-4 rounded-xl hover:bg-[#3346d8] font-semibold shadow-md shadow-blue-500/30 transition-all transform hover:-translate-y-0.5"
                 >
                   Start Camera
                 </button>
               </div>
               
-              <div className="text-center">
-                <p className="text-sm text-slate-500 mb-2">Or</p>
+              <div className="text-center pb-4">
+                <p className="text-sm text-gray-400 mb-3">Or verify manually</p>
                 <button
                   onClick={handleManualInput}
-                  className="text-emerald-400 hover:text-emerald-300 text-sm font-medium transition-colors"
+                  className="text-[#4154f1] hover:text-[#3346d8] text-sm font-semibold transition-colors hover:underline"
                 >
                   Enter Asset ID manually
                 </button>
@@ -320,11 +323,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
           )}
 
           {scanning && !landData && (
-            <div className="space-y-4">
-              <div className="relative">
+            <div className="space-y-6">
+              <div className="relative overflow-hidden rounded-xl shadow-lg border-2 border-[#4154f1]/20">
                 <video
                   ref={videoRef}
-                  className="w-full h-80 bg-black rounded-lg"
+                  className="w-full h-80 bg-gray-900 object-cover"
                   autoPlay
                   playsInline
                 />
@@ -334,22 +337,32 @@ const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
                 />
                 
                 {/* Scanning overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="border-4 border-emerald-500 w-64 h-64 rounded-lg">
-                    <div className="w-full h-full border-4 border-white/30 rounded-lg animate-pulse"></div>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                  <div className="relative w-64 h-64">
+                    <div className="absolute inset-0 border-2 border-[#4154f1] rounded-lg"></div>
+                    <div className="absolute inset-0 border-2 border-white/50 rounded-lg animate-ping"></div>
+                    
+                    {/* Corner markers */}
+                    <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
+                    <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
+                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
+                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white rounded-br-lg"></div>
+                    
+                    {/* Scanning line */}
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#4154f1] shadow-[0_0_8px_#4154f1] animate-[scan_2s_ease-in-out_infinite]"></div>
                   </div>
                 </div>
               </div>
               
               <div className="text-center">
-                <p className="text-sm text-slate-300 mb-4">
-                  Position the QR code within the frame
+                <p className="text-sm text-gray-600 font-medium mb-4">
+                  Position the QR code within the frame to scan
                 </p>
                 <button
                   onClick={stopScanning}
-                  className="bg-slate-700 text-white py-2 px-4 rounded-lg hover:bg-slate-600 transition-colors"
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium border border-gray-200 shadow-sm"
                 >
-                  Stop Scanning
+                  Cancel Scanning
                 </button>
               </div>
             </div>
