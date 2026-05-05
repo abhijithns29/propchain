@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "PropChain Land Registry - Black Box API Tests",
+    "description": "Automated Black-Box API test collection for PropChain. Run via Newman CLI.\nTool: Postman / Newman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "propchain-2026"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:5000", "type": "string" },
+    { "key": "authToken", "value": "", "type": "string" },
+    { "key": "adminEmail", "value": "admin@landregistry.gov", "type": "string" },
+    { "key": "adminPassword", "value": "admin123", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Status",
+      "item": [
+        {
+          "name": "TC-BB-01: GET /api/health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Response has message field', function() { const json = pm.response.json(); pm.expect(json.message).to.be.a('string'); });",
+                  "pm.test('Version is 1.0.0', function() { const json = pm.response.json(); pm.expect(json.version).to.eql('1.0.0'); });",
+                  "pm.test('Response time under 500ms', function() { pm.expect(pm.response.responseTime).to.be.below(500); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/health" }
+        },
+        {
+          "name": "TC-BB-02: GET /api (endpoint docs)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function() { pm.response.to.have.status(200); });",
+                  "pm.test('Response has endpoints object', function() { const json = pm.response.json(); pm.expect(json.endpoints).to.be.an('object'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api" }
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "TC-BB-03: POST /api/auth/login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Response has token', function() { const json = pm.response.json(); pm.expect(json.token).to.be.a('string'); pm.collectionVariables.set('authToken', json.token); });",
+                  "} else {",
+                  "  console.warn('Admin login failed — seed the database first');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"{{adminEmail}}\", \"password\": \"{{adminPassword}}\"}"
+            }
+          }
+        },
+        {
+          "name": "TC-BB-04: POST /api/auth/login (invalid creds) → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', function() { pm.response.to.have.status(400); });",
+                  "pm.test('Error message present', function() { const json = pm.response.json(); pm.expect(json.message).to.be.a('string'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"wrong@user.com\", \"password\": \"wrongpassword\"}"
+            }
+          }
+        },
+        {
+          "name": "TC-BB-05: POST /api/auth/register (missing fields) → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', function() { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\": \"incomplete@test.com\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Protected Routes",
+      "item": [
+        {
+          "name": "TC-BB-06: GET /api/auth/me (no token) → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401', function() { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me" }
+        },
+        {
+          "name": "TC-BB-07: GET /api/auth/me (fake token) → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401', function() { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer fake.jwt.token" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Lands & Buy Requests",
+      "item": [
+        {
+          "name": "TC-BB-09: GET /api/lands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response not 500', function() { pm.expect(pm.response.code).to.not.equal(500); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/lands" }
+        },
+        {
+          "name": "TC-BB-10: GET /api/lands/invalid-id → 400 or 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 404', function() { pm.expect([400,404]).to.include(pm.response.code); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/lands/NOT_A_VALID_MONGO_ID" }
+        }
+      ]
+    },
+    {
+      "name": "5. Security Tests",
+      "item": [
+        {
+          "name": "TC-BB-12: NoSQL Injection in login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('NoSQL injection blocked (not 200)', function() { pm.expect(pm.response.code).to.not.equal(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"email\": {\"$gt\": \"\"}, \"password\": \"any\"}" }
+          }
+        },
+        {
+          "name": "TC-BB-13: Unknown route → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 404', function() { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/this-does-not-exist-bb-test" }
+        }
+      ]
+    }
+  ]
+}

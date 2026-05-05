@@ -1,0 +1,396 @@
+{
+  "stats": {
+    "suites": 6,
+    "tests": 10,
+    "passes": 8,
+    "pending": 2,
+    "failures": 0,
+    "start": "2026-05-05T14:56:46.373Z",
+    "end": "2026-05-05T14:56:46.442Z",
+    "duration": 69,
+    "testsRegistered": 10,
+    "passPercent": 100,
+    "pendingPercent": 20,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "dc55229f-0ff1-4c76-b9b7-3f9f31d5f83a",
+      "title": "",
+      "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+      "file": "\\test\\performance.test.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "056bf153-30cd-49f1-932f-07c5825c79a6",
+          "title": "Performance Tests - API Response Times",
+          "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+          "file": "\\test\\performance.test.js",
+          "beforeHooks": [],
+          "afterHooks": [
+            {
+              "title": "\"after all\" hook in \"Performance Tests - API Response Times\"",
+              "fullTitle": "Performance Tests - API Response Times \"after all\" hook in \"Performance Tests - API Response Times\"",
+              "timedOut": false,
+              "duration": 2,
+              "state": null,
+              "speed": null,
+              "pass": false,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "console.log('\\n  ┌─────────────────────────────────────────────────────────────────────┐');\nconsole.log('  │                  PERFORMANCE TEST SUMMARY                           │');\nconsole.log('  ├────────────┬─────────────────────────────────────┬─────────┬───────┤');\nconsole.log('  │ Test ID    │ Endpoint                            │ Time(ms)│ Pass? │');\nconsole.log('  ├────────────┼─────────────────────────────────────┼─────────┼───────┤');\nperfResults.forEach(r => {\n  const id       = r.tcId.padEnd(10);\n  const name     = r.name.substring(0, 36).padEnd(36);\n  const time     = String(r.durationMs).padStart(7);\n  const status   = r.passed ? '  ✔    ' : '  ✘    ';\n  console.log(`  │ ${id} │ ${name} │${time} │${status}│`);\n});\nconsole.log('  └────────────┴─────────────────────────────────────┴─────────┴───────┘\\n');",
+              "err": {},
+              "uuid": "35a21a9d-af55-4e57-bb33-355dc0a3bb21",
+              "parentUUID": "056bf153-30cd-49f1-932f-07c5825c79a6",
+              "isHook": true,
+              "skipped": false
+            }
+          ],
+          "tests": [],
+          "suites": [
+            {
+              "uuid": "3ff72dcf-1cc9-4d1a-ac42-3c8ff1d6498b",
+              "title": "1. Static & Health Endpoints (threshold: <500ms)",
+              "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+              "file": "\\test\\performance.test.js",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "TC-PERF-01: GET /api/health → <500ms",
+                  "fullTitle": "Performance Tests - API Response Times 1. Static & Health Endpoints (threshold: <500ms) TC-PERF-01: GET /api/health → <500ms",
+                  "timedOut": false,
+                  "duration": 12,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('GET', '/api/health');\nexpect(res.status).to.equal(200);\nrecordResult('TC-PERF-01', 'GET /api/health', duration, 500, duration < 500);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(500);",
+                  "err": {},
+                  "uuid": "44fd2145-b4ce-4ccc-a0a8-6f6301a737ab",
+                  "parentUUID": "3ff72dcf-1cc9-4d1a-ac42-3c8ff1d6498b",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "TC-PERF-02: GET /api → <500ms (API doc)",
+                  "fullTitle": "Performance Tests - API Response Times 1. Static & Health Endpoints (threshold: <500ms) TC-PERF-02: GET /api → <500ms (API doc)",
+                  "timedOut": false,
+                  "duration": 3,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('GET', '/api');\nexpect(res.status).to.equal(200);\nrecordResult('TC-PERF-02', 'GET /api', duration, 500, duration < 500);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(500);",
+                  "err": {},
+                  "uuid": "6984d96d-8b61-45cf-b697-3e22912d6fcd",
+                  "parentUUID": "3ff72dcf-1cc9-4d1a-ac42-3c8ff1d6498b",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [
+                "44fd2145-b4ce-4ccc-a0a8-6f6301a737ab",
+                "6984d96d-8b61-45cf-b697-3e22912d6fcd"
+              ],
+              "failures": [],
+              "pending": [],
+              "skipped": [],
+              "duration": 15,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 30000
+            },
+            {
+              "uuid": "0feabb93-36aa-4ccf-9dd6-c6fec35639fc",
+              "title": "2. Authentication Endpoints (threshold: <1500ms)",
+              "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+              "file": "\\test\\performance.test.js",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "TC-PERF-03: POST /api/auth/login (invalid) → <1500ms",
+                  "fullTitle": "Performance Tests - API Response Times 2. Authentication Endpoints (threshold: <1500ms) TC-PERF-03: POST /api/auth/login (invalid) → <1500ms",
+                  "timedOut": false,
+                  "duration": 6,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('POST', '/api/auth/login', {\n  email: 'noexist@test.com', password: 'wrongpass'\n});\nexpect(res.status).to.be.oneOf([400, 401, 403]);\nrecordResult('TC-PERF-03', 'POST /api/auth/login (fail)', duration, 1500, duration < 1500);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(1500);",
+                  "err": {},
+                  "uuid": "0138bd54-52d5-418c-9fbe-ad47b7e56638",
+                  "parentUUID": "0feabb93-36aa-4ccf-9dd6-c6fec35639fc",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "TC-PERF-04: POST /api/auth/register (incomplete) → <1500ms",
+                  "fullTitle": "Performance Tests - API Response Times 2. Authentication Endpoints (threshold: <1500ms) TC-PERF-04: POST /api/auth/register (incomplete) → <1500ms",
+                  "timedOut": false,
+                  "duration": 2,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('POST', '/api/auth/register', {\n  email: 'perf-test@example.com'\n});\nexpect(res.status).to.be.oneOf([400, 422]);\nrecordResult('TC-PERF-04', 'POST /api/auth/register (fail)', duration, 1500, duration < 1500);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(1500);",
+                  "err": {},
+                  "uuid": "32dc84c9-14d2-4cd7-9314-d9b351045e7c",
+                  "parentUUID": "0feabb93-36aa-4ccf-9dd6-c6fec35639fc",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [
+                "0138bd54-52d5-418c-9fbe-ad47b7e56638",
+                "32dc84c9-14d2-4cd7-9314-d9b351045e7c"
+              ],
+              "failures": [],
+              "pending": [],
+              "skipped": [],
+              "duration": 8,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 30000
+            },
+            {
+              "uuid": "624e193b-e207-4b99-9144-d74c5ec99ff0",
+              "title": "3. Lands/DB Endpoints (threshold: <2000ms)",
+              "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+              "file": "\\test\\performance.test.js",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "TC-PERF-05: GET /api/lands → <2000ms",
+                  "fullTitle": "Performance Tests - API Response Times 3. Lands/DB Endpoints (threshold: <2000ms) TC-PERF-05: GET /api/lands → <2000ms",
+                  "timedOut": false,
+                  "duration": 3,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('GET', '/api/lands');\nexpect(res.status).to.be.oneOf([200, 401]);\nrecordResult('TC-PERF-05', 'GET /api/lands', duration, 2000, duration < 2000);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(2000);",
+                  "err": {},
+                  "uuid": "b53d2d3f-dcf3-4d41-9cd5-d0f2a917c931",
+                  "parentUUID": "624e193b-e207-4b99-9144-d74c5ec99ff0",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "TC-PERF-06: GET /api/land-transactions → <2000ms",
+                  "fullTitle": "Performance Tests - API Response Times 3. Lands/DB Endpoints (threshold: <2000ms) TC-PERF-06: GET /api/land-transactions → <2000ms",
+                  "timedOut": false,
+                  "duration": 0,
+                  "state": "pending",
+                  "speed": null,
+                  "pass": false,
+                  "fail": false,
+                  "pending": true,
+                  "context": null,
+                  "code": "",
+                  "err": {},
+                  "uuid": "3babb739-6771-430d-869b-c051689421e6",
+                  "parentUUID": "624e193b-e207-4b99-9144-d74c5ec99ff0",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "TC-PERF-07: GET /api/users → <2000ms",
+                  "fullTitle": "Performance Tests - API Response Times 3. Lands/DB Endpoints (threshold: <2000ms) TC-PERF-07: GET /api/users → <2000ms",
+                  "timedOut": false,
+                  "duration": 0,
+                  "state": "pending",
+                  "speed": null,
+                  "pass": false,
+                  "fail": false,
+                  "pending": true,
+                  "context": null,
+                  "code": "",
+                  "err": {},
+                  "uuid": "424d18b6-97a6-4b2e-92f3-1950301b1f5a",
+                  "parentUUID": "624e193b-e207-4b99-9144-d74c5ec99ff0",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [
+                "b53d2d3f-dcf3-4d41-9cd5-d0f2a917c931"
+              ],
+              "failures": [],
+              "pending": [
+                "3babb739-6771-430d-869b-c051689421e6",
+                "424d18b6-97a6-4b2e-92f3-1950301b1f5a"
+              ],
+              "skipped": [],
+              "duration": 3,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 30000
+            },
+            {
+              "uuid": "1f6f69cd-5138-487e-86a0-96339e6196ca",
+              "title": "4. Blockchain Endpoints (threshold: <5000ms)",
+              "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+              "file": "\\test\\performance.test.js",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "TC-PERF-08: GET /api/blockchain → <5000ms",
+                  "fullTitle": "Performance Tests - API Response Times 4. Blockchain Endpoints (threshold: <5000ms) TC-PERF-08: GET /api/blockchain → <5000ms",
+                  "timedOut": false,
+                  "duration": 2,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const { res, duration } = await measureRequest('GET', '/api/blockchain');\nexpect(res.status).to.be.oneOf([200, 401, 404, 503]);\nrecordResult('TC-PERF-08', 'GET /api/blockchain', duration, 5000, duration < 5000);\nconsole.log(`      ⏱  ${Math.round(duration)}ms`);\nexpect(duration).to.be.below(5000);",
+                  "err": {},
+                  "uuid": "785b5775-2d17-48f6-bb90-e94eaf247ece",
+                  "parentUUID": "1f6f69cd-5138-487e-86a0-96339e6196ca",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [
+                "785b5775-2d17-48f6-bb90-e94eaf247ece"
+              ],
+              "failures": [],
+              "pending": [],
+              "skipped": [],
+              "duration": 2,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 30000
+            },
+            {
+              "uuid": "6f8d16a1-321d-4a08-8b9c-2d65290019bd",
+              "title": "5. Concurrent Load Simulation (Node Event Simulator)",
+              "fullFile": "D:\\main-propchain\\test\\performance.test.js",
+              "file": "\\test\\performance.test.js",
+              "beforeHooks": [],
+              "afterHooks": [],
+              "tests": [
+                {
+                  "title": "TC-PERF-09: 10 concurrent health checks all respond < 1000ms each",
+                  "fullTitle": "Performance Tests - API Response Times 5. Concurrent Load Simulation (Node Event Simulator) TC-PERF-09: 10 concurrent health checks all respond < 1000ms each",
+                  "timedOut": false,
+                  "duration": 12,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const start = performance.now();\nconst requests = Array.from({ length: 10 }, () =>\n  request(API_URL).get('/api/health')\n);\nconst results = await Promise.all(requests);\nconst total = performance.now() - start;\nresults.forEach(r => expect(r.status).to.equal(200));\nrecordResult('TC-PERF-09', '10x concurrent GET /api/health', total, 1000, total < 1000);\nconsole.log(`      ⏱  ${Math.round(total)}ms for 10 concurrent requests`);\nexpect(total).to.be.below(1000);",
+                  "err": {},
+                  "uuid": "44ec1bb5-e9fe-45df-8510-c835b2dbd7b0",
+                  "parentUUID": "6f8d16a1-321d-4a08-8b9c-2d65290019bd",
+                  "isHook": false,
+                  "skipped": false
+                },
+                {
+                  "title": "TC-PERF-10: 5 concurrent failed logins complete < 3000ms total",
+                  "fullTitle": "Performance Tests - API Response Times 5. Concurrent Load Simulation (Node Event Simulator) TC-PERF-10: 5 concurrent failed logins complete < 3000ms total",
+                  "timedOut": false,
+                  "duration": 10,
+                  "state": "passed",
+                  "speed": "fast",
+                  "pass": true,
+                  "fail": false,
+                  "pending": false,
+                  "context": null,
+                  "code": "const start = performance.now();\nconst requests = Array.from({ length: 5 }, () =>\n  request(API_URL)\n    .post('/api/auth/login')\n    .send({ email: `load-test-${Date.now()}@test.com`, password: 'wrongpass' })\n);\nconst results = await Promise.all(requests);\nconst total = performance.now() - start;\nresults.forEach(r => expect(r.status).to.be.oneOf([400, 401, 403]));\nrecordResult('TC-PERF-10', '5x concurrent POST /api/auth/login', total, 3000, total < 3000);\nconsole.log(`      ⏱  ${Math.round(total)}ms for 5 concurrent logins`);\nexpect(total).to.be.below(3000);",
+                  "err": {},
+                  "uuid": "720a6f30-cf5a-4fe6-a5bb-3aa4f8ee0341",
+                  "parentUUID": "6f8d16a1-321d-4a08-8b9c-2d65290019bd",
+                  "isHook": false,
+                  "skipped": false
+                }
+              ],
+              "suites": [],
+              "passes": [
+                "44ec1bb5-e9fe-45df-8510-c835b2dbd7b0",
+                "720a6f30-cf5a-4fe6-a5bb-3aa4f8ee0341"
+              ],
+              "failures": [],
+              "pending": [],
+              "skipped": [],
+              "duration": 22,
+              "root": false,
+              "rootEmpty": false,
+              "_timeout": 30000
+            }
+          ],
+          "passes": [],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 0,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 30000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 35000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "11.7.5"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "perf-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.4"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "D:\\main-propchain\\test-results",
+        "reportFilename": "perf-report",
+        "json": "true",
+        "html": "false",
+        "overwrite": "true"
+      },
+      "version": "6.3.2"
+    }
+  }
+}
