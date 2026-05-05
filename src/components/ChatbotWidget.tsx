@@ -53,7 +53,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
     });
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [suggestions, setSuggestions] = useState<string[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom
@@ -87,10 +86,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
                 timestamp: new Date()
             };
             setMessages([greeting]);
-            loadSuggestions();
-        } else if (isOpen && messages.length > 0) {
-            // Just load suggestions if we have existing messages
-            loadSuggestions();
         }
     }, [isOpen]);
 
@@ -110,21 +105,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
-    // Load contextual suggestions
-    const loadSuggestions = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5000/api/chatbot/suggestions', {
-                headers: { Authorization: 'Bearer ' + token },
-                params: { page: context.page }
-            });
-            if (response.data.success) {
-                setSuggestions(response.data.suggestions);
-            }
-        } catch (error) {
-            console.error('Failed to load suggestions:', error);
-        }
-    };
 
     // Clear chat history
     const clearChat = () => {
@@ -136,7 +116,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
             timestamp: new Date()
         };
         setMessages([greeting]);
-        loadSuggestions();
     };
 
     // Send message to chatbot
@@ -176,9 +155,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
                 console.log('Bot message created:', botMessage);
                 setMessages(prev => [...prev, botMessage]);
 
-                if (response.data.suggestions) {
-                    setSuggestions(response.data.suggestions);
-                }
             }
         } catch (error: any) {
             console.error('Chatbot error:', error);
@@ -194,10 +170,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
         }
     };
 
-    // Handle suggestion click
-    const handleSuggestionClick = (suggestion: string) => {
-        sendMessage(suggestion);
-    };
 
     // Handle key press
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -377,23 +349,6 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ context = {}, onNavigateT
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* Suggestions */}
-                            {suggestions.length > 0 && !isLoading && (
-                                <div className="px-4 py-2 bg-white border-t border-gray-200">
-                                    <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {suggestions.map((suggestion, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => handleSuggestionClick(suggestion)}
-                                                className="text-xs px-3 py-1.5 bg-blue-50 text-[#4154f1] rounded-full hover:bg-blue-100 transition-colors border border-blue-200 font-medium"
-                                            >
-                                                {suggestion}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Input Area */}
                             <div className="p-4 bg-white border-t border-gray-200 rounded-b-2xl">

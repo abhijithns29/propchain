@@ -3,6 +3,7 @@ const User = require('../models/User');
 const LandTransaction = require('../models/LandTransaction');
 const BuyRequest = require('../models/BuyRequest');
 const { predictLandPrice } = require('../services/mlService');
+// Use built-in fetch (Node 18+)
 
 /**
  * Hybrid AI Chatbot Service
@@ -29,6 +30,17 @@ class ChatbotService {
       thanks: ['thank', 'thanks', 'appreciate'],
       goodbye: ['bye', 'goodbye', 'see you'],
     };
+
+    // Initialize AI API (OpenRouter)
+    this.aiEnabled = false;
+    this.aiApiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (this.aiApiKey) {
+      this.aiEnabled = true;
+      console.log('Chatbot: OpenRouter AI integration enabled.');
+    } else {
+      console.warn('Chatbot: OPENROUTER_API_KEY not found in environment. AI fallback disabled.');
+    }
   }
 
   /**
@@ -44,8 +56,7 @@ class ChatbotService {
       if (quickResponse) {
         return {
           message: quickResponse,
-          type: 'text',
-          suggestions: this.getContextualSuggestions(context)
+          type: 'text'
         };
       }
 
@@ -66,51 +77,17 @@ class ChatbotService {
       const intent = this.recognizeIntent(normalizedMessage);
       console.log('Recognized intent:', intent);
 
-      // Process based on intent
-      let response;
-      switch (intent) {
-        case 'SEARCH_LANDS':
-          response = await this.handleSearchLands(normalizedMessage, userId);
-          break;
-        case 'PRICE_INQUIRY':
-          response = await this.handlePriceInquiry(normalizedMessage);
-          break;
-        case 'PRICE_PREDICTION':
-          response = await this.handlePricePrediction(normalizedMessage, userId);
-          break;
-        case 'RECOMMENDATION':
-          response = await this.handleRecommendation(normalizedMessage, userId);
-          break;
-        case 'LOCATION_QUERY':
-          response = await this.handleLocationQuery(normalizedMessage);
-          break;
-        case 'HELP':
-          response = await this.handleHelp(normalizedMessage);
-          break;
-        case 'STATS':
-          response = await this.handleStats(normalizedMessage);
-          break;
-        case 'COMPARISON':
-          response = await this.handleComparison(normalizedMessage);
-          break;
-        default:
-          // Fallback to AI if configured, otherwise use FAQ
-          response = await this.handleFallback(normalizedMessage, userId);
-      }
+      // Process rule-based response
+      let ruleResponse = await this.getRuleBasedResponse(intent, normalizedMessage, userId);
 
-      return {
-        response: response.message,
-        type: response.type || 'text',
-        data: response.data || null,
-        suggestions: response.suggestions || this.getContextualSuggestions(context)
-      };
+      // Orchestrate final response via Gemini
+      return await this.orchestrateResponse(message, ruleResponse, userId, context);
 
     } catch (error) {
       console.error('Chatbot error:', error);
       return {
         response: "I'm having trouble processing that. Could you rephrase your question?",
-        type: 'error',
-        suggestions: ['Show available lands', 'Price statistics', 'How to buy land']
+        type: 'error'
       };
     }
   }
@@ -141,6 +118,130 @@ class ChatbotService {
       return "Goodbye! Come back anytime you need help with land registry. Have a great day! 👋";
     }
     return null;
+  }
+
+  /**
+   * Helper to get rule-based response based on intent
+   */
+  async getRuleBasedResponse(intent, message, userId) {
+    switch (intent) {
+      case 'SEARCH_LANDS': return await this.handleSearchLands(message, userId);
+      case 'PRICE_INQUIRY': return await this.handlePriceInquiry(message);
+      case 'PRICE_PREDICTION': return await this.handlePricePrediction(message, userId);
+      case 'RECOMMENDATION': return await this.handleRecommendation(message, userId);
+      case 'LOCATION_QUERY': return await this.handleLocationQuery(message);
+      case 'HELP': return await this.handleHelp(message);
+      case 'STATS': return await this.handleStats(message);
+      case 'COMPARISON': return await this.handleComparison(message);
+      default: return null;
+    }
+  }
+
+  /**
+   * Gemini Orchestrator: Combines rule-based data with AI personality
+   */
+  async orchestrateResponse(userMessage, ruleResponse, userId, context) {
+    if (!this.aiEnabled) {
+      // Fallback if AI is disabled
+      const r = ruleResponse || { message: "I'm not sure about that. How can I help you with lands?", type: 'text' };
+      return {
+        response: r.message,
+        type: r.type || 'text',
+        data: r.data || null,
+        suggestions: r.suggestions || this.getContextualSuggestions(context)
+      };
+    }
+
+    try {
+      let prompt = `You are the official PropChain Support Representative. 
+      
+      PERSONALITY RULES:
+      1. Act as an official representative of the PropChain platform.
+      2. Be professional, helpful, and extremely concise.
+      3. Your response must be a single, short paragraph (maximum 3-4 sentences).
+      4. DO NOT use introductory boilerplate like "Based on the platform context..." or "As an AI...". Start directly with the answer.
+      5. Never use bullet points unless absolutely necessary for complex data.
+      6. USE PLAIN ENGLISH ONLY. NEVER use emojis, icons, or special visual characters.
+      7. SECURITY GUARDRAIL: If the user's question is unrelated to land registry, real estate, blockchain technology, or PropChain services, you MUST politely decline to answer. Simply state that you are a specialized assistant for PropChain land and blockchain services and cannot help with unrelated topics.
+      
+      User Message: "${userMessage}"\n\n`;
+
+      if (ruleResponse) {
+        prompt += `The system has detected a specific intent and generated this standard response/data:
+        ---
+        Standard Response: "${ruleResponse.message}"
+        Data Type: ${ruleResponse.type}
+        ---
+        
+        INSTRUCTIONS:
+        1. If the Standard Response contains useful data (like prices, search results, or stats), incorporate it naturally into your answer.
+        2. If the Standard Response is just a generic help message and your AI knowledge provides a better, more direct answer to the User Message, prioritize your AI answer.
+        3. ALWAYS be professional and helpful. 
+        4. If the Data Type is 'search_results' or 'price_analysis', keep your text brief and encourage them to look at the results/cards shown.
+        5. Your final response should be a single, cohesive message for the user.`;
+      } else {
+        prompt += `The system did not recognize a specific intent. Please use your AI knowledge to answer the question based on the PropChain platform context (Blockchain Land Registry).`;
+      }
+
+      const aiText = await this.callOpenRouter(prompt);
+
+      return {
+        response: aiText,
+        type: ruleResponse?.type || 'text',
+        data: ruleResponse?.data || null
+      };
+    } catch (error) {
+      console.error('Orchestration error:', error);
+      const r = ruleResponse || { message: "I'm having trouble thinking right now. Try again?", type: 'text' };
+      return {
+        response: r.message,
+        type: r.type || 'text',
+        data: r.data || null
+      };
+    }
+  }
+
+  /**
+   * Direct call to OpenRouter API
+   */
+  async callOpenRouter(prompt) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.aiApiKey}`,
+          'HTTP-Referer': 'http://localhost:5173', // Site URL
+          'X-OpenRouter-Title': 'PropChain Assistant',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'openrouter/free', // Auto-selects the best available free model
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || `OpenRouter API error: ${response.status}`);
+      }
+
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenRouter Fetch Error:', error.message);
+      throw error;
+    }
   }
 
   /**
@@ -185,8 +286,7 @@ class ChatbotService {
       if (lands.length === 0) {
         return {
           message: `I couldn't find any lands matching your criteria. ${filters.district ? `Try searching in nearby districts or ` : ''}adjust your price range.`,
-          type: 'text',
-          suggestions: ['Show all available lands', 'Price statistics', 'Popular locations']
+          type: 'text'
         };
       }
 
@@ -204,8 +304,7 @@ class ChatbotService {
             area: l.area,
             landType: l.landType
           })) 
-        },
-        suggestions: ['Show more details', 'Compare prices', 'Filter by location']
+        }
       };
 
     } catch (error) {
@@ -325,8 +424,7 @@ class ChatbotService {
                 `• Total Listings: ${lands.length}\n\n` +
                 `Would you like to see properties in a specific price range?`,
         type: 'price_analysis',
-        data: { avgPrice, minPrice, maxPrice, count: lands.length },
-        suggestions: ['Show cheapest lands', 'Show premium lands', 'Compare locations']
+        data: { avgPrice, minPrice, maxPrice, count: lands.length }
       };
 
     } catch (error) {
@@ -373,8 +471,7 @@ class ChatbotService {
             area: l.area,
             landType: l.landType
           })) 
-        },
-        suggestions: ['View details', 'Compare these lands', 'Search by budget']
+        }
       };
 
     } catch (error) {
@@ -420,8 +517,7 @@ class ChatbotService {
       return {
         message: `📍 Popular Locations:\n\n${locationList}\n\nWould you like to see lands in any of these locations?`,
         type: 'location_list',
-        data: { locations },
-        suggestions: ['Show all locations', 'Filter by state', 'Price comparison']
+        data: { locations }
       };
 
     } catch (error) {
@@ -451,8 +547,7 @@ class ChatbotService {
 
     return {
       message: `📚 ${helpTopics[topic]}`,
-      type: 'help',
-      suggestions: ['How to buy land', 'Verification process', 'Search tips']
+      type: 'help'
     };
   }
 
@@ -474,8 +569,7 @@ class ChatbotService {
                 `• Pending Buy Requests: ${pendingRequests}\n\n` +
                 `The marketplace is active and growing!`,
         type: 'statistics',
-        data: { totalLands, totalUsers, totalTransactions, pendingRequests },
-        suggestions: ['Show available lands', 'Price trends', 'Popular locations']
+        data: { totalLands, totalUsers, totalTransactions, pendingRequests }
       };
 
     } catch (error) {
@@ -493,8 +587,7 @@ class ChatbotService {
   async handleComparison(message) {
     return {
       message: "To compare lands, please specify:\n• Two locations (e.g., 'Compare Bangalore vs Mysore')\n• Two land types (e.g., 'Compare agricultural vs residential')\n• Two specific properties by survey number",
-      type: 'help',
-      suggestions: ['Compare by location', 'Compare by price', 'Compare by type']
+      type: 'help'
     };
   }
 
@@ -503,46 +596,54 @@ class ChatbotService {
    */
   async handleFallback(message, userId) {
     // Check if AI API is configured
-    const aiApiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
-    
-    if (aiApiKey) {
-      // TODO: Integrate with AI API for complex queries
-      // For now, return helpful message
-      return {
-        message: "I'm not sure I understood that. Try asking:\n" +
-                "• 'Show me agricultural lands under 50 lakhs'\n" +
-                "• 'What's the average price in Karnataka?'\n" +
-                "• 'Recommend good investment properties'\n" +
-                "• 'How do I buy land?'",
-        type: 'fallback',
-        suggestions: ['Search lands', 'Price info', 'Help guide']
-      };
+    if (this.geminiEnabled && this.model) {
+      try {
+        const systemPrompt = `You are the PropChain Assistant, a specialized AI for the PropChain Blockchain Land Registry platform.
+        Your goal is to help users understand land registration, property transactions, and use the platform's features.
+        
+        Platform Context:
+        - It uses Ethereum blockchain (Smart Contracts) for ownership records.
+        - Users must be verified (Aadhaar, PAN) to buy land.
+        - Admin approves all transactions after seller/buyer confirmation.
+        - Marketplace features: Search, List, Buy, Price Prediction (ML-based).
+        
+        Rules:
+        - Be professional, helpful, and concise.
+        - If asked about specific land data, refer them to use the "Search" feature.
+        - If asked about legal advice, remind them you are an assistant and they should consult legal professionals.
+        - Keep answers focused on the PropChain platform and Indian land registry context.
+        
+        User Question: ${message}`;
+
+        const result = await this.model.generateContent(systemPrompt);
+        const response = await result.response;
+        const text = response.text();
+
+        if (!text) throw new Error('Empty response from Gemini');
+
+        return {
+          message: text,
+          type: 'ai_response'
+        };
+      } catch (error) {
+        console.error('Gemini API error:', error.message);
+        // If it's a quota or safety error, log it specifically
+        if (error.message.includes('429') || error.message.includes('quota')) {
+          console.error('Chatbot: Gemini API quota exceeded.');
+        }
+      }
     }
 
-    // Rule-based fallback
+    // Rule-based fallback if Gemini is disabled or fails
     return {
-      message: "I can help you with:\n" +
+      message: "I'm currently unable to access my advanced AI brain, but I can still help you with:\n" +
               "✓ Finding lands (search, filter, recommend)\n" +
               "✓ Price information and analysis\n" +
               "✓ Location-based queries\n" +
               "✓ Buying process guidance\n\n" +
               "What would you like to know?",
-      type: 'fallback',
-      suggestions: ['Show available lands', 'Price statistics', 'How to buy']
+      type: 'fallback'
     };
-  }
-
-  /**
-   * Get contextual suggestions based on current page/context
-   */
-  getContextualSuggestions(context = {}) {
-    if (context.page === 'marketplace') {
-      return ['Show cheap lands', 'AI Price Prediction', 'Recommend properties'];
-    } else if (context.page === 'my-lands') {
-      return ['Predict my land value', 'How to list for sale', 'Market value estimate'];
-    } else {
-      return ['Search lands', 'AI Price Prediction', 'Price statistics'];
-    }
   }
 
   /**
@@ -587,8 +688,7 @@ class ChatbotService {
         if (!land) {
           return {
             message: "I couldn't find that land. Please provide a valid land ID or ask me to search for lands first.",
-            type: 'error',
-            suggestions: ['Search lands', 'Show available lands']
+            type: 'error'
           };
         }
         
@@ -643,8 +743,7 @@ class ChatbotService {
                 surveyNumber: land.surveyNumber,
                 currentPrice
               }
-            },
-            suggestions: ['View land details', 'Compare with market', 'Search similar lands']
+            }
           };
         } else {
           // Fallback to simple estimation
@@ -653,8 +752,7 @@ class ChatbotService {
             message: `💡 Estimated Price for ${land.surveyNumber}:\n\n` +
                     `Based on market averages in ${land.district}, the estimated value is around ₹${estimatedPrice.toLocaleString('en-IN')}.\n\n` +
                     `Note: This is a basic estimate. For AI-powered prediction, the ML service needs to be running.`,
-            type: 'price_estimation',
-            suggestions: ['View land details', 'Market analysis', 'Search similar lands']
+            type: 'price_estimation'
           };
         }
       } else {
@@ -718,8 +816,7 @@ class ChatbotService {
                     "**Or search for a land first:**\n" +
                     "1. Search: 'Show lands in Kerala'\n" +
                     "2. Click 🤖 AI Price button on any land",
-            type: 'help',
-            suggestions: ['Search lands', 'Show available lands', 'Price statistics']
+            type: 'help'
           };
         }
         
@@ -769,8 +866,7 @@ class ChatbotService {
 
 💡 Market Insights: ${prediction.market_insights?.market_activity || 'Active'} market with ${prediction.market_insights?.growth_rate || 8}% annual growth`,
             type: 'price_prediction',
-            data: { prediction },
-            suggestions: ['Search similar lands', 'Market analysis', 'Show available lands']
+            data: { prediction }
           };
           console.log('Response created:', JSON.stringify(response).substring(0, 200));
           return response;
@@ -785,8 +881,7 @@ class ChatbotService {
                     `**Property:** ${area || '?'} ${areaUnit || 'units'} ${landType.toLowerCase()} land in ${district}\n\n` +
                     `Based on market averages, the estimated value is around ₹${estimatedPrice.toLocaleString('en-IN')}.\n\n` +
                     `Note: This is a basic estimate. For AI-powered prediction, ensure the ML service is running.`,
-            type: 'price_estimation',
-            suggestions: ['Search similar lands', 'Market analysis', 'Show available lands']
+            type: 'price_estimation'
           };
         }
       }
@@ -794,8 +889,7 @@ class ChatbotService {
       console.error('Price prediction error:', error);
       return {
         message: "I encountered an error with price prediction. Please try again or use market price analysis instead.",
-        type: 'error',
-        suggestions: ['Price statistics', 'Market analysis', 'Search lands']
+        type: 'error'
       };
     }
   }

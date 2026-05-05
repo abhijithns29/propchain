@@ -52,7 +52,7 @@ const initializeServices = async () => {
 
     // Initialize GridFS
     initGridFS();
-    console.log("✅ GridFS service initialized");
+    console.log("GridFS service initialized");
 
     // Verify email service configuration
     const { verifyEmailConfig } = require("./utils/emailService");
@@ -62,9 +62,9 @@ const initializeServices = async () => {
     const geminiService = require("./utils/geminiService");
     geminiService.initialize();
 
-    console.log("✅ All services initialized successfully");
+    console.log("All services initialized successfully");
   } catch (error) {
-    console.error("❌ Service initialization failed:", error);
+    console.error("Service initialization failed:", error);
     throw error;
   }
 };
@@ -427,25 +427,25 @@ const startServer = async () => {
     await initializeServices();
 
     server.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Land Registry Server running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`🌐 API URL: http://localhost:${PORT}/api`);
-      console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`Land Registry Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`API URL: http://localhost:${PORT}/api`);
+      console.log(`Health Check: http://localhost:${PORT}/api/health`);
       console.log("");
-      console.log("🏗️  System Components:");
-      console.log("   ✅ Express Server");
-      console.log("   ✅ MongoDB Database");
-      console.log(`   ✅ Blockchain Service (${blockchainService.networkName})`);
-      console.log("   ✅ IPFS Storage");
-      console.log("   ✅ JWT Authentication");
+      console.log("System Components:");
+      console.log("   [OK] Express Server");
+      console.log("   [OK] MongoDB Database");
+      console.log(`   [OK] Blockchain Service (${blockchainService.networkName})`);
+      console.log("   [OK] IPFS Storage");
+      console.log("   [OK] JWT Authentication");
       console.log("");
-      console.log("📚 Available Collections:");
+      console.log("Available Collections:");
       console.log("   - Users (Authentication & Verification)");
       console.log("   - DigitizedLand (Digitized Land Database)");
       console.log("   - LandTransaction (Transaction Records)");
       console.log("   - Chat (Buyer-Seller Communication)");
       console.log("");
-      console.log("🔐 Admin Accounts:");
+      console.log("Admin Accounts:");
       console.log("   - admin@landregistry.gov / admin123");
       console.log("   - officer@landregistry.gov / admin123");
     });
