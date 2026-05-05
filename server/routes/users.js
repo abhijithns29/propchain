@@ -445,12 +445,25 @@ router.get("/profile", auth, async (req, res) => {
       .select("-password -loginAttempts -lockUntil")
       .populate(
         "ownedLands",
-        "landId landDetails.village landDetails.district digitalDocument.isDigitalized marketInfo.isForSale"
+        "surveyNumber subDivision village district state status area originalDocument digitalDocument marketInfo createdAt"
       );
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Get transaction statistics
+    const LandTransaction = require("../models/LandTransaction");
+    
+    const completedTransactions = await LandTransaction.countDocuments({
+      $or: [{ seller: user._id }, { buyer: user._id }],
+      status: "COMPLETED"
+    });
+
+    const pendingTransactions = await LandTransaction.countDocuments({
+      $or: [{ seller: user._id }, { buyer: user._id }],
+      status: { $in: ["INITIATED", "DOCUMENTS_SUBMITTED", "UNDER_REVIEW", "APPROVED"] }
+    });
 
     res.json({
       user: {
@@ -459,6 +472,11 @@ router.get("/profile", auth, async (req, res) => {
         isVerified: user.verificationStatus === "VERIFIED",
         canClaimLand: user.canClaimLand(),
         hasRequiredDocuments: user.hasRequiredDocuments(),
+        statistics: {
+          propertiesOwned: user.ownedLands?.length || 0,
+          completedTransactions,
+          pendingTransactions
+        }
       },
     });
   } catch (error) {

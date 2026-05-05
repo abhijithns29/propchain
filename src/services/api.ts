@@ -324,7 +324,7 @@ class ApiService {
   }
 
   async downloadCertificate(landId: string) {
-    return this.downloadBlob(`/lands/${landId}/certificate`);
+    return this.downloadBlob(`/lands/${landId}/download-document`);
   }
 
   async downloadOriginalDocument(landId: string) {

@@ -508,7 +508,7 @@ async function approveTransaction(transaction, adminId, req) {
   await newOwnerUser.save();
 
   // Update land ownership
-  land.addOwnershipRecord(newOwner._id, 'SALE', transaction.transactionId);
+  land.addOwnershipRecord(newOwner._id, 'SALE', transaction.transactionId, newOwner.fullName);
   land.status = 'AVAILABLE';
   land.marketInfo.isForSale = false;
   

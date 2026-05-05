@@ -14,7 +14,9 @@ import {
   Trash2,
   Share2,
   Download,
-  FileText
+  FileText,
+  History,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Land } from '../types';
@@ -472,6 +474,67 @@ const LandDetailPage: React.FC<LandDetailPageProps> = ({ landId, onBack, onNavig
                 <p className="text-[#012970]">{land.village}</p>
                 <p className="text-[#012970]">{land.taluka}, {land.district}</p>
                 <p className="text-[#012970]">{land.state} - {land.pincode}</p>
+              </div>
+            </DetailCard>
+
+            {/* Ownership History */}
+            <DetailCard delay={0.55}>
+              <h3 className="text-xl font-semibold text-[#012970] mb-6 flex items-center gap-2">
+                <History className="w-5 h-5 text-[#4154f1]" />
+                Ownership History
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Owner</th>
+                      <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-widest">From</th>
+                      <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-widest">To</th>
+                      <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-widest">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {land.ownershipHistory && land.ownershipHistory.length > 0 ? (
+                      land.ownershipHistory.map((record, index) => (
+                        <tr key={index} className="group">
+                          <td className="py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-50 text-[#4154f1] flex items-center justify-center font-bold text-xs border border-blue-100">
+                                {(record.ownerName || record.owner?.fullName || "N").charAt(0)}
+                              </div>
+                              <span className="text-[#012970] font-medium">
+                                {record.ownerName || record.owner?.fullName || "NIL"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-4 text-sm text-gray-600">
+                            {new Date(record.fromDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="py-4 text-sm text-gray-600">
+                            {record.toDate 
+                              ? new Date(record.toDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                              : (index < (land.ownershipHistory?.length || 0) - 1
+                                  ? new Date(land.ownershipHistory[index + 1].fromDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                                  : <span className="text-emerald-500 font-bold uppercase text-[10px]">Present</span>
+                                )
+                            }
+                          </td>
+                          <td className="py-4">
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                              {record.transactionType}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-gray-400 italic text-sm">
+                          No historical ownership records available for this asset.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </DetailCard>
 

@@ -283,7 +283,7 @@ landSchema.methods.canBeListedForSale = function() {
          this.status === 'AVAILABLE';
 };
 
-landSchema.methods.addOwnershipRecord = function(newOwner, transactionType = 'SALE', transactionId = '') {
+landSchema.methods.addOwnershipRecord = function(newOwner, transactionType = 'SALE', transactionId = '', ownerName = '') {
   // Close current ownership
   if (this.ownershipHistory.length > 0) {
     const currentRecord = this.ownershipHistory[this.ownershipHistory.length - 1];
@@ -295,6 +295,7 @@ landSchema.methods.addOwnershipRecord = function(newOwner, transactionType = 'SA
   // Add new ownership record
   this.ownershipHistory.push({
     owner: newOwner,
+    ownerName: ownerName,
     fromDate: new Date(),
     transactionType,
     transactionId

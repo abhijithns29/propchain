@@ -802,9 +802,15 @@ class PDFGenerator {
                    "NIL";
           };
 
+          const toDateDisplay = entry.toDate 
+            ? getSafeDate(entry.toDate, "NIL") 
+            : (index < land.ownershipHistory.length - 1 
+                ? getSafeDate(land.ownershipHistory[index + 1].fromDate, "NIL") 
+                : 'Present');
+
           doc.text(getHistoryOwnerName(), 22, yPos + 1);
           doc.text(getSafeDate(entry.fromDate, "NIL"), 90, yPos + 1);
-          doc.text(entry.toDate ? getSafeDate(entry.toDate, "NIL") : 'Current', 130, yPos + 1);
+          doc.text(toDateDisplay, 130, yPos + 1);
           doc.text(getTransactionType(), 160, yPos + 1);
 
           yPos += 7;

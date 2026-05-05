@@ -43,7 +43,12 @@ export interface User {
     };
     profileImage?: string;
   };
-  ownedLands: string[];
+  ownedLands: string[] | any[];
+  statistics?: {
+    propertiesOwned: number;
+    completedTransactions: number;
+    pendingTransactions: number;
+  };
   createdAt: string;
   lastLogin?: string;
 }

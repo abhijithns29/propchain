@@ -827,38 +827,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ onNavigateToLand }) => {
             </div>
           </div>
 
-          {/* Account Statistics */}
-          <div>
-            <h3 className="text-lg font-medium text-[#012970] mb-4">
-              Account Statistics
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                <div className="text-2xl font-bold text-[#4154f1]">
-                  {auth.user.ownedLands?.length ?? 0}
-                </div>
-                <div className="text-sm text-emerald-600">Properties Owned</div>
-              </div>
-
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                <div className="text-2xl font-bold text-[#4154f1]">
-                  {/* This would be calculated from transactions */}0
-                </div>
-                <div className="text-sm text-emerald-600">
-                  Completed Transactions
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="text-2xl font-bold text-yellow-700">
-                  {/* This would be calculated from pending transactions */}0
-                </div>
-                <div className="text-sm text-yellow-600">
-                  Pending Transactions
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Owned Lands Section */}

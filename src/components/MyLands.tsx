@@ -147,6 +147,25 @@ const MyLands: React.FC = () => {
     }
   };
 
+  const handleDownloadDocument = async (id: string) => {
+    try {
+      setLoading(true);
+      const blob = await apiService.downloadOwnershipDocument(id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `land_certificate_${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      setError(error.message || 'Failed to download certificate');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const fileArray = Array.from(e.target.files);
@@ -345,6 +364,10 @@ const MyLands: React.FC = () => {
                 {land.digitalDocument?.isDigitalized && (
                   <div className="mt-3 flex items-center justify-center">
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadDocument(land._id || land.id);
+                      }}
                       className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
                     >
                       Download Digital Certificate

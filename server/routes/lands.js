@@ -208,6 +208,10 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
       }
     }
 
+    // Fetch owner details to get the name for the history record
+    const ownerUser = await User.findById(ownerId);
+    const ownerName = ownerUser ? ownerUser.fullName : "NIL";
+
     // Create land record
     console.log("Creating land record with processed data...");
     const landData = {
@@ -243,6 +247,7 @@ router.post("/add", adminAuth, upload.single("document"), async (req, res) => {
       ownershipHistory: [
         {
           owner: ownerId,
+          ownerName: ownerName,
           fromDate: new Date(),
           documentReference: "INITIAL_RECORD",
           transactionType: "INITIAL",
@@ -581,10 +586,12 @@ router.post("/digitalize", adminAuth, async (req, res) => {
       return res.status(400).json({ error: "Invalid landId format" });
     }
 
-    const land = await Land.findById(landId).populate(
-      "currentOwner",
-      "fullName email verificationDocuments verificationStatus"
-    );
+    const land = await Land.findById(landId)
+      .populate(
+        "currentOwner",
+        "fullName email verificationDocuments verificationStatus"
+      )
+      .populate("ownershipHistory.owner", "fullName");
 
     if (!land) {
       return res.status(404).json({ error: "Land not found" });
@@ -915,6 +922,7 @@ router.get("/", adminAuth, async (req, res) => {
       .populate("currentOwner", "fullName email")
       .populate("addedBy", "fullName")
       .populate("verifiedBy", "fullName")
+      .populate("ownershipHistory.owner", "fullName")
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .sort(sortObj);
@@ -2355,6 +2363,7 @@ router.get("/:landId/details", async (req, res) => {
       .populate("currentOwner", "fullName email verificationStatus")
       .populate("addedBy", "fullName")
       .populate("verifiedBy", "fullName")
+      .populate("ownershipHistory.owner", "fullName email")
       .lean();
 
     if (!land) {
@@ -2393,27 +2402,22 @@ router.get("/:landId/details", async (req, res) => {
 router.get("/:landId/download-document", auth, async (req, res) => {
   try {
     const { landId } = req.params;
-    console.log(`Digitized document download request for landId: ${landId}`);
+    console.log(`Fresh digitized document generation request for landId: ${landId}`);
 
     if (!mongoose.Types.ObjectId.isValid(landId)) {
-      console.error(`Invalid landId format: ${landId}`);
-      return res.status(400).json({
-        success: false,
-        error: "Invalid landId format",
-      });
+      return res.status(400).json({ success: false, error: "Invalid landId format" });
     }
 
-    const land = await Land.findById(landId);
+    const land = await Land.findById(landId)
+      .populate("currentOwner", "fullName email verificationStatus")
+      .populate("ownershipHistory.owner", "fullName email");
+
     if (!land) {
-      console.error(`Land not found: ${landId}`);
-      return res.status(404).json({
-        success: false,
-        error: "Land not found",
-      });
+      return res.status(404).json({ success: false, error: "Land not found" });
     }
 
     // Check if user is the current owner
-    if (land.currentOwner.toString() !== req.user._id.toString()) {
+    if (land.currentOwner._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "You can only download documents for lands you own",
@@ -2421,39 +2425,32 @@ router.get("/:landId/download-document", auth, async (req, res) => {
     }
 
     if (!land.digitalDocument || !land.digitalDocument.isDigitalized) {
-      console.error(`Land not digitalized: ${landId}`);
       return res.status(400).json({
         success: false,
-        error: "Land is not digitalized. Please contact an administrator to digitalize this land first.",
+        error: "Land is not digitalized. Please contact an administrator first.",
       });
     }
 
-    if (!land.digitalDocument.hash) {
-      console.error(`No digital document hash found for land: ${landId}`);
-      return res.status(404).json({
-        success: false,
-        error: "Digital certificate hash not found",
-      });
-    }
+    // Generate fresh QR code data
+    const qrData = {
+      assetId: land.assetId,
+      owner: land.currentOwner?.fullName || "Unassigned",
+      verifyUrl: `${process.env.FRONTEND_URL || "http://localhost:5173"}/verify-land/${land.assetId}`,
+      generatedDate: new Date().toISOString(),
+      generatedFor: req.user.fullName,
+    };
 
-    console.log(
-      `Attempting to download digitized document for land: ${land.assetId}, hash: ${land.digitalDocument.hash}`
-    );
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData), {
+      width: 200,
+      margin: 2,
+      color: { dark: "#000000", light: "#FFFFFF" },
+    });
 
-    // Fetch the PDF from IPFS
-    const pdfBuffer = await ipfsService.downloadFile(land.digitalDocument.hash);
+    // Generate fresh certificate PDF
+    console.log(`Generating fresh certificate for ${land.assetId}...`);
+    const pdfBuffer = await PDFGenerator.generateLandCertificate(land, qrCodeDataURL);
 
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      console.error(`Empty or null PDF buffer for land: ${landId}`);
-      return res.status(404).json({
-        success: false,
-        error: "Certificate file not found or is empty",
-      });
-    }
-
-    console.log(
-      `Successfully retrieved digitized document for land: ${land.assetId}, size: ${pdfBuffer.length} bytes`
-    );
+    console.log(`Successfully generated fresh certificate, size: ${pdfBuffer.length} bytes`);
 
     // Set proper headers for PDF download
     res.setHeader("Content-Type", "application/pdf");
@@ -2466,11 +2463,26 @@ router.get("/:landId/download-document", auth, async (req, res) => {
 
     // Send the PDF buffer
     res.send(pdfBuffer);
+
+    // Optional: Update IPFS in the background so the preview URL also stays somewhat fresh
+    try {
+      const newHash = await ipfsService.uploadFile(pdfBuffer, `land-certificate-${land.assetId}.pdf`);
+      if (newHash !== land.digitalDocument.hash) {
+        land.digitalDocument.hash = newHash;
+        land.digitalDocument.url = ipfsService.getFileUrl(newHash);
+        land.digitalDocument.generatedAt = new Date();
+        await land.save();
+        console.log(`✅ Updated IPFS hash in background: ${newHash}`);
+      }
+    } catch (bgError) {
+      console.error("⚠️ Background IPFS update failed:", bgError.message);
+    }
+
   } catch (error) {
-    console.error("Download digitized document error:", error);
+    console.error("Fresh document generation error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to download digitized document",
+      message: "Failed to generate digitized document",
       error: error.message,
     });
   }
